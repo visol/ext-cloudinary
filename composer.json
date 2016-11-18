@@ -1,0 +1,25 @@
+{
+  "name": "sinso/cloudinary",
+  "description": "Cloudinary integration in TYPO3. Use automatic breakpoint generation for images.",
+  "type": "typo3-cms-extension",
+  "version": "0.0.0",
+  "homepage": "",
+  "license": "GPL-2.0+",
+  "preferred-install": "dist",
+  "support": {
+    "irc": "",
+    "issues": ""
+  },
+  "require": {
+    "cloudinary/cloudinary_php": "^1.4"
+  },
+  "autoload": {
+    "psr-4": {
+      "Sinso\\Cloudinary\\": "Classes/"
+    }
+  },
+  "suggest": {
+  },
+  "require-dev": {
+  }
+}

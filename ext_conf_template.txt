@@ -1,0 +1,8 @@
+# cat=cloudinary; type=string; label=Cloudinary Cloud Name
+cloudName =
+
+# cat=cloudinary; type=string; label=Cloudinary API Key
+apiKey =
+
+# cat=cloudinary; type=string; label=Cloudinary API Secret
+apiSecret =
