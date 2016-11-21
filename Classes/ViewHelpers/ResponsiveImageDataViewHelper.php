@@ -146,19 +146,10 @@ class ResponsiveImageDataViewHelper extends \TYPO3\CMS\Fluid\Core\ViewHelper\Abs
 
             $breakpointData = $this->cloudinaryUtility->getResponsiveBreakpointData($publicId, $options);
             $responsiveImageData = [
-                'images' => $this->cloudinaryUtility->simplifyBreakpointData($breakpointData),
-                'minImage' => [
-                    'uri' => $this->cloudinaryUtility->getMinimumImageUri($breakpointData),
-                    'width' => $this->cloudinaryUtility->getMinimumImageWidth($breakpointData),
-                ],
-                'medianImage' => [
-                    'uri' => $this->cloudinaryUtility->getMedianImageUri($breakpointData),
-                    'width' => $this->cloudinaryUtility->getMedianImageWidth($breakpointData),
-                ],
-                'maxImage' => [
-                    'uri' => $this->cloudinaryUtility->getMaximumImageUri($breakpointData),
-                    'width' => $this->cloudinaryUtility->getMaximumImageWidth($breakpointData),
-                ],
+                'images' => $this->cloudinaryUtility->getImageObjects($breakpointData),
+                'minImage' => $this->cloudinaryUtility->getImage($breakpointData, 'min'),
+                'medianImage' => $this->cloudinaryUtility->getImage($breakpointData, 'median'),
+                'maxImage' => $this->cloudinaryUtility->getImage($breakpointData, 'max'),
             ];
         } catch (ResourceDoesNotExistException $e) {
             // thrown if file does not exist

@@ -105,77 +105,59 @@ class CloudinaryUtility
     }
 
     public function getSrcset($breakpointData) {
-        $widthUriMap = $this->simplifyBreakpointData($breakpointData);
+        $imageObjects = $this->getImageObjects($breakpointData);
 
         $srcset = [];
-        foreach ($widthUriMap as $width => $uri) {
-            $srcset[] = $uri . ' ' . $width . 'w';
+        foreach ($imageObjects as $imageObject) {
+            $srcset[] = $imageObject->secure_url . ' ' . $imageObject->width . 'w';
         }
 
         return $srcset;
     }
 
     public function getSizesAttribute($breakpointData) {
-        $defaultWidth = $this->getMaximumImageWidth($breakpointData);
-        return '(max-width: ' . $defaultWidth . 'px) 100vw, ' . $defaultWidth . 'px';
+        $maxImageObject = $this->getImage($breakpointData, 'max');
+        return '(max-width: ' . $maxImageObject->width . 'px) 100vw, ' . $maxImageObject->width . 'px';
     }
 
     public function getSrc($breakpointData) {
-        return $this->getMaximumImageUri($breakpointData);
+        $maxImageObject = $this->getImage($breakpointData, 'max');
+        return $maxImageObject->secure_url;
     }
 
-    public function getMinimumImageUri($breakpointData) {
-        $widthUriMap = $this->simplifyBreakpointData($breakpointData);
 
-        $medianWidth = $this->getMinimumImageWidth($breakpointData);
-        return $widthUriMap[$medianWidth];
+    public function getImage($breakpointData, $functionName) {
+        $imageObjects = $this->getImageObjects($breakpointData);
+        $widths = array_keys($imageObjects);
+
+        $width = call_user_func_array(array($this, $functionName), array($widths));
+
+        return $imageObjects[$width];
     }
 
-    public function getMedianImageUri($breakpointData) {
-        $widthUriMap = $this->simplifyBreakpointData($breakpointData);
 
-        $medianWidth = $this->getMedianImageWidth($breakpointData);
-        return $widthUriMap[$medianWidth];
+
+    public function min($items) {
+        return min($items);
     }
 
-    public function getMaximumImageUri($breakpointData) {
-        $widthUriMap = $this->simplifyBreakpointData($breakpointData);
-
-        $defaultWidth = $this->getMaximumImageWidth($breakpointData);
-        return $widthUriMap[$defaultWidth];
+    public function median($items) {
+        sort($items);
+        $medianIndex = ceil((count($items)/2))-1;
+        return $items[$medianIndex];
     }
 
-    public function getMinimumImageWidth($breakpointData) {
-        $widthUriMap = $this->simplifyBreakpointData($breakpointData);
-
-        return min(array_keys($widthUriMap));
+    public function max($items) {
+        return max($items);
     }
 
-    public function getMedianImageWidth($breakpointData) {
-        $widthUriMap = $this->simplifyBreakpointData($breakpointData);
-
-        $widths = array_keys($widthUriMap);
-
-        sort($widths);
-
-        $medianIndex = ceil((count($widths)/2))-1;
-
-        return $widths[$medianIndex];
-    }
-
-    public function getMaximumImageWidth($breakpointData) {
-        $widthUriMap = $this->simplifyBreakpointData($breakpointData);
-
-        return max(array_keys($widthUriMap));
-    }
-
-    public function simplifyBreakpointData($breakpointData) {
-        $widthUriMap = [];
+    public function getImageObjects($breakpointData) {
+        $widthMap = [];
         foreach ($breakpointData as $breakpoint) {
-            $widthUriMap[$breakpoint->width] = $breakpoint->secure_url;
+            $widthMap[$breakpoint->width] = $breakpoint;
         }
 
-        return $widthUriMap;
+        return $widthMap;
     }
 
 
