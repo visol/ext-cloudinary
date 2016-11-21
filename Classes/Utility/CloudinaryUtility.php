@@ -124,12 +124,30 @@ class CloudinaryUtility
         return $this->getDefaultImageUri($breakpointData);
     }
 
+    public function getMedianImageUri($breakpointData) {
+        $widthUriMap = $this->simplifyBreakpointData($breakpointData);
+
+        $medianWidth = $this->getMedianImageWidth($breakpointData);
+        return $widthUriMap[$medianWidth];
+    }
 
     protected function getDefaultImageUri($breakpointData) {
         $widthUriMap = $this->simplifyBreakpointData($breakpointData);
 
         $defaultWidth = $this->getDefaultImageWidth($breakpointData);
         return $widthUriMap[$defaultWidth];
+    }
+
+    protected function getMedianImageWidth($breakpointData) {
+        $widthUriMap = $this->simplifyBreakpointData($breakpointData);
+
+        $widths = array_keys($widthUriMap);
+
+        sort($widths);
+
+        $medianIndex = ceil((count($widths)/2))-1;
+
+        return $widths[$medianIndex];
     }
 
     protected function getDefaultImageWidth($breakpointData) {
