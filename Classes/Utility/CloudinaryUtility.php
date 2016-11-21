@@ -116,12 +116,19 @@ class CloudinaryUtility
     }
 
     public function getSizesAttribute($breakpointData) {
-        $defaultWidth = $this->getDefaultImageWidth($breakpointData);
+        $defaultWidth = $this->getMaximumImageWidth($breakpointData);
         return '(max-width: ' . $defaultWidth . 'px) 100vw, ' . $defaultWidth . 'px';
     }
 
     public function getSrc($breakpointData) {
-        return $this->getDefaultImageUri($breakpointData);
+        return $this->getMaximumImageUri($breakpointData);
+    }
+
+    public function getMinimumImageUri($breakpointData) {
+        $widthUriMap = $this->simplifyBreakpointData($breakpointData);
+
+        $medianWidth = $this->getMinimumImageWidth($breakpointData);
+        return $widthUriMap[$medianWidth];
     }
 
     public function getMedianImageUri($breakpointData) {
@@ -131,14 +138,20 @@ class CloudinaryUtility
         return $widthUriMap[$medianWidth];
     }
 
-    protected function getDefaultImageUri($breakpointData) {
+    public function getMaximumImageUri($breakpointData) {
         $widthUriMap = $this->simplifyBreakpointData($breakpointData);
 
-        $defaultWidth = $this->getDefaultImageWidth($breakpointData);
+        $defaultWidth = $this->getMaximumImageWidth($breakpointData);
         return $widthUriMap[$defaultWidth];
     }
 
-    protected function getMedianImageWidth($breakpointData) {
+    public function getMinimumImageWidth($breakpointData) {
+        $widthUriMap = $this->simplifyBreakpointData($breakpointData);
+
+        return min(array_keys($widthUriMap));
+    }
+
+    public function getMedianImageWidth($breakpointData) {
         $widthUriMap = $this->simplifyBreakpointData($breakpointData);
 
         $widths = array_keys($widthUriMap);
@@ -150,13 +163,13 @@ class CloudinaryUtility
         return $widths[$medianIndex];
     }
 
-    protected function getDefaultImageWidth($breakpointData) {
+    public function getMaximumImageWidth($breakpointData) {
         $widthUriMap = $this->simplifyBreakpointData($breakpointData);
 
         return max(array_keys($widthUriMap));
     }
 
-    protected function simplifyBreakpointData($breakpointData) {
+    public function simplifyBreakpointData($breakpointData) {
         $widthUriMap = [];
         foreach ($breakpointData as $breakpoint) {
             $widthUriMap[$breakpoint->width] = $breakpoint->secure_url;
