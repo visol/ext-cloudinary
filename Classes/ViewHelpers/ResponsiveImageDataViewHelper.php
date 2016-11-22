@@ -112,7 +112,7 @@ class ResponsiveImageDataViewHelper extends \TYPO3\CMS\Fluid\Core\ViewHelper\Abs
      * @throws \TYPO3\CMS\Fluid\Core\ViewHelper\Exception
      * @return string Rendered tag
      */
-    public function render($src = null, $minWidth = 100, $maxWidth = 2000, $maxImages = 20, $bytesStep = 20000, $aspectRatio = null, $gravity = null, $crop = null, $treatIdAsReference = false, $image = null, $data = 'responsiveImageData')
+    public function render($src = null, $minWidth = 100, $maxWidth = 2000, $maxImages = 10, $bytesStep = 40000, $aspectRatio = null, $gravity = null, $crop = null, $treatIdAsReference = false, $image = null, $data = 'responsiveImageData')
     {
         if (is_null($src) && is_null($image) || !is_null($src) && !is_null($image)) {
             throw new \TYPO3\CMS\Fluid\Core\ViewHelper\Exception('You must either specify a string src or a File object.', 1382284106);
