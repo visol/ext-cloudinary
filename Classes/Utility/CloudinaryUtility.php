@@ -51,6 +51,7 @@ class CloudinaryUtility
 
 
     public function getPublicId($filename) {
+        $filename = $this->removeAbsRefPrefix($filename);
         $media = $this->mediaRepository->findByFilename($filename);
 
         if (!$media) {
@@ -62,6 +63,7 @@ class CloudinaryUtility
 
     public function uploadImage($filename)
     {
+        $filename = $this->removeAbsRefPrefix($filename);
         $imagePathAndFilename = GeneralUtility::getFileAbsFileName($filename);
 
         $filenameWithoutExtension = preg_replace('/\\.[^.\\s]{3,4}$/', '', $filename);
@@ -158,6 +160,25 @@ class CloudinaryUtility
         }
 
         return $widthMap;
+    }
+
+    /**
+     * Remove absRefPrefix from filename
+     *
+     * This utility only supports filenames on a local filesystem. If absRefPrefix is enabled all URLs generated in
+     * TYPO3 probably contain schema and domain.
+     *
+     * @param $filename
+     * @return string
+     */
+    public function removeAbsRefPrefix($filename) {
+        $uriPrefix = $GLOBALS['TSFE']->absRefPrefix;
+
+        if ($uriPrefix && (substr($filename, 0, strlen($uriPrefix)) == $uriPrefix)) {
+            $filename = substr($filename, strlen($uriPrefix));
+        }
+
+        return $filename;
     }
 
 
