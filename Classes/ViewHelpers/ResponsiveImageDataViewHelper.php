@@ -127,6 +127,10 @@ class ResponsiveImageDataViewHelper extends \TYPO3\CMS\Fluid\Core\ViewHelper\Abs
             ];
             $processedImage = $this->imageService->applyProcessingInstructions($image, $processingInstructions);
             $imageUri = $this->imageService->getImageUri($processedImage);
+
+            // decode URLs from RealURL
+            $imageUri = rawurldecode($imageUri);
+
             $publicId = $this->cloudinaryUtility->getPublicId(ltrim($imageUri, '/'));
 
             $options = [
