@@ -6,3 +6,6 @@ apiKey =
 
 # cat=cloudinary; type=string; label=Cloudinary API Secret
 apiSecret =
+
+# cat=cloudinary; type=int; label=Cloudinary API timeout
+timeout = 60

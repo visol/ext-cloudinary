@@ -46,6 +46,7 @@ class CloudinaryUtility
             'cloud_name' => $extConf['cloudName'],
             'api_key' => $extConf['apiKey'],
             'api_secret' => $extConf['apiSecret'],
+            'timeout' => $extConf['timeout'],
         ]);
     }
 
