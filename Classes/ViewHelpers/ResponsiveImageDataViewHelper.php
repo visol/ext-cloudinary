@@ -118,6 +118,11 @@ class ResponsiveImageDataViewHelper extends \TYPO3\CMS\Fluid\Core\ViewHelper\Abs
             throw new \TYPO3\CMS\Fluid\Core\ViewHelper\Exception('You must either specify a string src or a File object.', 1382284106);
         }
 
+        if (!is_int($src)) {
+            $parsedUrl = parse_url($src);
+            $src = $parsedUrl['path'];
+        }
+
         try {
             $image = $this->imageService->getImage($src, $image, $treatIdAsReference);
             if ($crop === null) {

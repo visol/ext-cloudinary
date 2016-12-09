@@ -52,7 +52,7 @@ class CloudinaryUtility
 
 
     public function getPublicId($filename) {
-        $filename = $this->removeAbsRefPrefix($filename);
+        $filename = $this->cleanFilename($filename);
         $media = $this->mediaRepository->findByFilename($filename);
 
         if (!$media) {
@@ -64,7 +64,7 @@ class CloudinaryUtility
 
     public function uploadImage($filename)
     {
-        $filename = $this->removeAbsRefPrefix($filename);
+        $filename = $this->cleanFilename($filename);
         $imagePathAndFilename = GeneralUtility::getFileAbsFileName($filename);
 
         $filenameWithoutExtension = preg_replace('/\\.[^.\\s]{3,4}$/', '', $filename);
@@ -161,6 +161,14 @@ class CloudinaryUtility
         }
 
         return $widthMap;
+    }
+
+    public function cleanFilename($filename) {
+        $filename = $this->removeAbsRefPrefix($filename);
+        $parsedUrl = parse_url($filename);
+        $filename = $parsedUrl['path'];
+
+        return $filename;
     }
 
     /**
