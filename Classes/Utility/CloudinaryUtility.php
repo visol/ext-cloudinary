@@ -22,6 +22,7 @@ use TYPO3\CMS\Core\Utility\ArrayUtility;
 class CloudinaryUtility
 {
 
+    const SEPERATOR = '---';
 
     /**
      * @var \Sinso\Cloudinary\Domain\Repository\MediaRepository
@@ -55,8 +56,28 @@ class CloudinaryUtility
     public function getPublicId($filename) {
         try {
             $filename = $this->cleanFilename($filename);
-            $media = $this->mediaRepository->findByFilename($filename);
+            $imagePathAndFilename = GeneralUtility::getFileAbsFileName($filename);
+            $modificationDate = filemtime($imagePathAndFilename);
 
+            $possibleMedias = $this->mediaRepository->findByFilename($filename);
+
+            // check modification date
+            $media = null;
+            foreach($possibleMedias as $possibleMedia) {
+                if (intval($possibleMedia['modification_date']) !== $modificationDate) {
+                    continue;
+                }
+
+                $media = $possibleMedia;
+            }
+
+            // fallback and check sha1
+            if (!$media) {
+                $sha1 = sha1_file($imagePathAndFilename);
+                $media = $this->mediaRepository->findOneByFilenameAndSha1($filename, $sha1);
+            }
+
+            // new image
             if (!$media) {
                 return $this->uploadImage($filename);
             }
@@ -74,12 +95,15 @@ class CloudinaryUtility
     public function uploadImage($filename)
     {
         try {
+
             $filename = $this->cleanFilename($filename);
             $imagePathAndFilename = GeneralUtility::getFileAbsFileName($filename);
+            $sha1 = sha1_file($imagePathAndFilename);
+            $modificationDate = filemtime($imagePathAndFilename);
 
             $filenameWithoutExtension = preg_replace('/\\.[^.\\s]{3,4}$/', '', $filename);
             $folder = dirname($filenameWithoutExtension);
-            $publicId = basename($filenameWithoutExtension);
+            $publicId = basename($filenameWithoutExtension) . self::SEPERATOR . $sha1;
 
             $options = [
                 'public_id' => $publicId,
@@ -94,7 +118,7 @@ class CloudinaryUtility
                 throw new \Exception('Error while uploading image to Cloudinary', 1479469830);
             }
 
-            $this->mediaRepository->save($filename, $publicId);
+            $this->mediaRepository->save($filename, $publicId, $sha1, $modificationDate);
 
             return $publicId;
         } catch (\Exception $e) {
