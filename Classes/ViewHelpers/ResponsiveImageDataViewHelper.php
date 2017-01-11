@@ -133,33 +133,49 @@ class ResponsiveImageDataViewHelper extends \TYPO3\CMS\Fluid\Core\ViewHelper\Abs
             $processedImage = $this->imageService->applyProcessingInstructions($image, $processingInstructions);
             $imageUri = $this->imageService->getImageUri($processedImage);
 
-            // decode URLs from RealURL
-            $imageUri = rawurldecode($imageUri);
+            try {
+                // decode URLs from RealURL
+                $imageUri = rawurldecode($imageUri);
 
-            $publicId = $this->cloudinaryUtility->getPublicId(ltrim($imageUri, '/'));
+                $publicId = $this->cloudinaryUtility->getPublicId(ltrim($imageUri, '/'));
 
-            $options = [
-                'type' => 'upload',
-                'responsive_breakpoints' => [
-                    'create_derived' => false,
-                    'bytes_step' => $bytesStep,
-                    'min_width' => $minWidth,
-                    'max_width' => $maxWidth,
-                    'max_images' => $maxImages,
-                    'transformation' => 'f_auto,fl_lossy,q_auto,c_crop'
-                        . ($aspectRatio ? ',ar_' . $aspectRatio : '')
-                        . ($gravity ? ',g_' . $gravity : '')
-                        . ($crop ? ',c_' . $crop : ''),
-                ]
-            ];
+                $options = [
+                    'type' => 'upload',
+                    'responsive_breakpoints' => [
+                        'create_derived' => false,
+                        'bytes_step' => $bytesStep,
+                        'min_width' => $minWidth,
+                        'max_width' => $maxWidth,
+                        'max_images' => $maxImages,
+                        'transformation' => 'f_auto,fl_lossy,q_auto,c_crop'
+                            . ($aspectRatio ? ',ar_' . $aspectRatio : '')
+                            . ($gravity ? ',g_' . $gravity : '')
+                            . ($crop ? ',c_' . $crop : ''),
+                    ]
+                ];
 
-            $breakpointData = $this->cloudinaryUtility->getResponsiveBreakpointData($publicId, $options);
-            $responsiveImageData = [
-                'images' => $this->cloudinaryUtility->getImageObjects($breakpointData),
-                'minImage' => $this->cloudinaryUtility->getImage($breakpointData, 'min'),
-                'medianImage' => $this->cloudinaryUtility->getImage($breakpointData, 'median'),
-                'maxImage' => $this->cloudinaryUtility->getImage($breakpointData, 'max'),
-            ];
+                $breakpointData = $this->cloudinaryUtility->getResponsiveBreakpointData($publicId, $options);
+                $responsiveImageData = [
+                    'images' => $this->cloudinaryUtility->getImageObjects($breakpointData),
+                    'minImage' => $this->cloudinaryUtility->getImage($breakpointData, 'min'),
+                    'medianImage' => $this->cloudinaryUtility->getImage($breakpointData, 'median'),
+                    'maxImage' => $this->cloudinaryUtility->getImage($breakpointData, 'max'),
+                ];
+            } catch (\Exception $e) {
+                $responsiveImageData = [
+                    'images' => [
+                        1 => [
+                            'width' => 1,
+                            'height' => 1,
+                            'url' => $imageUri,
+                            'secure_url' => $imageUri,
+                        ]
+                    ],
+                    'minImage' => $imageUri,
+                    'medianImage' => $imageUri,
+                    'maxImage' => $imageUri,
+                ];
+            }
         } catch (ResourceDoesNotExistException $e) {
             // thrown if file does not exist
         } catch (\UnexpectedValueException $e) {
