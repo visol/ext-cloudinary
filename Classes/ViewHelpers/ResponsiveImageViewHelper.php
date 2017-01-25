@@ -129,31 +129,36 @@ class ResponsiveImageViewHelper extends \TYPO3\CMS\Fluid\Core\ViewHelper\Abstrac
             ];
             $processedImage = $this->imageService->applyProcessingInstructions($image, $processingInstructions);
             $imageUri = $this->imageService->getImageUri($processedImage);
-            $publicId = $this->cloudinaryUtility->getPublicId(ltrim($imageUri, '/'));
 
-            $options = [
-                'type' => 'upload',
-                'responsive_breakpoints' => [
-                    'create_derived' => false,
-                    'bytes_step' => $bytesStep,
-                    'min_width' => $minWidth,
-                    'max_width' => $maxWidth,
-                    'max_images' => $maxImages,
-                    'transformation' => 'f_auto,fl_lossy,q_auto,c_crop'
-                        . ($aspectRatio ? ',ar_' . $aspectRatio : '')
-                        . ($gravity ? ',g_' . $gravity : '')
-                        . ($crop ? ',c_' . $crop : ''),
-                ]
-            ];
+            try {
+                $publicId = $this->cloudinaryUtility->getPublicId(ltrim($imageUri, '/'));
 
-            $breakpointData = $this->cloudinaryUtility->getResponsiveBreakpointData($publicId, $options);
-            $cloudinarySizes = $this->cloudinaryUtility->getSizesAttribute($breakpointData);
-            $cloudinarySrcset = $this->cloudinaryUtility->getSrcsetAttribute($breakpointData);
-            $cloudinarySrc = $this->cloudinaryUtility->getSrc($breakpointData);
+                $options = [
+                    'type' => 'upload',
+                    'responsive_breakpoints' => [
+                        'create_derived' => false,
+                        'bytes_step' => $bytesStep,
+                        'min_width' => $minWidth,
+                        'max_width' => $maxWidth,
+                        'max_images' => $maxImages,
+                        'transformation' => 'f_auto,fl_lossy,q_auto,c_crop'
+                            . ($aspectRatio ? ',ar_' . $aspectRatio : '')
+                            . ($gravity ? ',g_' . $gravity : '')
+                            . ($crop ? ',c_' . $crop : ''),
+                    ]
+                ];
 
-            $this->tag->addAttribute('sizes', $cloudinarySizes);
-            $this->tag->addAttribute('srcset', $cloudinarySrcset);
-            $this->tag->addAttribute('src', $cloudinarySrc);
+                $breakpointData = $this->cloudinaryUtility->getResponsiveBreakpointData($publicId, $options);
+                $cloudinarySizes = $this->cloudinaryUtility->getSizesAttribute($breakpointData);
+                $cloudinarySrcset = $this->cloudinaryUtility->getSrcsetAttribute($breakpointData);
+                $cloudinarySrc = $this->cloudinaryUtility->getSrc($breakpointData);
+
+                $this->tag->addAttribute('sizes', $cloudinarySizes);
+                $this->tag->addAttribute('srcset', $cloudinarySrcset);
+                $this->tag->addAttribute('src', $cloudinarySrc);
+            } catch (\Exception $e) {
+                $this->tag->addAttribute('src', $imageUri);
+            }
 
             $alt = $image->getProperty('alternative');
             $title = $image->getProperty('title');

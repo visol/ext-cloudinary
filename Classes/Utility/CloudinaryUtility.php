@@ -14,6 +14,7 @@
 
 namespace Sinso\Cloudinary\Utility;
 
+use Sinso\Cloudinary\CloudinaryException;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
 use TYPO3\CMS\Core\Utility\ExtensionManagementUtility;
 use TYPO3\CMS\Core\Utility\ArrayUtility;
@@ -52,41 +53,57 @@ class CloudinaryUtility
 
 
     public function getPublicId($filename) {
-        $filename = $this->cleanFilename($filename);
-        $media = $this->mediaRepository->findByFilename($filename);
+        try {
+            $filename = $this->cleanFilename($filename);
+            $media = $this->mediaRepository->findByFilename($filename);
 
-        if (!$media) {
-            return $this->uploadImage($filename);
+            if (!$media) {
+                return $this->uploadImage($filename);
+            }
+
+            return $media['public_id'];
+        } catch (\Exception $e) {
+            /** @var \TYPO3\CMS\Core\Log\Logger $logger */
+            $logger = \TYPO3\CMS\Core\Utility\GeneralUtility::makeInstance('TYPO3\CMS\Core\Log\LogManager')->getLogger(__CLASS__);
+            $logger->error('Error getting Cloudinary public ID for file "' . $filename .'"');
+
+            throw new CloudinaryException('Error getting Cloudinary public ID for file "' . $filename .'"', 1484152954);
         }
-
-        return $media['public_id'];
     }
 
     public function uploadImage($filename)
     {
-        $filename = $this->cleanFilename($filename);
-        $imagePathAndFilename = GeneralUtility::getFileAbsFileName($filename);
+        try {
+            $filename = $this->cleanFilename($filename);
+            $imagePathAndFilename = GeneralUtility::getFileAbsFileName($filename);
 
-        $filenameWithoutExtension = preg_replace('/\\.[^.\\s]{3,4}$/', '', $filename);
-        $folder = dirname($filenameWithoutExtension);
-        $publicId = basename($filenameWithoutExtension);
+            $filenameWithoutExtension = preg_replace('/\\.[^.\\s]{3,4}$/', '', $filename);
+            $folder = dirname($filenameWithoutExtension);
+            $publicId = basename($filenameWithoutExtension);
 
-        $options = [
-            'public_id' => $publicId,
-            'folder' => $folder,
-            'overwrite' => TRUE,
-        ];
+            $options = [
+                'public_id' => $publicId,
+                'folder' => $folder,
+                'overwrite' => true,
+            ];
 
-        $response = \Cloudinary\Uploader::upload($imagePathAndFilename, $options);
-        $publicId = $response['public_id'];
+            $response = \Cloudinary\Uploader::upload($imagePathAndFilename, $options);
+            $publicId = $response['public_id'];
 
-        if (!$publicId) {
-            throw new \Exception('Error while uploading image to Cloudinary', 1479469830);
+            if (!$publicId) {
+                throw new \Exception('Error while uploading image to Cloudinary', 1479469830);
+            }
+
+            $this->mediaRepository->save($filename, $publicId);
+
+            return $publicId;
+        } catch (\Exception $e) {
+            /** @var \TYPO3\CMS\Core\Log\Logger $logger */
+            $logger = \TYPO3\CMS\Core\Utility\GeneralUtility::makeInstance('TYPO3\CMS\Core\Log\LogManager')->getLogger(__CLASS__);
+            $logger->error('Error uploading file "' . $filename .'" to Cloudinary.');
+
+            throw new CloudinaryException('Error uploading file "' . $filename .'" to Cloudinary.', 1484153176);
         }
-
-        $this->mediaRepository->save($filename, $publicId);
-
-        return $publicId;
     }
 
     public function getResponsiveBreakpointData($publicId, $options) {
