@@ -125,10 +125,10 @@ class ResponsiveImageDataViewHelper extends \TYPO3\CMS\Fluid\Core\ViewHelper\Abs
 
         try {
             $image = $this->imageService->getImage($src, $image, $treatIdAsReference);
-            if ($crop === null) {
-                $crop = $image instanceof FileReference ? $image->getProperty('crop') : null;
-            }
+
+            $preCrop = $image instanceof FileReference ? $image->getProperty('crop') : null;
             $processingInstructions = [
+                'crop' => $preCrop,
             ];
             $processedImage = $this->imageService->applyProcessingInstructions($image, $processingInstructions);
             $imageUri = $this->imageService->getImageUri($processedImage);
