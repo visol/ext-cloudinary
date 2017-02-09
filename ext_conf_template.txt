@@ -1,6 +1,15 @@
 # cat=cloudinary; type=string; label=Cloudinary Cloud Name
 cloudName =
 
+# cat=cloudinary; type=string; label=CNAME
+cname =
+
+# cat=cloudinary; type=string; label=Private CDN
+privateCdn=
+
+# cat=cloudinary; type=string; label=Secure distribution
+secureDdistribution=
+
 # cat=cloudinary; type=string; label=Cloudinary API Key
 apiKey =
 

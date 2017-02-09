@@ -46,6 +46,9 @@ class CloudinaryUtility
 
         \Cloudinary::config([
             'cloud_name' => $extConf['cloudName'],
+            'cname' => $extConf['cname'],
+            'private_cdn' => $extConf['privateCdn'],
+            'distribution' => $extConf['secureDdistribution'],
             'api_key' => $extConf['apiKey'],
             'api_secret' => $extConf['apiSecret'],
             'timeout' => $extConf['timeout'],

@@ -11,7 +11,7 @@
     "issues": ""
   },
   "require": {
-    "cloudinary/cloudinary_php": "^1.4"
+    "cloudinary/cloudinary_php": "^1.6"
   },
   "autoload": {
     "psr-4": {
