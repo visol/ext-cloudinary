@@ -23,6 +23,11 @@ class CloudinaryUtility
 {
 
     const SEPERATOR = '---';
+    const HASH_POSITION_DISABLED = 0;
+    const HASH_POSITION_APPEND_FILENAME = 1;
+    const HASH_POSITION_PREPEND_FILENAME = 2;
+    const HASH_POSITION_APPEND_FOLDERNAME = 3;
+    const HASH_POSITION_PREPEND_FOLDERNAME = 4;
 
     /**
      * @var \Sinso\Cloudinary\Domain\Repository\MediaRepository
@@ -36,19 +41,24 @@ class CloudinaryUtility
      */
     protected $responsiveBreakpointsRepository;
 
+    /**
+     * @var array
+     */
+    protected $extensionConfiguration;
+
 
     /**
      * CloudinaryUtility constructor.
      */
     public function __construct()
     {
-        $extConf = (array)unserialize($GLOBALS['TYPO3_CONF_VARS']['EXT']['extConf']['cloudinary']);
+        $this->extensionConfiguration = (array)unserialize($GLOBALS['TYPO3_CONF_VARS']['EXT']['extConf']['cloudinary']);
 
         \Cloudinary::config([
-            'cloud_name' => $extConf['cloudName'],
-            'api_key' => $extConf['apiKey'],
-            'api_secret' => $extConf['apiSecret'],
-            'timeout' => $extConf['timeout'],
+            'cloud_name' => $this->extensionConfiguration['cloudName'],
+            'api_key' => $this->extensionConfiguration['apiKey'],
+            'api_secret' => $this->extensionConfiguration['apiSecret'],
+            'timeout' => $this->extensionConfiguration['timeout'],
         ]);
     }
 
@@ -102,8 +112,29 @@ class CloudinaryUtility
             $modificationDate = filemtime($imagePathAndFilename);
 
             $filenameWithoutExtension = preg_replace('/\\.[^.\\s]{3,4}$/', '', $filename);
-            $folder = dirname($filenameWithoutExtension);
-            $publicId = basename($filenameWithoutExtension) . self::SEPERATOR . $sha1;
+
+            switch ($this->extensionConfiguration['hash_position']) {
+                case self::HASH_POSITION_APPEND_FILENAME:
+                    $folder = dirname($filenameWithoutExtension);
+                    $publicId = basename($filenameWithoutExtension) . self::SEPERATOR . $sha1;
+                    break;
+                case self::HASH_POSITION_PREPEND_FILENAME:
+                    $folder = dirname($filenameWithoutExtension);
+                    $publicId = $sha1 . self::SEPERATOR . basename($filenameWithoutExtension);
+                    break;
+                case self::HASH_POSITION_APPEND_FOLDERNAME:
+                    $folder = dirname($filenameWithoutExtension) . '/' . $sha1;
+                    $publicId = basename($filenameWithoutExtension);
+                    break;
+                case self::HASH_POSITION_PREPEND_FOLDERNAME:
+                    $folder = $sha1 . '/' . dirname($filenameWithoutExtension);
+                    $publicId = basename($filenameWithoutExtension);
+                    break;
+                default:
+                    $folder = dirname($filenameWithoutExtension);
+                    $publicId = basename($filenameWithoutExtension);
+            }
+
 
             $options = [
                 'public_id' => $publicId,
