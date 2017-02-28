@@ -20,7 +20,7 @@ class CloudinaryImage  {
     public function getUrl($content='', $conf = [])
     {
         if (empty($content)) {
-            return else;
+            return false;
         }
         $imageUri = $content;
         $publicId = $this->cloudinaryUtility->getPublicId(ltrim($imageUri, '/'));
