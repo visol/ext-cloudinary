@@ -53,6 +53,10 @@ class CloudinaryUtility
     public function __construct()
     {
         $this->extensionConfiguration = (array)unserialize($GLOBALS['TYPO3_CONF_VARS']['EXT']['extConf']['cloudinary']);
+        
+        // Workaround: dependency injection not supported in userFuncs
+        $this->mediaRepository = GeneralUtility::makeInstance(\Sinso\Cloudinary\Domain\Repository\MediaRepository::class);
+        $this->responsiveBreakpointsRepository = GeneralUtility::makeInstance(\Sinso\Cloudinary\Domain\Repository\ResponsiveBreakpointsRepository::class);
 
         \Cloudinary::config([
             'cloud_name' => $this->extensionConfiguration['cloudName'],
