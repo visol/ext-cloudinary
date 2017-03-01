@@ -6,7 +6,7 @@ class ResponsiveBreakpointsRepository {
 
     public function findByPublicIdAndOptions($publicId, $options) {
         $optionsHash = $this->calculateHashFromOptions($options);
-        $row = $this->getDatabaseConnection()->exec_SELECTgetSingleRow('*', 'tx_cloudinary_responsivebreakpoints', '`public_id` = "' . $publicId . '" AND `options_hash` = "' . $optionsHash . '"');
+        $row = $this->getDatabaseConnection()->exec_SELECTgetSingleRow('*', 'tx_cloudinary_responsivebreakpoints', '`public_id_hash` = "' . sha1($publicId) . '" AND `options_hash` = "' . $optionsHash . '"');
 
         return $row;
     }
@@ -22,6 +22,7 @@ class ResponsiveBreakpointsRepository {
         $optionsHash = $this->calculateHashFromOptions($options);
         $insert = [
             'public_id' => $publicId,
+            'public_id_hash' => sha1($publicId),
             'options_hash' => $optionsHash,
             'breakpoints' => $breakpoints,
         ];
