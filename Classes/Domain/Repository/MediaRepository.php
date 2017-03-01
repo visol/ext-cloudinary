@@ -5,20 +5,19 @@ namespace Sinso\Cloudinary\Domain\Repository;
 class MediaRepository {
 
 	public function findOneByPublicId($publicId) {
-        $row = $this->getDatabaseConnection()->exec_SELECTgetSingleRow('*', 'tx_cloudinary_media', '`public_id` = "' . $publicId . '"');
+        $row = $this->getDatabaseConnection()->exec_SELECTgetSingleRow('*', 'tx_cloudinary_media', '`public_id_hash` = "' . sha1($publicId) . '"');
 
         return $row;
     }
 
-
     public function findByFilename($filename) {
-        $rows = $this->getDatabaseConnection()->exec_SELECTgetRows('*', 'tx_cloudinary_media', '`filename` = "' . $filename . '"');
+        $rows = $this->getDatabaseConnection()->exec_SELECTgetRows('*', 'tx_cloudinary_media', '`filename_hash` = "' . sha1($filename) . '"');
 
         return $rows;
     }
 
     public function findOneByFilenameAndSha1($filename, $sha1) {
-        $row = $this->getDatabaseConnection()->exec_SELECTgetSingleRow('*', 'tx_cloudinary_media', '`filename` = "' . $filename . '" AND `sha1` = "' . $sha1 . '"');
+        $row = $this->getDatabaseConnection()->exec_SELECTgetSingleRow('*', 'tx_cloudinary_media', '`filename_hash` = "' . sha1($filename) . '" AND `sha1` = "' . $sha1 . '"');
 
         return $row;
     }
@@ -26,7 +25,9 @@ class MediaRepository {
     public function save($filename, $publicId, $sha1, $modification_date) {
         $insert = [
             'filename' => $filename,
+            'filename_hash' => sha1($filename),
             'public_id' => $publicId,
+            'public_id_hash' => sha1($publicId),
             'sha1' => $sha1,
             'modification_date' => $modification_date,
         ];
