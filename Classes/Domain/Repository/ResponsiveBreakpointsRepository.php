@@ -11,13 +11,6 @@ class ResponsiveBreakpointsRepository {
         return $row;
     }
 
-
-    public function findByFilename($filename) {
-        $row = $this->getDatabaseConnection()->exec_SELECTgetSingleRow('*', 'tx_cloudinary_responsivebreakpoints', '`filename` = "' . $filename . '"');
-
-        return $row;
-    }
-
     public function save($publicId, $options, $breakpoints) {
         $optionsHash = $this->calculateHashFromOptions($options);
         $insert = [
