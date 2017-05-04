@@ -23,6 +23,11 @@ class MediaRepository {
     }
 
     public function save($filename, $publicId, $sha1, $modification_date) {
+        if ($this->findOneByPublicId($publicId)) {
+	        $this->getDatabaseConnection()->exec_DELETEquery('tx_cloudinary_media', 'public_id_hash = "' . sha1($publicId) . '"');
+	        $this->getDatabaseConnection()->exec_DELETEquery('tx_cloudinary_responsivebreakpoints', 'public_id_hash = "' . sha1($publicId) . '"');
+        }
+
         $insert = [
             'filename' => $filename,
             'filename_hash' => sha1($filename),
