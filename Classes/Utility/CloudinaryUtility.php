@@ -14,10 +14,12 @@
 
 namespace Sinso\Cloudinary\Utility;
 
+use DmitryDulepov\Realurl\Utility;
 use Sinso\Cloudinary\CloudinaryException;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
 use TYPO3\CMS\Core\Utility\ExtensionManagementUtility;
 use TYPO3\CMS\Core\Utility\ArrayUtility;
+use TYPO3\CMS\Extbase\Object\ObjectManager;
 
 class CloudinaryUtility
 {
@@ -102,7 +104,7 @@ class CloudinaryUtility
             $logger = \TYPO3\CMS\Core\Utility\GeneralUtility::makeInstance('TYPO3\CMS\Core\Log\LogManager')->getLogger(__CLASS__);
             $logger->error('Error getting Cloudinary public ID for file "' . $filename .'"');
 
-            throw new CloudinaryException('Error getting Cloudinary public ID for file "' . $filename .'"', 1484152954);
+            throw new CloudinaryException('Error getting Cloudinary public ID for file "' . $filename .'" / ' . $e->getMessage(), 1484152954);
         }
     }
 
@@ -243,6 +245,7 @@ class CloudinaryUtility
         $filename = $this->removeAbsRefPrefix($filename);
         $parsedUrl = parse_url($filename);
         $filename = $parsedUrl['path'];
+        $filename = urldecode($filename);
 
         return $filename;
     }
