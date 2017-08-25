@@ -106,7 +106,7 @@ class ResponsiveImageDataViewHelper extends \TYPO3\CMS\Fluid\Core\ViewHelper\Abs
      * @param string $gravity define the focus for the transformation in Cloudinary
      * @param string $crop define cropping for Cloudinary
      * @param bool $treatIdAsReference given src argument is a sys_file_reference record
-     * @param FileInterface|AbstractFileFolder $image a FAL object
+     * @param mixed $image a FAL object
      * @param string $data Name for variable with responsive image data within the viewhelper
      *
      * @throws \TYPO3\CMS\Fluid\Core\ViewHelper\Exception
