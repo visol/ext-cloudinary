@@ -24,23 +24,7 @@ class CloudinaryImage  {
         }
         $imageUri = $content;
         $publicId = $this->cloudinaryUtility->getPublicId(ltrim($imageUri, '/'));
-
-        $options = [
-            'type' => 'upload',
-            'responsive_breakpoints' => [
-                'create_derived' => false,
-                'bytes_step' => $conf['bytesStep'],
-                'min_width' => $conf['minWidth'],
-                'max_width' => $conf['maxWidth'],
-                'max_images' => $conf['maxImages'],
-                'transformation' => 'f_auto,fl_lossy,q_auto,c_crop'
-                    . ($conf['aspectRatio'] ? ',ar_' . $conf['aspectRatio'] : '')
-                    . ($conf['gravity'] ? ',g_' . $conf['gravity'] : '')
-                    . ($conf['crop'] ? ',c_' . $conf['crop'] : '')
-                    . ($conf['background'] ? ',b_' . $conf['background'] : ''),
-            ]
-        ];
-        
+        $options = $this->cloudinaryUtility->generateOptionsFromSettings($conf);
         $imageData = current($this->cloudinaryUtility->getResponsiveBreakpointData($publicId,$options));
 
         return $imageData->url;

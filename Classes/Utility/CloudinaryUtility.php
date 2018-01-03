@@ -181,6 +181,26 @@ class CloudinaryUtility
         return json_decode($breakpointData);
     }
 
+    public function generateOptionsFromSettings(array $settings) {
+        $options = [
+            'type' => 'upload',
+            'responsive_breakpoints' => [
+                'create_derived' => false,
+                'bytes_step' => $settings['bytesStep'],
+                'min_width' => $settings['minWidth'],
+                'max_width' => $settings['maxWidth'],
+                'max_images' => $settings['maxImages'],
+                'transformation' => 'f_auto,fl_lossy,q_auto,c_crop'
+                    . ($settings['aspectRatio'] ? ',ar_' . $settings['aspectRatio'] : '')
+                    . ($settings['gravity'] ? ',g_' . $settings['gravity'] : '')
+                    . ($settings['crop'] ? ',c_' . $settings['crop'] : '')
+                    . ($settings['background'] ? ',b_' . $settings['background'] : ''),
+            ]
+        ];
+
+        return $options;
+    }
+
     public function getSrcsetAttribute($breakpointData) {
         return implode(',' . PHP_EOL, $this->getSrcset($breakpointData));
     }

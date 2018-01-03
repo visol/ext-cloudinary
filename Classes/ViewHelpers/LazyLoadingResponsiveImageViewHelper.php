@@ -132,20 +132,16 @@ class LazyLoadingResponsiveImageViewHelper extends \TYPO3\CMS\Fluid\Core\ViewHel
             $imageUri = $this->imageService->getImageUri($processedImage);
             $publicId = $this->cloudinaryUtility->getPublicId(ltrim($imageUri, '/'));
 
-            $options = [
-                'type' => 'upload',
-                'responsive_breakpoints' => [
-                    'create_derived' => false,
-                    'bytes_step' => $bytesStep,
-                    'min_width' => $minWidth,
-                    'max_width' => $maxWidth,
-                    'max_images' => $maxImages,
-                    'transformation' => 'f_auto,fl_lossy,q_auto,c_crop'
-                        . ($aspectRatio ? ',ar_' . $aspectRatio : '')
-                        . ($gravity ? ',g_' . $gravity : '')
-                        . ($crop ? ',c_' . $crop : ''),
-                ]
+            $settings = [
+                'bytesStep' => $bytesStep,
+                'minWidth' => $minWidth,
+                'maxWidth' => $maxWidth,
+                'maxImages' => $maxImages,
+                'aspectRatio' => $aspectRatio,
+                'gravity' => $gravity,
+                'crop' => $crop,
             ];
+            $options = $this->cloudinaryUtility->generateOptionsFromSettings($settings);
 
             $breakpointData = $this->cloudinaryUtility->getResponsiveBreakpointData($publicId, $options);
             $cloudinarySrcset = $this->cloudinaryUtility->getSrcsetAttribute($breakpointData);
