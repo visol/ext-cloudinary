@@ -2,7 +2,6 @@
   "name": "sinso/cloudinary",
   "description": "Cloudinary integration in TYPO3. Use automatic breakpoint generation for images.",
   "type": "typo3-cms-extension",
-  "version": "0.0.0",
   "homepage": "",
   "license": "GPL-2.0+",
   "preferred-install": "dist",
