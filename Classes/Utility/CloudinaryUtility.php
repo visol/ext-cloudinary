@@ -156,6 +156,7 @@ class CloudinaryUtility
             }
 
             $this->mediaRepository->save($filename, $publicId, $sha1, $modificationDate);
+            $this->mediaRepository->save($filename, $publicId, $sha1, $modificationDate);
 
             return $publicId;
         } catch (\Exception $e) {
@@ -207,7 +208,6 @@ class CloudinaryUtility
 
     public function getSrcset($breakpointData) {
         $imageObjects = $this->getImageObjects($breakpointData);
-
         $srcset = [];
         foreach ($imageObjects as $imageObject) {
             $srcset[] = $imageObject->secure_url . ' ' . $imageObject->width . 'w';
@@ -228,6 +228,9 @@ class CloudinaryUtility
 
 
     public function getImage($breakpointData, $functionName) {
+        if (!in_array($functionName, ['min', 'median', 'max'])) {
+            $functionName = 'max';
+        }
         $imageObjects = $this->getImageObjects($breakpointData);
         $widths = array_keys($imageObjects);
 

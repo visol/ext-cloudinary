@@ -1,9 +1,12 @@
 <?php
+
 namespace Sinso\Cloudinary\UserFunc;
 
+use Sinso\Cloudinary\Utility\CloudinaryUtility;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
 
-class CloudinaryImage  {
+class CloudinaryImage
+{
 
     /**
      * @var \Sinso\Cloudinary\Utility\CloudinaryUtility
@@ -14,7 +17,7 @@ class CloudinaryImage  {
     public function __construct()
     {
         // Workaround: dependency injection not supported in userFuncs
-        $this->cloudinaryUtility = GeneralUtility::makeInstance('Sinso\\Cloudinary\\Utility\\CloudinaryUtility');
+        $this->cloudinaryUtility = GeneralUtility::makeInstance(CloudinaryUtility::class);
     }
 
     /**
@@ -26,51 +29,49 @@ class CloudinaryImage  {
      * @return bool
      * @throws \Sinso\Cloudinary\CloudinaryException
      */
-    public function getUrl($content='', $conf = [])
+    public function getUrl($content = '', $conf = [])
     {
         if (empty($content)) {
             return false;
         }
 
-        $imageData = $this->getImageData($content, $conf);
-
-        return $imageData->url;
+        $functionName = $conf['functionName'];
+        unset($conf['functionName']);
+        $breakpointData = $this->getBreakpointData($content, $conf);
+        $imageData = $this->cloudinaryUtility->getImage($breakpointData, $functionName);
+        return $imageData->secure_url;
     }
 
     /**
-     * Compress image and return secure image URL (https://)
-     *
      * @param string $content Source image
      * @param array $conf
      *
      * @return bool
      * @throws \Sinso\Cloudinary\CloudinaryException
      */
-    public function getSecureUrl($content='', $conf = [])
+    public function getSrcSet($content = '', $conf = [])
     {
         if (empty($content)) {
             return false;
         }
 
-        $imageData = $this->getImageData($content, $conf);
+        $breakpointData = $this->getBreakpointData($content, $conf);
 
-        return $imageData->secure_url;
+        return $this->cloudinaryUtility->getSrcsetAttribute($breakpointData);
     }
 
     /**
-     * @param $imageUri
+     * @param $content
      * @param $conf
-     *
      * @return mixed
-     * @throws \Sinso\Cloudinary\CloudinaryException
      */
-    protected function getImageData($imageUri, $conf)
+    public function getBreakpointData($content, $conf)
     {
-        $publicId = $this->cloudinaryUtility->getPublicId(ltrim($imageUri, '/'));
+        $publicId = $this->cloudinaryUtility->getPublicId(ltrim($content, '/'));
         $options = $this->cloudinaryUtility->generateOptionsFromSettings($conf);
-        $imageData = current($this->cloudinaryUtility->getResponsiveBreakpointData($publicId,$options));
+        $breakpointData = $this->cloudinaryUtility->getResponsiveBreakpointData($publicId, $options);
 
-        return $imageData;
+        return $breakpointData;
     }
 
 }
