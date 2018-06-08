@@ -3,7 +3,7 @@
   "description": "Cloudinary integration in TYPO3. Use automatic breakpoint generation for images.",
   "type": "typo3-cms-extension",
   "homepage": "",
-  "license": "GPL-2.0+",
+  "license": ["GPL-2.0-or-later"],
   "preferred-install": "dist",
   "support": {
     "irc": "",
