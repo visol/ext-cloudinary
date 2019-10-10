@@ -4,13 +4,12 @@
   "type": "typo3-cms-extension",
   "homepage": "",
   "license": ["GPL-2.0-or-later"],
-  "preferred-install": "dist",
   "support": {
     "irc": "",
     "issues": ""
   },
   "require": {
-    "cloudinary/cloudinary_php": "^1.4"
+    "cloudinary/cloudinary_php": "^1.15"
   },
   "autoload": {
     "psr-4": {
