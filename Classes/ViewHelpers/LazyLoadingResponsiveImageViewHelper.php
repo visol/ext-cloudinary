@@ -62,6 +62,7 @@ use TYPO3\CMS\Extbase\Domain\Model\AbstractFileFolder;
  * <output>
  * Could not get image resource for "NonExistingImage.png".
  * </output>
+ * @deprecated use LazyLoadingCloudinaryImageViewHelper instead
  */
 class LazyLoadingResponsiveImageViewHelper extends \TYPO3\CMS\Fluid\Core\ViewHelper\AbstractTagBasedViewHelper
 {
