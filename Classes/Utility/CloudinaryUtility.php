@@ -21,6 +21,10 @@ use TYPO3\CMS\Core\Utility\ExtensionManagementUtility;
 use TYPO3\CMS\Core\Utility\ArrayUtility;
 use TYPO3\CMS\Extbase\Object\ObjectManager;
 
+/**
+ * Class CloudinaryUtility
+ * @deprecated
+ */
 class CloudinaryUtility
 {
 
