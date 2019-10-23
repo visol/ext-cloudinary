@@ -1,6 +1,6 @@
 <?php
 
-namespace Sinso\Cloudinary\Converters;
+namespace Sinso\Cloudinary\Utility;
 
 /*
  * This file is part of the Sinso/Cloudinary project under GPLv2 or later.
@@ -10,28 +10,41 @@ namespace Sinso\Cloudinary\Converters;
  */
 
 /**
- * Class FalToCloudinaryConverter
- * @package Sinso\Cloudinary\Converters
+ * Class CloudinaryPathUtility
  */
-class FalToCloudinaryConverter
+class CloudinaryPathUtility
 {
+
+    /**
+     * @param array $cloudinaryResource
+     * @return string
+     */
+    public static function computeFileIdentifier(array $cloudinaryResource): string
+    {
+        return sprintf(
+            '%s.%s',
+            DIRECTORY_SEPARATOR . ltrim($cloudinaryResource['public_id'], DIRECTORY_SEPARATOR),
+            $cloudinaryResource['format']
+        );
+    }
+
     /**
      * @param string $fileIdentifier
      * @return string
      */
-    public static function toPublicId(string $fileIdentifier): string
+    public static function computeCloudinaryPublicId(string $fileIdentifier): string
     {
         $fileIdentifierWithoutExtension = self::stripExtension($fileIdentifier);
-        return self::toCloudinaryPath($fileIdentifierWithoutExtension);
+        return self::computeCloudinaryPath($fileIdentifierWithoutExtension);
     }
 
     /**
-     * @param string $identifier
+     * @param string $fileIdentifier
      * @return string
      */
-    protected static function toCloudinaryPath(string $identifier): string
+    public static function computeCloudinaryPath(string $fileIdentifier): string
     {
-        return trim($identifier, DIRECTORY_SEPARATOR);
+        return trim($fileIdentifier, DIRECTORY_SEPARATOR);
     }
 
     /**
