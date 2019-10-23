@@ -10,16 +10,13 @@ namespace Sinso\Cloudinary\Driver;
  */
 
 use Cloudinary\Api;
-use http\Exception\RuntimeException;
+use Cloudinary\Search;
 use TYPO3\CMS\Core\Charset\CharsetConverter;
 use TYPO3\CMS\Core\Log\LogLevel;
 use TYPO3\CMS\Core\Log\LogManager;
 use TYPO3\CMS\Core\Messaging\FlashMessage;
 use TYPO3\CMS\Core\Messaging\FlashMessageService;
 use TYPO3\CMS\Core\Resource\File;
-use TYPO3\CMS\Core\Resource\Folder;
-use TYPO3\CMS\Core\Resource\ResourceStorageInterface;
-use TYPO3\CMS\Core\Resource\StorageRepository;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
 use TYPO3\CMS\Core\Utility\PathUtility;
 use TYPO3\CMS\Core\Resource\Driver\AbstractHierarchicalFilesystemDriver;
@@ -104,16 +101,6 @@ class CloudinaryDriver extends AbstractHierarchicalFilesystemDriver
             ResourceStorage::CAPABILITY_BROWSABLE
             | ResourceStorage::CAPABILITY_PUBLIC
             | ResourceStorage::CAPABILITY_WRITABLE;
-
-        \Cloudinary::config(array(
-            'cloud_name' => $this->getConfiguration('cloudName'),
-            'api_key' => $this->getConfiguration('apiKey'),
-            'api_secret' => $this->getConfiguration('apiSecret'),
-            'timeout' => $this->getConfiguration('timeout'),
-            'secure' => true
-        ));
-
-        $this->api = new \Cloudinary\Api();
     }
 
     /**
@@ -153,7 +140,7 @@ class CloudinaryDriver extends AbstractHierarchicalFilesystemDriver
     {
         if (empty($this->cachedCloudinaryResources[$identifier])) {
             $this->log('Cloudinary: API call in "getPublicUrl" with identifier "%s"', [$identifier]);
-            $response = $this->api->resource(
+            $response = $this->getApi()->resource(
                 $this->convertToCloudinaryPublicId($identifier)
             );
 
@@ -250,7 +237,7 @@ class CloudinaryDriver extends AbstractHierarchicalFilesystemDriver
         try {
 
             $this->log('Cloudinary: API call in "folderExists with identifier "%s"', [$identifier]);
-            $this->cachedSubFolders[$identifier] = (array)$this->api->subfolders($identifier);
+            $this->cachedSubFolders[$identifier] = (array)$this->getApi()->subfolders($identifier);
         } catch (\Exception $e) {
             return false;
         }
@@ -324,9 +311,40 @@ class CloudinaryDriver extends AbstractHierarchicalFilesystemDriver
             'overwrite' => true,
         ];
 
+        // Before calling API, make sure we are connected with the right "bucket"
+        $this->initializeApi();
+
+        // Upload the file
         \Cloudinary\Uploader::upload($localFilePath, $options);
         $targetIdentifier = $targetFolderIdentifier . $fileName;
         return $targetIdentifier;
+    }
+
+    /**
+     * @return void
+     */
+    protected function initializeApi()
+    {
+        \Cloudinary::config(array(
+            'cloud_name' => $this->getConfiguration('cloudName'),
+            'api_key' => $this->getConfiguration('apiKey'),
+            'api_secret' => $this->getConfiguration('apiSecret'),
+            'timeout' => $this->getConfiguration('timeout'),
+            'secure' => true
+        ));
+    }
+    /**
+     * @return Api
+     */
+    protected function getApi()
+    {
+        $this->initializeApi();
+
+        // The object \Cloudinary\Api behaves like a singleton object.
+        // The problem: if we have multiple driver instances / configuration, we don't get the expected result
+        // meaning we are wrongly fetching resources from other cloudinary "buckets" because of the singleton behaviour
+        // Therefore it is better to create a new instance upon each API call to avoid confusion
+        return new \Cloudinary\Api();
     }
 
     /**
@@ -365,6 +383,9 @@ class CloudinaryDriver extends AbstractHierarchicalFilesystemDriver
      */
     public function copyFileWithinStorage($fileIdentifier, $targetFolderIdentifier, $fileName)
     {
+        // Before calling API, make sure we are connected with the right "bucket"
+        $this->initializeApi();
+
         \Cloudinary\Uploader::upload(
             $this->getPublicUrl($fileIdentifier),
             [
@@ -398,6 +419,10 @@ class CloudinaryDriver extends AbstractHierarchicalFilesystemDriver
             'overwrite' => true,
         ];
 
+        // Before calling the API, make sure we are connected with the right "bucket"
+        $this->initializeApi();
+
+        // Upload the file
         \Cloudinary\Uploader::upload($localFilePath, $options);
         return true;
     }
@@ -413,7 +438,7 @@ class CloudinaryDriver extends AbstractHierarchicalFilesystemDriver
     public function deleteFile($fileIdentifier)
     {
         $this->log('Cloudinary: API call in "deleteFile" with identifier "%s"', [$fileIdentifier]);
-        $response = $this->api->delete_resources([
+        $response = $this->getApi()->delete_resources([
             $this->convertToCloudinaryPublicId($fileIdentifier)
         ]);
         return is_array($response['deleted']);
@@ -431,11 +456,11 @@ class CloudinaryDriver extends AbstractHierarchicalFilesystemDriver
         $normalizedFolderIdentifier = $this->convertToCloudinaryPath($folderIdentifier);
 
         if ($deleteRecursively) {
-            $this->api->delete_resources_by_prefix($normalizedFolderIdentifier);
+            $this->getApi()->delete_resources_by_prefix($normalizedFolderIdentifier);
         }
 
         $this->log('Cloudinary: API call in "deleteFolder" with folder identifier "%s"', [$folderIdentifier]);
-        $this->api->delete_folder($normalizedFolderIdentifier);
+        $this->getApi()->delete_folder($normalizedFolderIdentifier);
         return true;
     }
 
@@ -459,7 +484,7 @@ class CloudinaryDriver extends AbstractHierarchicalFilesystemDriver
         if (!is_file($temporaryPath) || !filesize($temporaryPath)) {
             if (empty($this->cachedCloudinaryResources[$fileIdentifier])) {
                 $this->log('Cloudinary: API call in "getFileForLocalProcessing" with identifier "%s"', [$fileIdentifier]);
-                $resource = (array)$this->api->resource(
+                $resource = (array)$this->getApi()->resource(
                     $this->convertToCloudinaryPublicId($fileIdentifier)
                 );
             } else {
@@ -515,7 +540,7 @@ class CloudinaryDriver extends AbstractHierarchicalFilesystemDriver
         $normalizedFolderIdentifier = $this->normalizeCloudinaryFolderNameWithPath($newFolderName, $parentFolderIdentifier);
 
         $this->log('Cloudinary: API call in "createFolder" with identifier "%s"', [$normalizedFolderIdentifier]);
-        $this->api->create_folder(
+        $this->getApi()->create_folder(
             $normalizedFolderIdentifier
         );
         return $normalizedFolderIdentifier;
@@ -565,6 +590,11 @@ class CloudinaryDriver extends AbstractHierarchicalFilesystemDriver
         $newCloudinaryPublicId = $this->convertToCloudinaryPublicId($newFileIdentifier);
 
         if ($cloudinaryPublicId !== $newCloudinaryPublicId) {
+
+            // Before calling API, make sure we are connected with the right "bucket"
+            $this->initializeApi();
+
+            // Rename the file
             \Cloudinary\Uploader::rename($cloudinaryPublicId, $newCloudinaryPublicId);
         }
 
@@ -604,6 +634,11 @@ class CloudinaryDriver extends AbstractHierarchicalFilesystemDriver
                 $newCloudinaryPublicId = implode('/', $pathSegments);
 
                 if ($cloudinaryPublicId !== $newCloudinaryPublicId) {
+
+                    // Before calling the API, make sure we are connected with the right "bucket"
+                    $this->initializeApi();
+
+                    // Rename the file
                     \Cloudinary\Uploader::rename($cloudinaryPublicId, $newCloudinaryPublicId);
                     $oldFileIdentifier = $this->convertToFileIdentifier($item);
                     $newFileIdentifier = $this->convertToFileIdentifier([
@@ -680,7 +715,7 @@ class CloudinaryDriver extends AbstractHierarchicalFilesystemDriver
     {
         $normalizedIdentifier = $this->convertToCloudinaryPath($folderIdentifier);
         $this->log('Cloudinary: API call in "isFolderEmpty" with identifier "%s"', [$normalizedIdentifier]);
-        $response = $this->api->resources([
+        $response = $this->getApi()->resources([
             'resource_type' => 'image',
             'type' => 'upload',
             'max_results' => 1,
@@ -808,7 +843,7 @@ class CloudinaryDriver extends AbstractHierarchicalFilesystemDriver
     {
         if (empty($this->cachedSubFolders[$folderIdentifier])) {
             $this->log('Cloudinary: API call in "getFoldersInFolder" with folder identifier "%s"', [$folderIdentifier]);
-            $this->cachedSubFolders[$folderIdentifier] = (array)$this->api->subfolders($folderIdentifier);
+            $this->cachedSubFolders[$folderIdentifier] = (array)$this->getApi()->subfolders($folderIdentifier);
         }
 
         $folders = [];
@@ -915,17 +950,24 @@ class CloudinaryDriver extends AbstractHierarchicalFilesystemDriver
     protected function recursivelyFetchCloudinaryResources(string $folderIdentifier, string $nextCursor = '')
     {
         $this->log('Cloudinary: API call in "getFoldersInFolder" with folder identifier "%s"', [$folderIdentifier]);
-        $response = $this->api->resources(
-            [
-                'next_cursor' => $nextCursor,
-                'resource_type' => 'image',
-                'type' => 'upload',
-                'max_results' => 500,
-                'prefix' => $this->convertToCloudinaryPath($folderIdentifier),
-            ]
-        );
+        $cloudinaryFolder = $folderIdentifier === self::ROOT_FOLDER_IDENTIFIER
+            ? self::ROOT_FOLDER_IDENTIFIER . '*'
+            : $this->convertToCloudinaryPath($folderIdentifier);
 
-        if (isset($response['resources'])) {
+        // Before calling the Search API, make sure we are connected with the right cloudinary account
+        $this->initializeApi();
+
+        /** @var Search $search */
+        $search = new \Cloudinary\Search();
+        $response = $search
+            ->expression('resource_type:image AND folder=' . $cloudinaryFolder)
+            ->sort_by('public_id','asc')
+            ->max_results(500)
+            ->next_cursor($nextCursor)
+            ->execute();
+
+
+        if (is_array($response['resources'])) {
             foreach ($response['resources'] as $item) {
 
                 $fileIdentifier = $this->canonicalizeAndCheckFileIdentifier(
@@ -980,7 +1022,7 @@ class CloudinaryDriver extends AbstractHierarchicalFilesystemDriver
         $messageQueue = $this->getMessageQueue();
         $localizationPrefix = $this->languageFile . ':driverConfiguration.message.';
         try {
-            $this->getFilesInFolder(static::ROOT_FOLDER_IDENTIFIER);
+            $this->getFilesInFolder(self::ROOT_FOLDER_IDENTIFIER);
             /** @var \TYPO3\CMS\Core\Messaging\FlashMessage $message */
             $message = GeneralUtility::makeInstance(
                 FlashMessage::class,
@@ -1027,7 +1069,7 @@ class CloudinaryDriver extends AbstractHierarchicalFilesystemDriver
 
         try {
             $this->log('Cloudinary: API call in "resourceExists" with identifier "%s"', [$identifier]);
-            $this->cachedCloudinaryResources[$identifier] = $this->api->resource(
+            $this->cachedCloudinaryResources[$identifier] = $this->getApi()->resource(
                 $this->convertToCloudinaryPublicId($identifier)
             );
         } catch (\Exception $e) {
@@ -1047,7 +1089,7 @@ class CloudinaryDriver extends AbstractHierarchicalFilesystemDriver
         } else {
             $publicId = $this->convertToCloudinaryPublicId($fileIdentifier);
             $this->log('Cloudinary: API call in "resourceExists" with identifier "%s"', [$fileIdentifier]);
-            $cloudinaryResource = (array)$this->api->resource($publicId);
+            $cloudinaryResource = (array)$this->getApi()->resource($publicId);
         }
 
         if ($cloudinaryResource['resource_type'] !== 'image') {
