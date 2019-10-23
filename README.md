@@ -34,6 +34,7 @@ For a new "file storage" record, then:
 * Pick the **Cloudinary** driver in the driver dropdown menu.
 * Fill in the requested fields. Password and secrets can be found from the [Cloudinary Console](https://cloudinary.com/console).
 * **Important!** Configure the "folder for manipulated and temporary images" on a local driver where we have a **writeable** processed folder.
+  Example: `1:/_processed`
 
 
 ![](Documentation/driver-configuration-02.png)
