@@ -12,16 +12,13 @@ namespace Sinso\Cloudinary\ViewHelpers;
 use Sinso\Cloudinary\Utility\CloudinaryPathUtility;
 use TYPO3\CMS\Core\Resource\Exception\ResourceDoesNotExistException;
 use TYPO3\CMS\Core\Resource\FileInterface;
+use TYPO3\CMS\Core\Resource\FileReference;
 
 /**
- * Resizes a given image (if required) and renders the respective img tag
+ * Class CloudinaryImageDataViewHelper
  */
-class CloudinaryImageViewHelper extends \TYPO3\CMS\Fluid\Core\ViewHelper\AbstractTagBasedViewHelper
+class CloudinaryImageDataViewHelper extends \TYPO3\CMS\Fluid\Core\ViewHelper\AbstractViewHelper
 {
-    /**
-     * @var string
-     */
-    protected $tagName = 'img';
 
     /**
      * @var \TYPO3\CMS\Extbase\Service\ImageService
@@ -55,12 +52,6 @@ class CloudinaryImageViewHelper extends \TYPO3\CMS\Fluid\Core\ViewHelper\Abstrac
      */
     public function initializeArguments(): void
     {
-        parent::initializeArguments();
-        $this->registerUniversalTagAttributes();
-        $this->registerTagAttribute('alt', 'string', 'Specifies an alternate text for an image', false);
-        $this->registerTagAttribute('ismap', 'string', 'Specifies an image as a server-side image-map. Rarely used. Look at usemap instead', false);
-        $this->registerTagAttribute('longdesc', 'string', 'Specifies the URL to a document that contains a long description of an image', false);
-        $this->registerTagAttribute('usemap', 'string', 'Specifies an image as a client-side image-map', false);
 
         $this->registerArgument('src', 'string', 'a path to a file, a combined FAL identifier or an uid (int). If $treatIdAsReference is set, the integer is considered the uid of the sys_file_reference record. If you already got a FAL object, consider using the $image parameter instead')
             ->registerArgument('minWidth', 'int', 'minimum width of the image', false, 100)
@@ -71,19 +62,17 @@ class CloudinaryImageViewHelper extends \TYPO3\CMS\Fluid\Core\ViewHelper\Abstrac
             ->registerArgument('gravity', 'string', 'define the focus for the transformation in Cloudinary')
             ->registerArgument('crop', 'string', 'define cropping for Cloudinary')
             ->registerArgument('treatIdAsReference', 'bool', 'given src argument is a sys_file_reference record', false)
-            ->registerArgument('image', FileInterface::class, 'a FAL object');
+            ->registerArgument('image', FileInterface::class, 'a FAL object')
+            ->registerArgument('data', 'string', 'Name for variable with responsive image data within the viewhelper', false, 'responsiveImageData');
     }
 
     /**
      * Resizes a given image (if required) and renders the respective img tag
-     *
-     * @see https://docs.typo3.org/typo3cms/TyposcriptReference/ContentObjects/Image/
-     *
-     * @throws \TYPO3\CMS\Fluid\Core\ViewHelper\Exception
      * @return string Rendered tag
      */
     public function render(): string
     {
+
         $src = $this->arguments['src'];
         $minWidth = $this->arguments['minWidth'];
         $maxWidth = $this->arguments['maxWidth'];
@@ -94,17 +83,35 @@ class CloudinaryImageViewHelper extends \TYPO3\CMS\Fluid\Core\ViewHelper\Abstrac
         $crop = $this->arguments['crop'];
         $treatIdAsReference = $this->arguments['treatIdAsReference'];
         $image = $this->arguments['image'];
+        $data = $this->arguments['data'];
 
         if (is_null($src) && is_null($image) || !is_null($src) && !is_null($image)) {
             throw new \TYPO3\CMS\Fluid\Core\ViewHelper\Exception('You must either specify a string src or a File object.', 1382284106);
         }
 
+        if (!is_int($src)) {
+            $parsedUrl = parse_url($src);
+            $src = $parsedUrl['path'];
+        }
+
+        $responsiveImageData = [];
         try {
 
             /** @var FileInterface $image */
             $image = $this->imageService->getImage($src, $image, $treatIdAsReference);
 
+            $preCrop = $image instanceof FileReference ? $image->getProperty('crop') : null;
+            $processingInstructions = [
+                'crop' => $preCrop,
+            ];
+            $processedImage = $this->imageService->applyProcessingInstructions($image, $processingInstructions);
+            $imageUri = $this->imageService->getImageUri($processedImage);
+
             try {
+                // decode URLs from RealURL
+                $imageUri = rawurldecode($imageUri);
+
+                $publicId = CloudinaryPathUtility::computeCloudinaryPublicId($image->getIdentifier());
 
                 $settings = [
                     'bytesStep' => $bytesStep,
@@ -117,26 +124,27 @@ class CloudinaryImageViewHelper extends \TYPO3\CMS\Fluid\Core\ViewHelper\Abstrac
                 ];
                 $options = $this->cloudinaryUtility->generateOptionsFromSettings($settings);
 
-                $publicId = CloudinaryPathUtility::computeCloudinaryPublicId($image->getIdentifier());
-                $breakpoints = $this->cloudinaryUtility->getResponsiveBreakpointData($publicId, $options);
-                $cloudinarySizes = $this->cloudinaryUtility->getSizesAttribute($breakpoints);
-                $cloudinarySrcset = $this->cloudinaryUtility->getSrcsetAttribute($breakpoints);
-
-                $this->tag->addAttribute('sizes', $cloudinarySizes);
-                $this->tag->addAttribute('srcset', $cloudinarySrcset);
-                $this->tag->addAttribute('src', $image->getPublicUrl());
-
+                $breakpointData = $this->cloudinaryUtility->getResponsiveBreakpointData($publicId, $options);
+                $responsiveImageData = [
+                    'images' => $this->cloudinaryUtility->getImageObjects($breakpointData),
+                    'minImage' => $this->cloudinaryUtility->getImage($breakpointData, 'min'),
+                    'medianImage' => $this->cloudinaryUtility->getImage($breakpointData, 'median'),
+                    'maxImage' => $this->cloudinaryUtility->getImage($breakpointData, 'max'),
+                ];
             } catch (\Exception $e) {
-                $this->tag->addAttribute('src', $image->getPublicUrl());
-            }
-
-            $alt = $image->getProperty('alternative');
-            $title = $image->getProperty('title');
-
-            // The alt-attribute is mandatory to have valid html-code, therefore add it even if it is empty
-            $this->tag->addAttribute('alt', $alt);
-            if (!empty($this->arguments['title'])) {
-                $this->tag->addAttribute('title', $title);
+                $responsiveImageData = [
+                    'images' => [
+                        1 => [
+                            'width' => 1,
+                            'height' => 1,
+                            'url' => $imageUri,
+                            'secure_url' => $imageUri,
+                        ]
+                    ],
+                    'minImage' => $imageUri,
+                    'medianImage' => $imageUri,
+                    'maxImage' => $imageUri,
+                ];
             }
         } catch (ResourceDoesNotExistException $e) {
             // thrown if file does not exist
@@ -148,6 +156,11 @@ class CloudinaryImageViewHelper extends \TYPO3\CMS\Fluid\Core\ViewHelper\Abstrac
             // thrown if file storage does not exist
         }
 
-        return $this->tag->render();
+        $this->templateVariableContainer->add($data, $responsiveImageData);
+        $output = $this->renderChildren();
+        $this->templateVariableContainer->remove($data);
+
+        return $output;
     }
+
 }

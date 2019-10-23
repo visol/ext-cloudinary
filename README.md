@@ -67,6 +67,40 @@ Caveats and trouble shooting
  * Free Cloudinary account allows 500 API request per day 
 * The cloudinary FAL driver is currently **limited to images**.
 
-## Source of inspiration
+ViewHelpers
+-----------
+
+The extension provides ViewHelpers that can be used like that:
+
+1. Output an images and its source-set.
+
+```
+<html xmlns:c="http://typo3.org/ns/Sinso/Cloudinary/ViewHelpers">
+    <c:cloudinaryImage image="{file}"/>
+</html>
+```
+
+This will produces the following output:
+
+```
+<img sizes="(max-width: 768px) 100vw, 768px" 
+     srcset="https://res.cloudinary.com/fabidule/image/upload/f_auto,fl_lossy,q_auto,c_crop/c_scale,w_768/v1570098754/sample/animals/cat.jpg 768w,
+            https://res.cloudinary.com/fabidule/image/upload/f_auto,fl_lossy,q_auto,c_crop/c_scale,w_553/v1570098754/sample/animals/cat.jpg 553w,
+            https://res.cloudinary.com/fabidule/image/upload/f_auto,fl_lossy,q_auto,c_crop/c_scale,w_100/v1570098754/sample/animals/cat.jpg 100w" 
+    src="https://res.cloudinary.com/fabidule/image/upload/v1570098754/sample/animals/cat.jpg" />
+```
+
+2. Generate an array of variants that can be iterated.
+
+```
+<html xmlns:c="http://typo3.org/ns/Sinso/Cloudinary/ViewHelpers">
+    <c:cloudinaryImageData image="{file}">
+        <f:debug>{responsiveImageData}</f:debug>
+    </c:cloudinaryImageData>
+</html>
+```
+
+Source of inspiration
+---------------------
 
 https://github.com/carlosocarvalho/flysystem-cloudinary/blob/master/src/CloudinaryAdapter.php

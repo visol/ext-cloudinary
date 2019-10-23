@@ -11,6 +11,7 @@ namespace Sinso\Cloudinary\Driver;
 
 use Cloudinary\Api;
 use Cloudinary\Search;
+use Sinso\Cloudinary\Utility\CloudinaryPathUtility;
 use TYPO3\CMS\Core\Charset\CharsetConverter;
 use TYPO3\CMS\Core\Log\LogLevel;
 use TYPO3\CMS\Core\Log\LogManager;
@@ -133,20 +134,20 @@ class CloudinaryDriver extends AbstractHierarchicalFilesystemDriver
     }
 
     /**
-     * @param string $identifier
+     * @param string $fileIdentifier
      * @return string
      */
-    public function getPublicUrl($identifier)
+    public function getPublicUrl($fileIdentifier)
     {
-        if (empty($this->cachedCloudinaryResources[$identifier])) {
-            $this->log('Cloudinary: API call in "getPublicUrl" with identifier "%s"', [$identifier]);
+        if (empty($this->cachedCloudinaryResources[$fileIdentifier])) {
+            $this->log('Cloudinary: API call in "getPublicUrl" with identifier "%s"', [$fileIdentifier]);
             $response = $this->getApi()->resource(
-                $this->convertToCloudinaryPublicId($identifier)
+                CloudinaryPathUtility::computeCloudinaryPublicId($fileIdentifier)
             );
 
-            $this->cachedCloudinaryResources[$identifier] = $response;
+            $this->cachedCloudinaryResources[$fileIdentifier] = $response;
         }
-        return $this->cachedCloudinaryResources[$identifier]['secure_url'];
+        return $this->cachedCloudinaryResources[$fileIdentifier]['secure_url'];
     }
 
     /**
@@ -253,7 +254,7 @@ class CloudinaryDriver extends AbstractHierarchicalFilesystemDriver
     public function fileExistsInFolder($fileName, $folderIdentifier)
     {
         $fileIdentifier = $folderIdentifier . $fileName;
-        $publicId = $this->convertToCloudinaryPublicId($fileIdentifier);
+        $publicId = CloudinaryPathUtility::computeCloudinaryPublicId($fileIdentifier);
         return $this->resourceExists($publicId);
     }
 
@@ -302,12 +303,12 @@ class CloudinaryDriver extends AbstractHierarchicalFilesystemDriver
         );
 
         $publicId = PathUtility::basename(
-            $this->convertToCloudinaryPublicId($fileName)
+            CloudinaryPathUtility::computeCloudinaryPublicId($fileName)
         );
 
         $options = [
             'public_id' => $publicId,
-            'folder' => $this->convertToCloudinaryPath($targetFolderIdentifier),
+            'folder' => CloudinaryPathUtility::computeCloudinaryPath($targetFolderIdentifier),
             'overwrite' => true,
         ];
 
@@ -390,9 +391,9 @@ class CloudinaryDriver extends AbstractHierarchicalFilesystemDriver
             $this->getPublicUrl($fileIdentifier),
             [
                 'public_id' => PathUtility::basename(
-                    $this->convertToCloudinaryPublicId($fileName)
+                    CloudinaryPathUtility::computeCloudinaryPublicId($fileName)
                 ),
-                'folder' => $this->convertToCloudinaryPath($targetFolderIdentifier),
+                'folder' => CloudinaryPathUtility::computeCloudinaryPath($targetFolderIdentifier),
                 'overwrite' => true,
             ]
         );
@@ -410,8 +411,8 @@ class CloudinaryDriver extends AbstractHierarchicalFilesystemDriver
      */
     public function replaceFile($fileIdentifier, $localFilePath)
     {
-        $publicId = PathUtility::basename($this->convertToCloudinaryPublicId($fileIdentifier));
-        $folderPath = $this->convertToCloudinaryPath(dirname($fileIdentifier));
+        $publicId = PathUtility::basename(CloudinaryPathUtility::computeCloudinaryPublicId($fileIdentifier));
+        $folderPath = CloudinaryPathUtility::computeCloudinaryPath(dirname($fileIdentifier));
 
         $options = [
             'public_id' => $publicId,
@@ -439,7 +440,7 @@ class CloudinaryDriver extends AbstractHierarchicalFilesystemDriver
     {
         $this->log('Cloudinary: API call in "deleteFile" with identifier "%s"', [$fileIdentifier]);
         $response = $this->getApi()->delete_resources([
-            $this->convertToCloudinaryPublicId($fileIdentifier)
+            CloudinaryPathUtility::computeCloudinaryPublicId($fileIdentifier)
         ]);
         return is_array($response['deleted']);
     }
@@ -453,7 +454,7 @@ class CloudinaryDriver extends AbstractHierarchicalFilesystemDriver
      */
     public function deleteFolder($folderIdentifier, $deleteRecursively = false)
     {
-        $normalizedFolderIdentifier = $this->convertToCloudinaryPath($folderIdentifier);
+        $normalizedFolderIdentifier = CloudinaryPathUtility::computeCloudinaryPath($folderIdentifier);
 
         if ($deleteRecursively) {
             $this->getApi()->delete_resources_by_prefix($normalizedFolderIdentifier);
@@ -485,7 +486,7 @@ class CloudinaryDriver extends AbstractHierarchicalFilesystemDriver
             if (empty($this->cachedCloudinaryResources[$fileIdentifier])) {
                 $this->log('Cloudinary: API call in "getFileForLocalProcessing" with identifier "%s"', [$fileIdentifier]);
                 $resource = (array)$this->getApi()->resource(
-                    $this->convertToCloudinaryPublicId($fileIdentifier)
+                    CloudinaryPathUtility::computeCloudinaryPublicId($fileIdentifier)
                 );
             } else {
                 $resource = $this->cachedCloudinaryResources[$fileIdentifier];
@@ -586,8 +587,8 @@ class CloudinaryDriver extends AbstractHierarchicalFilesystemDriver
             $newFileIdentifier = $this->computeNewFileNameAndIdentifier($fileIdentifier, PathUtility::basename($newFileIdentifier));
         }
 
-        $cloudinaryPublicId = $this->convertToCloudinaryPublicId($fileIdentifier);
-        $newCloudinaryPublicId = $this->convertToCloudinaryPublicId($newFileIdentifier);
+        $cloudinaryPublicId = CloudinaryPathUtility::computeCloudinaryPublicId($fileIdentifier);
+        $newCloudinaryPublicId = CloudinaryPathUtility::computeCloudinaryPublicId($newFileIdentifier);
 
         if ($cloudinaryPublicId !== $newCloudinaryPublicId) {
 
@@ -621,9 +622,9 @@ class CloudinaryDriver extends AbstractHierarchicalFilesystemDriver
     {
         $renamedFiles = [];
 
-        foreach ($this->cachedCloudinaryResources as $item) {
+        foreach ($this->cachedCloudinaryResources as $resource) {
 
-            $cloudinaryPublicId = $item['public_id'];
+            $cloudinaryPublicId = $resource['public_id'];
 
             $pathSegments = GeneralUtility::trimExplode('/', $cloudinaryPublicId);
 
@@ -640,10 +641,10 @@ class CloudinaryDriver extends AbstractHierarchicalFilesystemDriver
 
                     // Rename the file
                     \Cloudinary\Uploader::rename($cloudinaryPublicId, $newCloudinaryPublicId);
-                    $oldFileIdentifier = $this->convertToFileIdentifier($item);
-                    $newFileIdentifier = $this->convertToFileIdentifier([
+                    $oldFileIdentifier = CloudinaryPathUtility::computeFileIdentifier($resource);
+                    $newFileIdentifier = CloudinaryPathUtility::computeFileIdentifier([
                         'public_id' => $newCloudinaryPublicId,
-                        'format' => $item['format'],
+                        'format' => $resource['format'],
                     ]);
                     $renamedFiles[$oldFileIdentifier] = $newFileIdentifier;
                 }
@@ -713,7 +714,7 @@ class CloudinaryDriver extends AbstractHierarchicalFilesystemDriver
      */
     public function isFolderEmpty($folderIdentifier)
     {
-        $normalizedIdentifier = $this->convertToCloudinaryPath($folderIdentifier);
+        $normalizedIdentifier = CloudinaryPathUtility::computeCloudinaryPath($folderIdentifier);
         $this->log('Cloudinary: API call in "isFolderEmpty" with identifier "%s"', [$normalizedIdentifier]);
         $response = $this->getApi()->resources([
             'resource_type' => 'image',
@@ -952,7 +953,7 @@ class CloudinaryDriver extends AbstractHierarchicalFilesystemDriver
         $this->log('Cloudinary: API call in "getFoldersInFolder" with folder identifier "%s"', [$folderIdentifier]);
         $cloudinaryFolder = $folderIdentifier === self::ROOT_FOLDER_IDENTIFIER
             ? self::ROOT_FOLDER_IDENTIFIER . '*'
-            : $this->convertToCloudinaryPath($folderIdentifier);
+            : CloudinaryPathUtility::computeCloudinaryPath($folderIdentifier);
 
         // Before calling the Search API, make sure we are connected with the right cloudinary account
         $this->initializeApi();
@@ -968,10 +969,10 @@ class CloudinaryDriver extends AbstractHierarchicalFilesystemDriver
 
 
         if (is_array($response['resources'])) {
-            foreach ($response['resources'] as $item) {
+            foreach ($response['resources'] as $resource) {
 
                 $fileIdentifier = $this->canonicalizeAndCheckFileIdentifier(
-                    $this->convertToFileIdentifier($item)
+                    CloudinaryPathUtility::computeFileIdentifier($resource)
                 );
 
                 $computedFolderIdentifier = $this->canonicalizeAndCheckFolderIdentifier(
@@ -980,7 +981,7 @@ class CloudinaryDriver extends AbstractHierarchicalFilesystemDriver
 
                 // We manually filter the resources belonging to the given folder.
                 if ($computedFolderIdentifier === $folderIdentifier) {
-                    $this->cachedCloudinaryResources[$fileIdentifier] = $item;
+                    $this->cachedCloudinaryResources[$fileIdentifier] = $resource;
                 }
             }
         }
@@ -1057,20 +1058,21 @@ class CloudinaryDriver extends AbstractHierarchicalFilesystemDriver
     /**
      * Checks if an object exists
      *
-     * @param string $identifier
+     * @param string $fileIdentifier
      * @return bool
      */
-    protected function resourceExists(string $identifier)
+    protected function resourceExists(string $fileIdentifier)
     {
         // Early return since we can tell the resource exists without making an API call
-        if (isset($this->cachedCloudinaryResources[$identifier])) {
+        if (isset($this->cachedCloudinaryResources[$fileIdentifier])) {
             return true;
         }
 
         try {
-            $this->log('Cloudinary: API call in "resourceExists" with identifier "%s"', [$identifier]);
-            $this->cachedCloudinaryResources[$identifier] = $this->getApi()->resource(
-                $this->convertToCloudinaryPublicId($identifier)
+            $this->log('Cloudinary: API call in "resourceExists" with identifier "%s"', [$fileIdentifier]);
+            $this->cachedCloudinaryResources[$fileIdentifier] = $this->getApi()->resource(
+
+                CloudinaryPathUtility::computeCloudinaryPublicId($fileIdentifier)
             );
         } catch (\Exception $e) {
             return false;
@@ -1087,7 +1089,7 @@ class CloudinaryDriver extends AbstractHierarchicalFilesystemDriver
         if (isset($this->cachedCloudinaryResources[$fileIdentifier])) {
             $cloudinaryResource = $this->cachedCloudinaryResources[$fileIdentifier];
         } else {
-            $publicId = $this->convertToCloudinaryPublicId($fileIdentifier);
+            $publicId = CloudinaryPathUtility::computeCloudinaryPublicId($fileIdentifier);
             $this->log('Cloudinary: API call in "resourceExists" with identifier "%s"', [$fileIdentifier]);
             $cloudinaryResource = (array)$this->getApi()->resource($publicId);
         }
@@ -1114,38 +1116,6 @@ class CloudinaryDriver extends AbstractHierarchicalFilesystemDriver
             'type' => File::FILETYPE_IMAGE,
             'name' => PathUtility::basename($cloudinaryResource['secure_url'])
         ];
-    }
-
-    /**
-     * @param array $cloudinaryResource
-     * @return string
-     */
-    protected function convertToFileIdentifier(array $cloudinaryResource): string
-    {
-        return sprintf(
-            '%s.%s',
-            DIRECTORY_SEPARATOR . ltrim($cloudinaryResource['public_id'], DIRECTORY_SEPARATOR),
-            $cloudinaryResource['format']
-        );
-    }
-
-    /**
-     * @param string $fileIdentifier
-     * @return string
-     */
-    protected function convertToCloudinaryPublicId(string $fileIdentifier): string
-    {
-        $fileIdentifierWithoutExtension = $this->stripExtension($fileIdentifier);
-        return $this->convertToCloudinaryPath($fileIdentifierWithoutExtension);
-    }
-
-    /**
-     * @param string $identifier
-     * @return string
-     */
-    protected function convertToCloudinaryPath(string $identifier): string
-    {
-        return trim($identifier, DIRECTORY_SEPARATOR);
     }
 
     /**
