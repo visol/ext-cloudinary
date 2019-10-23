@@ -2,38 +2,97 @@
 
 namespace Sinso\Cloudinary\Domain\Repository;
 
-class ResponsiveBreakpointsRepository {
+use TYPO3\CMS\Core\Database\Connection;
+use TYPO3\CMS\Core\Database\ConnectionPool;
+use TYPO3\CMS\Core\Database\Query\QueryBuilder;
+use TYPO3\CMS\Core\Utility\GeneralUtility;
 
-    public function findByPublicIdAndOptions($publicId, $options) {
-        $optionsHash = $this->calculateHashFromOptions($options);
-        $row = $this->getDatabaseConnection()->exec_SELECTgetSingleRow('*', 'tx_cloudinary_responsivebreakpoints', '`public_id_hash` = "' . sha1($publicId) . '" AND `options_hash` = "' . $optionsHash . '"');
+class ResponsiveBreakpointsRepository
+{
 
-        return $row;
+    /**
+     * @var $tableName
+     */
+    protected $tableName = 'tx_cloudinary_responsivebreakpoints';
+
+    /**
+     * @param string $publicId
+     * @param array $options
+     * @return array
+     */
+    public function findByPublicIdAndOptions(string $publicId, array $options): array
+    {
+        $query = $this->getQueryBuilder();
+        $query->select('*')
+            ->from($this->tableName)
+            ->where(
+                $this->getQueryBuilder()->expr()->eq(
+                    'public_id_hash',
+                    $query->expr()->literal(
+                        sha1($publicId)
+                    )
+                ),
+                $this->getQueryBuilder()->expr()->eq(
+                    'options_hash',
+                    $query->expr()->literal(
+                        $this->calculateHashFromOptions($options)
+                    )
+                )
+            );
+        $item = $query->execute()->fetch();
+        return is_array($item)
+            ? $item
+            : [];
     }
 
-    public function save($publicId, $options, $breakpoints) {
-        $optionsHash = $this->calculateHashFromOptions($options);
-        $insert = [
-            'public_id' => $publicId,
-            'public_id_hash' => sha1($publicId),
-            'options_hash' => $optionsHash,
-            'breakpoints' => $breakpoints,
-        ];
-
-        $this->getDatabaseConnection()->exec_INSERTquery('tx_cloudinary_responsivebreakpoints', $insert);
+    /**
+     * @param string $publicId
+     * @param array $options
+     * @param string $breakpoints
+     * @return int
+     */
+    public function save(string $publicId, array $options, string $breakpoints): int
+    {
+        $connection = $this->getConnection();
+        $connection->insert(
+            $this->tableName,
+            [
+                'public_id' => $publicId,
+                'public_id_hash' => sha1($publicId),
+                'options_hash' => $this->calculateHashFromOptions($options),
+                'breakpoints' => $breakpoints,
+            ]
+        );
+        return (int)$connection->lastInsertId();
     }
 
-
-    protected function calculateHashFromOptions($options) {
+    /**
+     * @param array $options
+     * @return string
+     */
+    protected function calculateHashFromOptions($options): string
+    {
         return sha1(json_encode($options));
     }
 
     /**
-     * Return DatabaseConnection
-     *
-     * @return \TYPO3\CMS\Core\Database\DatabaseConnection
+     * @return object|QueryBuilder
      */
-    protected function getDatabaseConnection() {
-        return $GLOBALS['TYPO3_DB'];
+    protected function getQueryBuilder(): QueryBuilder
+    {
+        /** @var ConnectionPool $connectionPool */
+        $connectionPool = GeneralUtility::makeInstance(ConnectionPool::class);
+        return $connectionPool->getQueryBuilderForTable($this->tableName);
     }
+
+    /**
+     * @return object|Connection
+     */
+    protected function getConnection(): Connection
+    {
+        /** @var ConnectionPool $connectionPool */
+        $connectionPool = GeneralUtility::makeInstance(ConnectionPool::class);
+        return $connectionPool->getConnectionForTable($this->tableName);
+    }
+
 }

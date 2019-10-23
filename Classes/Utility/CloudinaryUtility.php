@@ -17,13 +17,9 @@ namespace Sinso\Cloudinary\Utility;
 use DmitryDulepov\Realurl\Utility;
 use Sinso\Cloudinary\CloudinaryException;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
-use TYPO3\CMS\Core\Utility\ExtensionManagementUtility;
-use TYPO3\CMS\Core\Utility\ArrayUtility;
-use TYPO3\CMS\Extbase\Object\ObjectManager;
 
 /**
  * Class CloudinaryUtility
- * @deprecated
  */
 class CloudinaryUtility
 {
@@ -59,7 +55,7 @@ class CloudinaryUtility
     public function __construct()
     {
         $this->extensionConfiguration = (array)unserialize($GLOBALS['TYPO3_CONF_VARS']['EXT']['extConf']['cloudinary']);
-        
+
         // Workaround: dependency injection not supported in userFuncs
         $this->mediaRepository = GeneralUtility::makeInstance(\Sinso\Cloudinary\Domain\Repository\MediaRepository::class);
         $this->responsiveBreakpointsRepository = GeneralUtility::makeInstance(\Sinso\Cloudinary\Domain\Repository\ResponsiveBreakpointsRepository::class);
@@ -72,8 +68,14 @@ class CloudinaryUtility
         ]);
     }
 
-
-    public function getPublicId($filename) {
+    /**
+     * @param $filename
+     * @return string
+     * @throws CloudinaryException
+     * @deprecated use FalToCloudinaryConverter::toPublicId instead
+     */
+    public function getPublicId($filename)
+    {
         try {
             $filename = $this->cleanFilename($filename);
             $imagePathAndFilename = GeneralUtility::getFileAbsFileName($filename);
@@ -83,7 +85,7 @@ class CloudinaryUtility
 
             // check modification date
             $media = null;
-            foreach($possibleMedias as $possibleMedia) {
+            foreach ($possibleMedias as $possibleMedia) {
                 if (intval($possibleMedia['modification_date']) !== $modificationDate) {
                     continue;
                 }
@@ -106,12 +108,18 @@ class CloudinaryUtility
         } catch (\Exception $e) {
             /** @var \TYPO3\CMS\Core\Log\Logger $logger */
             $logger = \TYPO3\CMS\Core\Utility\GeneralUtility::makeInstance('TYPO3\CMS\Core\Log\LogManager')->getLogger(__CLASS__);
-            $logger->error('Error getting Cloudinary public ID for file "' . $filename .'"');
+            $logger->error('Error getting Cloudinary public ID for file "' . $filename . '"');
 
-            throw new CloudinaryException('Error getting Cloudinary public ID for file "' . $filename .'" / ' . $e->getMessage(), 1484152954);
+            throw new CloudinaryException('Error getting Cloudinary public ID for file "' . $filename . '" / ' . $e->getMessage(), 1484152954);
         }
     }
 
+    /**
+     * @param $filename
+     * @return string
+     * @throws CloudinaryException
+     * @deprecated not used anymore
+     */
     public function uploadImage($filename)
     {
         try {
@@ -166,13 +174,19 @@ class CloudinaryUtility
         } catch (\Exception $e) {
             /** @var \TYPO3\CMS\Core\Log\Logger $logger */
             $logger = \TYPO3\CMS\Core\Utility\GeneralUtility::makeInstance('TYPO3\CMS\Core\Log\LogManager')->getLogger(__CLASS__);
-            $logger->error('Error uploading file "' . $filename .'" to Cloudinary.');
+            $logger->error('Error uploading file "' . $filename . '" to Cloudinary.');
 
-            throw new CloudinaryException('Error uploading file "' . $filename .'" to Cloudinary.', 1484153176);
+            throw new CloudinaryException('Error uploading file "' . $filename . '" to Cloudinary.', 1484153176);
         }
     }
 
-    public function getResponsiveBreakpointData($publicId, $options) {
+    /**
+     * @param string $publicId
+     * @param array $options
+     * @return array
+     */
+    public function getResponsiveBreakpointData(string $publicId, array $options): array
+    {
         $responsiveBreakpoints = $this->responsiveBreakpointsRepository->findByPublicIdAndOptions($publicId, $options);
 
         if (!$responsiveBreakpoints) {
@@ -183,10 +197,18 @@ class CloudinaryUtility
             $breakpointData = $responsiveBreakpoints['breakpoints'];
         }
 
-        return json_decode($breakpointData);
+        $breakpoints = json_decode($breakpointData);
+        return is_array($breakpoints)
+            ? $breakpoints
+            : [];
     }
 
-    public function generateOptionsFromSettings(array $settings) {
+    /**
+     * @param array $settings
+     * @return array
+     */
+    public function generateOptionsFromSettings(array $settings)
+    {
         $options = [
             'type' => 'upload',
             'responsive_breakpoints' => [
@@ -206,12 +228,22 @@ class CloudinaryUtility
         return $options;
     }
 
-    public function getSrcsetAttribute($breakpointData) {
-        return implode(',' . PHP_EOL, $this->getSrcset($breakpointData));
+    /**
+     * @param array $breakpoints
+     * @return string
+     */
+    public function getSrcsetAttribute(array $breakpoints): string
+    {
+        return implode(',' . PHP_EOL, $this->getSrcset($breakpoints));
     }
 
-    public function getSrcset($breakpointData) {
-        $imageObjects = $this->getImageObjects($breakpointData);
+    /**
+     * @param array $breakpoints
+     * @return array
+     */
+    public function getSrcset(array $breakpoints): array
+    {
+        $imageObjects = $this->getImageObjects($breakpoints);
         $srcset = [];
         foreach ($imageObjects as $imageObject) {
             $srcset[] = $imageObject->secure_url . ' ' . $imageObject->width . 'w';
@@ -220,22 +252,38 @@ class CloudinaryUtility
         return $srcset;
     }
 
-    public function getSizesAttribute($breakpointData) {
-        $maxImageObject = $this->getImage($breakpointData, 'max');
+    /**
+     * @param array $breakpoints
+     * @return string
+     */
+    public function getSizesAttribute(array $breakpoints): string
+    {
+        $maxImageObject = $this->getImage($breakpoints, 'max');
         return '(max-width: ' . $maxImageObject->width . 'px) 100vw, ' . $maxImageObject->width . 'px';
     }
 
-    public function getSrc($breakpointData) {
-        $maxImageObject = $this->getImage($breakpointData, 'max');
+    /**
+     * @param array $breakpoints
+     * @return string
+     * @deprecated use $file->getPublicUrl() instead
+     */
+    public function getSrc(array $breakpoints): string
+    {
+        $maxImageObject = $this->getImage($breakpoints, 'max');
         return $maxImageObject->secure_url;
     }
 
-
-    public function getImage($breakpointData, $functionName) {
+    /**
+     * @param array $breakpoints
+     * @param string $functionName
+     * @return mixed
+     */
+    public function getImage(array $breakpoints, string $functionName)
+    {
         if (!in_array($functionName, ['min', 'median', 'max'])) {
             $functionName = 'max';
         }
-        $imageObjects = $this->getImageObjects($breakpointData);
+        $imageObjects = $this->getImageObjects($breakpoints);
         $widths = array_keys($imageObjects);
 
         $width = call_user_func_array(array($this, $functionName), array($widths));
@@ -243,32 +291,55 @@ class CloudinaryUtility
         return $imageObjects[$width];
     }
 
-
-
-    public function min($items) {
+    /**
+     * @param $items
+     * @return mixed
+     */
+    public function min($items)
+    {
         return min($items);
     }
 
-    public function median($items) {
+    /**
+     * @param array $items
+     * @return mixed
+     */
+    public function median(array $items)
+    {
         sort($items);
-        $medianIndex = ceil((count($items)/2))-1;
+        $medianIndex = ceil((count($items) / 2)) - 1;
         return $items[$medianIndex];
     }
 
-    public function max($items) {
+    /**
+     * @param $items
+     * @return mixed
+     */
+    public function max($items)
+    {
         return max($items);
     }
 
-    public function getImageObjects($breakpointData) {
+    /**
+     * @param array $breakpoints
+     * @return array
+     */
+    public function getImageObjects(array $breakpoints): array
+    {
         $widthMap = [];
-        foreach ($breakpointData as $breakpoint) {
+        foreach ($breakpoints as $breakpoint) {
             $widthMap[$breakpoint->width] = $breakpoint;
         }
 
         return $widthMap;
     }
 
-    public function cleanFilename($filename) {
+    /**
+     * @param string $filename
+     * @return string
+     */
+    public function cleanFilename(string $filename): string
+    {
         $filename = $this->removeAbsRefPrefix($filename);
         $parsedUrl = parse_url($filename);
         $filename = $parsedUrl['path'];
@@ -283,10 +354,11 @@ class CloudinaryUtility
      * This utility only supports filenames on a local filesystem. If absRefPrefix is enabled all URLs generated in
      * TYPO3 probably contain schema and domain.
      *
-     * @param $filename
+     * @param string $filename
      * @return string
      */
-    public function removeAbsRefPrefix($filename) {
+    public function removeAbsRefPrefix(string $filename): string
+    {
         $uriPrefix = $GLOBALS['TSFE']->absRefPrefix;
 
         if ($uriPrefix && (substr($filename, 0, strlen($uriPrefix)) == $uriPrefix)) {
@@ -294,17 +366,6 @@ class CloudinaryUtility
         }
 
         return $filename;
-    }
-
-
-
-    /**
-     * Return DatabaseConnection
-     *
-     * @return \TYPO3\CMS\Core\Database\DatabaseConnection
-     */
-    protected function getDatabaseConnection() {
-        return $GLOBALS['TYPO3_DB'];
     }
 
 }
