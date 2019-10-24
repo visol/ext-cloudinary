@@ -189,5 +189,4 @@ class ResponsiveImageDataViewHelper extends \TYPO3\CMS\Fluid\Core\ViewHelper\Abs
 
         return $output;
     }
-
 }

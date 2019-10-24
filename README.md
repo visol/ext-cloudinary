@@ -56,7 +56,7 @@ It might be useful to check the log file in case of a low response time in the B
 tail -f public/typo3temp/var/logs/cloudinary.log
 ```
 
-TODO: we now have log level INFO. We might consider "increasing" the level to "DEBUG".
+To decide: we now have log level INFO. We might consider "increasing" the level to "DEBUG".
 
 Caveats and trouble shooting
 ----------------------------
@@ -64,8 +64,8 @@ Caveats and trouble shooting
 * As said above, the first time a folder is clicked in the File list module, 
  images must be retrieved from Cloudinary to be locally processed and thumbnails generated.
  Be patient if you have many images to display.
- * Free Cloudinary account allows 500 API request per day 
-* The cloudinary FAL driver is currently **limited to images**.
+* **Free** Cloudinary account allows 500 API request per day 
+* This cloudinary FAL driver is currently **limited to images**.
 
 ViewHelpers
 -----------
@@ -98,6 +98,23 @@ This will produces the following output:
         <f:debug>{responsiveImageData}</f:debug>
     </c:cloudinaryImageData>
 </html>
+```
+
+Development tools
+-----------------
+
+Type command `make` at the source of the extension to display utility commands related to code formatting. 
+
+```
+Usage:
+ make [target]
+
+Available targets:
+ help:            Help
+ phpcs:           Display formatting issues in detail
+ phpcs-summary:   Display a summary of formatting issues
+ phpcbf:          Automatically fix code formatting issues
+
 ```
 
 Source of inspiration

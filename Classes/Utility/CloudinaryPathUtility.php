@@ -57,5 +57,4 @@ class CloudinaryPathUtility
         // '.' . PathUtility::pathinfo($filename, PATHINFO_EXTENSION)
         return preg_replace('/\\.[^.\\s]{3,4}$/', '', $filename);
     }
-
 }

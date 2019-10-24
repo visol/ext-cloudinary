@@ -105,7 +105,6 @@ class CloudinaryImageViewHelper extends \TYPO3\CMS\Fluid\Core\ViewHelper\Abstrac
             $image = $this->imageService->getImage($src, $image, $treatIdAsReference);
 
             try {
-
                 $settings = [
                     'bytesStep' => $bytesStep,
                     'minWidth' => $minWidth,
@@ -125,7 +124,6 @@ class CloudinaryImageViewHelper extends \TYPO3\CMS\Fluid\Core\ViewHelper\Abstrac
                 $this->tag->addAttribute('sizes', $cloudinarySizes);
                 $this->tag->addAttribute('srcset', $cloudinarySrcset);
                 $this->tag->addAttribute('src', $image->getPublicUrl());
-
             } catch (\Exception $e) {
                 $this->tag->addAttribute('src', $image->getPublicUrl());
             }

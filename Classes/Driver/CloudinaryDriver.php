@@ -236,7 +236,6 @@ class CloudinaryDriver extends AbstractHierarchicalFilesystemDriver
             return true;
         }
         try {
-
             $this->log('Cloudinary: API call in "folderExists with identifier "%s"', [$identifier]);
             $this->cachedSubFolders[$identifier] = (array)$this->getApi()->subfolders($identifier);
         } catch (\Exception $e) {
@@ -326,14 +325,17 @@ class CloudinaryDriver extends AbstractHierarchicalFilesystemDriver
      */
     protected function initializeApi()
     {
-        \Cloudinary::config(array(
-            'cloud_name' => $this->getConfiguration('cloudName'),
-            'api_key' => $this->getConfiguration('apiKey'),
-            'api_secret' => $this->getConfiguration('apiSecret'),
-            'timeout' => $this->getConfiguration('timeout'),
-            'secure' => true
-        ));
+        \Cloudinary::config(
+            [
+                'cloud_name' => $this->getConfiguration('cloudName'),
+                'api_key' => $this->getConfiguration('apiKey'),
+                'api_secret' => $this->getConfiguration('apiSecret'),
+                'timeout' => $this->getConfiguration('timeout'),
+                'secure' => true
+            ]
+        );
     }
+
     /**
      * @return Api
      */
@@ -591,7 +593,6 @@ class CloudinaryDriver extends AbstractHierarchicalFilesystemDriver
         $newCloudinaryPublicId = CloudinaryPathUtility::computeCloudinaryPublicId($newFileIdentifier);
 
         if ($cloudinaryPublicId !== $newCloudinaryPublicId) {
-
             // Before calling API, make sure we are connected with the right "bucket"
             $this->initializeApi();
 
@@ -623,7 +624,6 @@ class CloudinaryDriver extends AbstractHierarchicalFilesystemDriver
         $renamedFiles = [];
 
         foreach ($this->cachedCloudinaryResources as $resource) {
-
             $cloudinaryPublicId = $resource['public_id'];
 
             $pathSegments = GeneralUtility::trimExplode('/', $cloudinaryPublicId);
@@ -635,7 +635,6 @@ class CloudinaryDriver extends AbstractHierarchicalFilesystemDriver
                 $newCloudinaryPublicId = implode('/', $pathSegments);
 
                 if ($cloudinaryPublicId !== $newCloudinaryPublicId) {
-
                     // Before calling the API, make sure we are connected with the right "bucket"
                     $this->initializeApi();
 
@@ -962,7 +961,7 @@ class CloudinaryDriver extends AbstractHierarchicalFilesystemDriver
         $search = new \Cloudinary\Search();
         $response = $search
             ->expression('resource_type:image AND folder=' . $cloudinaryFolder)
-            ->sort_by('public_id','asc')
+            ->sort_by('public_id', 'asc')
             ->max_results(500)
             ->next_cursor($nextCursor)
             ->execute();
@@ -970,7 +969,6 @@ class CloudinaryDriver extends AbstractHierarchicalFilesystemDriver
 
         if (is_array($response['resources'])) {
             foreach ($response['resources'] as $resource) {
-
                 $fileIdentifier = $this->canonicalizeAndCheckFileIdentifier(
                     CloudinaryPathUtility::computeFileIdentifier($resource)
                 );

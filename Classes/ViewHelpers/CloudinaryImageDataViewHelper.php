@@ -162,5 +162,4 @@ class CloudinaryImageDataViewHelper extends \TYPO3\CMS\Fluid\Core\ViewHelper\Abs
 
         return $output;
     }
-
 }
