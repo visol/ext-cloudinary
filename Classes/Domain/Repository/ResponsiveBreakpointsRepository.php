@@ -94,5 +94,4 @@ class ResponsiveBreakpointsRepository
         $connectionPool = GeneralUtility::makeInstance(ConnectionPool::class);
         return $connectionPool->getConnectionForTable($this->tableName);
     }
-
 }

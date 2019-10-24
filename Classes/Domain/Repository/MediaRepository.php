@@ -2,6 +2,10 @@
 
 namespace Sinso\Cloudinary\Domain\Repository;
 
+/**
+ * Class MediaRepository
+ * @deprecated
+ */
 class MediaRepository {
 
 	public function findOneByPublicId($publicId) {

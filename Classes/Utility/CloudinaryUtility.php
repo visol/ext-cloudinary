@@ -123,7 +123,6 @@ class CloudinaryUtility
     public function uploadImage($filename)
     {
         try {
-
             $filename = $this->cleanFilename($filename);
             $imagePathAndFilename = GeneralUtility::getFileAbsFileName($filename);
             $sha1 = sha1_file($imagePathAndFilename);
@@ -367,5 +366,4 @@ class CloudinaryUtility
 
         return $filename;
     }
-
 }

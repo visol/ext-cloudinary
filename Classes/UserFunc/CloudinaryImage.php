@@ -73,5 +73,4 @@ class CloudinaryImage
 
         return $breakpointData;
     }
-
 }

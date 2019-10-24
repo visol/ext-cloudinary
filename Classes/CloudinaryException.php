@@ -2,5 +2,6 @@
 
 namespace Sinso\Cloudinary;
 
-class CloudinaryException extends \Exception {
+class CloudinaryException extends \Exception
+{
 }
