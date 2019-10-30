@@ -24,3 +24,15 @@ CREATE TABLE tx_cloudinary_responsivebreakpoints (
 
   PRIMARY KEY (public_id_hash, options_hash),
 );
+
+#
+# Table structure for table 'tx_cloudinary_processedresources'
+#
+CREATE TABLE tx_cloudinary_processedresources (
+  public_id text,
+  public_id_hash char(40) DEFAULT '' NOT NULL,
+  options_hash char(40) DEFAULT '' NOT NULL,
+  breakpoints text NOT NULL,
+
+  PRIMARY KEY (public_id_hash, options_hash),
+);

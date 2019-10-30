@@ -44,6 +44,12 @@ class CloudinaryUtility
     protected $responsiveBreakpointsRepository;
 
     /**
+     * @var \Sinso\Cloudinary\Domain\Repository\CloudinaryProcessedResourceRepository
+     * @inject
+     */
+    protected $cloudinaryProcessedResourceRepository;
+
+    /**
      * @var array
      */
     protected $extensionConfiguration;
@@ -184,8 +190,29 @@ class CloudinaryUtility
      * @param array $options
      * @return array
      */
+    public function getCloudinaryProcessedResource(string $publicId, array $options): array
+    {
+        $record = $this->cloudinaryProcessedResourceRepository->findByPublicIdAndOptions($publicId, $options);
+
+        if (!$record) {
+            $response = \Cloudinary\Uploader::explicit($publicId, $options);
+            $cloudinaryProcessedResource = $response['eager'][0];
+            $this->cloudinaryProcessedResourceRepository->save($publicId, $options, json_encode($cloudinaryProcessedResource));
+        } else {
+            $cloudinaryProcessedResource = json_decode($record['breakpoints'], true);
+        }
+
+        return $cloudinaryProcessedResource;
+    }
+
+    /**
+     * @param string $publicId
+     * @param array $options
+     * @return array
+     */
     public function getResponsiveBreakpointData(string $publicId, array $options): array
     {
+        $responsiveBreakpoints = null;
         $responsiveBreakpoints = $this->responsiveBreakpointsRepository->findByPublicIdAndOptions($publicId, $options);
 
         if (!$responsiveBreakpoints) {

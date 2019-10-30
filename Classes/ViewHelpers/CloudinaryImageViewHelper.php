@@ -71,6 +71,7 @@ class CloudinaryImageViewHelper extends \TYPO3\CMS\Fluid\Core\ViewHelper\Abstrac
             ->registerArgument('gravity', 'string', 'define the focus for the transformation in Cloudinary')
             ->registerArgument('crop', 'string', 'define cropping for Cloudinary')
             ->registerArgument('treatIdAsReference', 'bool', 'given src argument is a sys_file_reference record', false)
+            ->registerArgument('options', 'array', 'Possible cloudinary options to transform / crop the image', false, [])
             ->registerArgument('image', FileInterface::class, 'a FAL object');
     }
 
@@ -105,6 +106,8 @@ class CloudinaryImageViewHelper extends \TYPO3\CMS\Fluid\Core\ViewHelper\Abstrac
             $image = $this->imageService->getImage($src, $image, $treatIdAsReference);
 
             try {
+
+                $publicId = CloudinaryPathUtility::computeCloudinaryPublicId($image->getIdentifier());
                 $settings = [
                     'bytesStep' => $bytesStep,
                     'minWidth' => $minWidth,
@@ -114,18 +117,40 @@ class CloudinaryImageViewHelper extends \TYPO3\CMS\Fluid\Core\ViewHelper\Abstrac
                     'gravity' => $gravity,
                     'crop' => $crop,
                 ];
+
                 $options = $this->cloudinaryUtility->generateOptionsFromSettings($settings);
 
-                $publicId = CloudinaryPathUtility::computeCloudinaryPublicId($image->getIdentifier());
-                $breakpoints = $this->cloudinaryUtility->getResponsiveBreakpointData($publicId, $options);
+
+                // True means process with default options
+                // False means we have a cloudinary $options override
+                if (empty($this->arguments['options'])) {
+                    $breakpoints = $this->cloudinaryUtility->getResponsiveBreakpointData($publicId, $options);
+                    $publicUrl = $image->getPublicUrl();
+                } else {
+
+                    // Apply custom transformation to breakpoint images
+                    $options['responsive_breakpoints']['transformation'] = $this->arguments['options'];
+                    $breakpoints = $this->cloudinaryUtility->getResponsiveBreakpointData($publicId, $options);
+
+                    $resource = $this->cloudinaryUtility->getCloudinaryProcessedResource(
+                        $publicId,
+                        [
+                            'type' => 'upload',
+                            'eager' => [$this->arguments['options']],
+                        ]
+                    );
+                    $publicUrl = $resource['secure_url'];
+                }
+
                 $cloudinarySizes = $this->cloudinaryUtility->getSizesAttribute($breakpoints);
                 $cloudinarySrcset = $this->cloudinaryUtility->getSrcsetAttribute($breakpoints);
 
                 $this->tag->addAttribute('sizes', $cloudinarySizes);
                 $this->tag->addAttribute('srcset', $cloudinarySrcset);
-                $this->tag->addAttribute('src', $image->getPublicUrl());
+                $this->tag->addAttribute('src', $publicUrl);
+
             } catch (\Exception $e) {
-                $this->tag->addAttribute('src', $image->getPublicUrl());
+                $this->tag->addAttribute('src', $publicUrl);
             }
 
             $alt = $image->getProperty('alternative');
