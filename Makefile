@@ -26,13 +26,13 @@ help:
 #######################
 
 ## Display formatting issues in detail
-phpcs:
+lint:
 	phpcs
 
 ## Display a summary of formatting issues
-phpcs-summary:
+lint-summary:
 	phpcs --report=summary
 
 ## Automatically fix code formatting issues
-phpcbf:
+lint-fix:
 	phpcbf
