@@ -139,3 +139,9 @@ Source of inspiration
 ---------------------
 
 https://github.com/carlosocarvalho/flysystem-cloudinary/blob/master/src/CloudinaryAdapter.php
+
+TODO
+----
+
+ * create an abstract class since we have here duplicate methods with ResponsiveBreakpointsRepository
+ * Handle CloudinaryImageDataViewHelper to also support $options
