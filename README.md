@@ -100,6 +100,25 @@ This will produces the following output:
 </html>
 ```
 
+CLI Command
+-----------
+
+The extension provides a tool to copy a bunch of files (restricted to images) from one storage to an another. 
+This can be achieved with this command:
+
+```shell script
+./vendor/bin/typo3 cloudinary:copy 1 2         
+# where 1 is the source storage (local)
+# and 2 is the target storage (cloudinary)
+ 
+# Ouptut:
+Copying 64 files from storage "fileadmin/ (auto-created)" (1) to "Cloudinary Storage (fabidule)" (2)
+Copying /introduction/images/typo3-book-backend-login.png
+Copying /introduction/images/content/content-quote.png
+...
+Number of file copied: 64
+``` 
+
 Development tools
 -----------------
 
@@ -111,10 +130,9 @@ Usage:
 
 Available targets:
  help:            Help
- phpcs:           Display formatting issues in detail
- phpcs-summary:   Display a summary of formatting issues
- phpcbf:          Automatically fix code formatting issues
-
+ lint:           Display formatting issues in detail
+ lint-summary:   Display a summary of formatting issues
+ lint-fix:       Automatically fix code formatting issues
 ```
 
 Source of inspiration

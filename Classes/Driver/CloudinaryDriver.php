@@ -346,7 +346,7 @@ class CloudinaryDriver extends AbstractHierarchicalFilesystemDriver
         // The object \Cloudinary\Api behaves like a singleton object.
         // The problem: if we have multiple driver instances / configuration, we don't get the expected result
         // meaning we are wrongly fetching resources from other cloudinary "buckets" because of the singleton behaviour
-        // Therefore it is better to create a new instance upon each API call to avoid confusion
+        // Therefore it is better to create a new instance upon each API call to avoid driver confusion
         return new \Cloudinary\Api();
     }
 
