@@ -102,7 +102,6 @@ class CloudinaryImageViewHelper extends \TYPO3\CMS\Fluid\Core\ViewHelper\Abstrac
             );
 
             try {
-
                 $publicId = CloudinaryPathUtility::computeCloudinaryPublicId($image->getIdentifier());
 
                 $options = $this->cloudinaryUtility->generateOptionsFromSettings(
@@ -123,7 +122,6 @@ class CloudinaryImageViewHelper extends \TYPO3\CMS\Fluid\Core\ViewHelper\Abstrac
                     $breakpoints = $this->cloudinaryUtility->getResponsiveBreakpointData($publicId, $options);
                     $publicUrl = $image->getPublicUrl();
                 } else {
-
                     // Apply custom transformation to breakpoint images
                     $options['responsive_breakpoints']['transformation'] = $this->arguments['options'];
                     $breakpoints = $this->cloudinaryUtility->getResponsiveBreakpointData($publicId, $options);
@@ -144,7 +142,6 @@ class CloudinaryImageViewHelper extends \TYPO3\CMS\Fluid\Core\ViewHelper\Abstrac
                 $this->tag->addAttribute('sizes', $cloudinarySizes);
                 $this->tag->addAttribute('srcset', $cloudinarySrcset);
                 $this->tag->addAttribute('src', $publicUrl);
-
             } catch (\Exception $e) {
                 $this->tag->addAttribute('src', $publicUrl);
             }

@@ -126,7 +126,6 @@ class CloudinaryImageDataViewHelper extends \TYPO3\CMS\Fluid\Core\ViewHelper\Abs
                 if (empty($this->arguments['options'])) {
                     $breakpoints = $this->cloudinaryUtility->getResponsiveBreakpointData($publicId, $options);
                 } else {
-
                     // Apply custom transformation to breakpoint images
                     $options['responsive_breakpoints']['transformation'] = $this->arguments['options'];
                     $breakpoints = $this->cloudinaryUtility->getResponsiveBreakpointData($publicId, $options);
@@ -138,7 +137,6 @@ class CloudinaryImageDataViewHelper extends \TYPO3\CMS\Fluid\Core\ViewHelper\Abs
                     'medianImage' => $this->cloudinaryUtility->getImage($breakpoints, 'median'),
                     'maxImage' => $this->cloudinaryUtility->getImage($breakpoints, 'max'),
                 ];
-
             } catch (\Exception $e) {
                 $responsiveImageData = [
                     'images' => [
