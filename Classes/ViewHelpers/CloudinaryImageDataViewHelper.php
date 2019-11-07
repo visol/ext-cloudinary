@@ -63,6 +63,7 @@ class CloudinaryImageDataViewHelper extends \TYPO3\CMS\Fluid\Core\ViewHelper\Abs
             ->registerArgument('crop', 'string', 'define cropping for Cloudinary')
             ->registerArgument('treatIdAsReference', 'bool', 'given src argument is a sys_file_reference record', false)
             ->registerArgument('image', FileInterface::class, 'a FAL object')
+            ->registerArgument('options', 'array', 'Possible cloudinary options to transform / crop the image', false, [])
             ->registerArgument('data', 'string', 'Name for variable with responsive image data within the viewhelper', false, 'responsiveImageData');
     }
 
@@ -72,18 +73,8 @@ class CloudinaryImageDataViewHelper extends \TYPO3\CMS\Fluid\Core\ViewHelper\Abs
      */
     public function render(): string
     {
-
         $src = $this->arguments['src'];
-        $minWidth = $this->arguments['minWidth'];
-        $maxWidth = $this->arguments['maxWidth'];
-        $maxImages = $this->arguments['maxImages'];
-        $bytesStep = $this->arguments['bytesStep'];
-        $aspectRatio = $this->arguments['aspectRatio'];
-        $gravity = $this->arguments['gravity'];
-        $crop = $this->arguments['crop'];
-        $treatIdAsReference = $this->arguments['treatIdAsReference'];
         $image = $this->arguments['image'];
-        $data = $this->arguments['data'];
 
         if (is_null($src) && is_null($image) || !is_null($src) && !is_null($image)) {
             throw new \TYPO3\CMS\Fluid\Core\ViewHelper\Exception('You must either specify a string src or a File object.', 1382284106);
@@ -95,10 +86,15 @@ class CloudinaryImageDataViewHelper extends \TYPO3\CMS\Fluid\Core\ViewHelper\Abs
         }
 
         $responsiveImageData = [];
+
         try {
 
             /** @var FileInterface $image */
-            $image = $this->imageService->getImage($src, $image, $treatIdAsReference);
+            $image = $this->imageService->getImage(
+                $src,
+                $image,
+                $this->arguments['treatIdAsReference']
+            );
 
             $preCrop = $image instanceof FileReference ? $image->getProperty('crop') : null;
             $processingInstructions = [
@@ -113,24 +109,36 @@ class CloudinaryImageDataViewHelper extends \TYPO3\CMS\Fluid\Core\ViewHelper\Abs
 
                 $publicId = CloudinaryPathUtility::computeCloudinaryPublicId($image->getIdentifier());
 
-                $settings = [
-                    'bytesStep' => $bytesStep,
-                    'minWidth' => $minWidth,
-                    'maxWidth' => $maxWidth,
-                    'maxImages' => $maxImages,
-                    'aspectRatio' => $aspectRatio,
-                    'gravity' => $gravity,
-                    'crop' => $crop,
-                ];
-                $options = $this->cloudinaryUtility->generateOptionsFromSettings($settings);
+                $options = $this->cloudinaryUtility->generateOptionsFromSettings(
+                    [
+                        'bytesStep' => $this->arguments['bytesStep'],
+                        'minWidth' => $this->arguments['minWidth'],
+                        'maxWidth' => $this->arguments['maxWidth'],
+                        'maxImages' => $this->arguments['maxImages'],
+                        'aspectRatio' => $this->arguments['aspectRatio'],
+                        'gravity' => $this->arguments['gravity'],
+                        'crop' => $this->arguments['crop'],
+                    ]
+                );
 
-                $breakpointData = $this->cloudinaryUtility->getResponsiveBreakpointData($publicId, $options);
+                // True means process with default options
+                // False means we have a cloudinary $options override
+                if (empty($this->arguments['options'])) {
+                    $breakpoints = $this->cloudinaryUtility->getResponsiveBreakpointData($publicId, $options);
+                } else {
+
+                    // Apply custom transformation to breakpoint images
+                    $options['responsive_breakpoints']['transformation'] = $this->arguments['options'];
+                    $breakpoints = $this->cloudinaryUtility->getResponsiveBreakpointData($publicId, $options);
+                }
+
                 $responsiveImageData = [
-                    'images' => $this->cloudinaryUtility->getImageObjects($breakpointData),
-                    'minImage' => $this->cloudinaryUtility->getImage($breakpointData, 'min'),
-                    'medianImage' => $this->cloudinaryUtility->getImage($breakpointData, 'median'),
-                    'maxImage' => $this->cloudinaryUtility->getImage($breakpointData, 'max'),
+                    'images' => $this->cloudinaryUtility->getImageObjects($breakpoints),
+                    'minImage' => $this->cloudinaryUtility->getImage($breakpoints, 'min'),
+                    'medianImage' => $this->cloudinaryUtility->getImage($breakpoints, 'median'),
+                    'maxImage' => $this->cloudinaryUtility->getImage($breakpoints, 'max'),
                 ];
+
             } catch (\Exception $e) {
                 $responsiveImageData = [
                     'images' => [
@@ -156,10 +164,13 @@ class CloudinaryImageDataViewHelper extends \TYPO3\CMS\Fluid\Core\ViewHelper\Abs
             // thrown if file storage does not exist
         }
 
+        $data = $this->arguments['data'];
         $this->templateVariableContainer->add($data, $responsiveImageData);
         $output = $this->renderChildren();
         $this->templateVariableContainer->remove($data);
 
-        return $output;
+        return is_string($output)
+            ? $output
+            : '';
     }
 }
