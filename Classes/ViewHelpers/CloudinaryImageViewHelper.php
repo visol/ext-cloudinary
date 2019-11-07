@@ -76,7 +76,7 @@ class CloudinaryImageViewHelper extends \TYPO3\CMS\Fluid\Core\ViewHelper\Abstrac
     }
 
     /**
-     * Resizes a given image (if required) and renders the respective img tag
+     * Resize a given image (if required) and renders the respective img tag
      *
      * @see https://docs.typo3.org/typo3cms/TyposcriptReference/ContentObjects/Image/
      *
@@ -86,14 +86,6 @@ class CloudinaryImageViewHelper extends \TYPO3\CMS\Fluid\Core\ViewHelper\Abstrac
     public function render(): string
     {
         $src = $this->arguments['src'];
-        $minWidth = $this->arguments['minWidth'];
-        $maxWidth = $this->arguments['maxWidth'];
-        $maxImages = $this->arguments['maxImages'];
-        $bytesStep = $this->arguments['bytesStep'];
-        $aspectRatio = $this->arguments['aspectRatio'];
-        $gravity = $this->arguments['gravity'];
-        $crop = $this->arguments['crop'];
-        $treatIdAsReference = $this->arguments['treatIdAsReference'];
         $image = $this->arguments['image'];
 
         if (is_null($src) && is_null($image) || !is_null($src) && !is_null($image)) {
@@ -103,23 +95,27 @@ class CloudinaryImageViewHelper extends \TYPO3\CMS\Fluid\Core\ViewHelper\Abstrac
         try {
 
             /** @var FileInterface $image */
-            $image = $this->imageService->getImage($src, $image, $treatIdAsReference);
+            $image = $this->imageService->getImage(
+                $src,
+                $image,
+                $this->arguments['treatIdAsReference']
+            );
 
             try {
 
                 $publicId = CloudinaryPathUtility::computeCloudinaryPublicId($image->getIdentifier());
-                $settings = [
-                    'bytesStep' => $bytesStep,
-                    'minWidth' => $minWidth,
-                    'maxWidth' => $maxWidth,
-                    'maxImages' => $maxImages,
-                    'aspectRatio' => $aspectRatio,
-                    'gravity' => $gravity,
-                    'crop' => $crop,
-                ];
 
-                $options = $this->cloudinaryUtility->generateOptionsFromSettings($settings);
-
+                $options = $this->cloudinaryUtility->generateOptionsFromSettings(
+                    [
+                        'bytesStep' => $this->arguments['bytesStep'],
+                        'minWidth' => $this->arguments['minWidth'],
+                        'maxWidth' => $this->arguments['maxWidth'],
+                        'maxImages' => $this->arguments['maxImages'],
+                        'aspectRatio' => $this->arguments['aspectRatio'],
+                        'gravity' => $this->arguments['gravity'],
+                        'crop' => $this->arguments['crop'],
+                    ]
+                );
 
                 // True means process with default options
                 // False means we have a cloudinary $options override
