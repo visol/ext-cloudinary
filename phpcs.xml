@@ -16,7 +16,7 @@
 
     <ini name="memory_limit" value="512M"/>
 
-    <rule ref="PSR2"/>
+    <rule ref="PSR12"/>
 
     <rule ref="Generic.Files.LineLength">
         <properties>
