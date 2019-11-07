@@ -23,9 +23,9 @@ use TYPO3\CMS\Core\Resource\ResourceFactory;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
 
 /**
- * Class CloudinaryCommand
+ * Class CloudinaryCopyCommand
  */
-class CloudinaryCommand extends Command
+class CloudinaryCopyCommand extends Command
 {
 
     /**

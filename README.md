@@ -103,6 +103,23 @@ This will produces the following output:
 CLI Command
 -----------
 
+Move bunch of images from a local storage to a cloudinary storage.
+
+**CAUTIOUS!**
+1. Moving means: we are "manually" uploading a file
+to the Cloudinary storage and "manually" deleting the one from the local storage.
+Finally we are changing the `sys_file.storage value` to the cloudinary storage id.
+Consequently, the file uid will be kept. File references are not touched.
+
+2. The FE might break. Migrate your code that use VH `<f:image />` to `<c:cloudinaryImage />`
+  
+
+```shell script
+./vendor/bin/typo3 cloudinary:move 1 2
+# where 1 is the source storage (local)
+# and 2 is the target storage (cloudinary)
+```
+
 The extension provides a tool to copy a bunch of files (restricted to images) from one storage to an another. 
 This can be achieved with this command:
 
