@@ -1,0 +1,29 @@
+
+######################################
+# Ajax request configuration
+######################################
+page_1573555440 = PAGE
+page_1573555440 {
+    typeNum = 1573555440
+    config {
+        xhtml_cleaning = 0
+        admPanel = 0
+        disableAllHeaderCode = 1
+        additionalHeaders = Content-type:text/html
+    }
+    10 = COA_INT
+    10 {
+        10 = USER_INT
+        10 {
+            userFunc = TYPO3\CMS\Extbase\Core\Bootstrap->run
+            vendorName = Sinso
+            extensionName = Cloudinary
+            pluginName = Cache
+            switchableControllerActions {
+                CloudinaryTypo3CacheManager {
+                    1 = flush
+                }
+            }
+        }
+    }
+}
