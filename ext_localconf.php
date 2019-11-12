@@ -1,24 +1,53 @@
 <?php
+defined('TYPO3_MODE') || die('Access denied.');
+call_user_func(
+    function () {
 
-if (!defined('TYPO3_MODE')) {
-    die('Access denied.');
-}
+        \TYPO3\CMS\Core\Utility\ExtensionManagementUtility::addTypoScript(
+            'cloudinary',
+            'setup',
+            '<INCLUDE_TYPOSCRIPT: source="FILE:EXT:cloudinary/Configuration/TypoScript/setup.typoscript">'
+        );
 
-$GLOBALS['TYPO3_CONF_VARS']['SYS']['fal']['registeredDrivers'][\Sinso\Cloudinary\Driver\CloudinaryDriver::DRIVER_TYPE] = [
-    'class' => \Sinso\Cloudinary\Driver\CloudinaryDriver::class,
+        \TYPO3\CMS\Extbase\Utility\ExtensionUtility::configurePlugin(
+            'Sinso.Cloudinary',
+            'Cache',
+            [
+                'CloudinaryTypo3CacheManager' => 'flush',
+            ],
+            // non-cacheable actions
+            [
+                'CloudinaryTypo3CacheManager' => 'flush',
+            ]
+        );
 
-    'flexFormDS' => 'FILE:EXT:cloudinary/Configuration/FlexForm/CloudinaryFlexForm.xml',
-    'label' => 'Cloudinary',
-    'shortName' => \Sinso\Cloudinary\Driver\CloudinaryDriver::DRIVER_TYPE,
-];
+        $GLOBALS['TYPO3_CONF_VARS']['SYS']['fal']['registeredDrivers'][\Sinso\Cloudinary\Driver\CloudinaryDriver::DRIVER_TYPE] = [
+            'class' => \Sinso\Cloudinary\Driver\CloudinaryDriver::class,
 
-$GLOBALS['TYPO3_CONF_VARS']['LOG']['Sinso']['Cloudinary']['Driver']['writerConfiguration'] = [
-    // configuration for WARNING severity, including all
-    // levels with higher severity (ERROR, CRITICAL, EMERGENCY)
-    \TYPO3\CMS\Core\Log\LogLevel::INFO => [
-        \TYPO3\CMS\Core\Log\Writer\FileWriter::class => [
-            // configuration for the writer
-            'logFile' => 'typo3temp/var/logs/cloudinary.log'
-        ],
-    ],
-];
+            'flexFormDS' => 'FILE:EXT:cloudinary/Configuration/FlexForm/CloudinaryFlexForm.xml',
+            'label' => 'Cloudinary',
+            'shortName' => \Sinso\Cloudinary\Driver\CloudinaryDriver::DRIVER_TYPE,
+        ];
+
+        $GLOBALS['TYPO3_CONF_VARS']['LOG']['Sinso']['Cloudinary']['Cache']['writerConfiguration'] =
+        $GLOBALS['TYPO3_CONF_VARS']['LOG']['Sinso']['Cloudinary']['Driver']['writerConfiguration'] = [
+
+            // configuration for WARNING severity, including all
+            // levels with higher severity (ERROR, CRITICAL, EMERGENCY)
+            \TYPO3\CMS\Core\Log\LogLevel::INFO => [
+                \TYPO3\CMS\Core\Log\Writer\FileWriter::class => [
+                    // configuration for the writer
+                    'logFile' => 'typo3temp/var/logs/cloudinary.log'
+                ],
+            ],
+        ];
+
+        if (!is_array($GLOBALS['TYPO3_CONF_VARS']['SYS']['caching']['cacheConfigurations']['cloudinary'])) {
+            // cache configuration, see https://docs.typo3.org/typo3cms/CoreApiReference/ApiOverview/CachingFramework/Configuration/Index.html#cache-configurations
+            $GLOBALS['TYPO3_CONF_VARS']['SYS']['caching']['cacheConfigurations']['cloudinary']['frontend'] = \TYPO3\CMS\Core\Cache\Frontend\VariableFrontend::class;
+            $GLOBALS['TYPO3_CONF_VARS']['SYS']['caching']['cacheConfigurations']['cloudinary']['groups'] = ['all', 'cloudinary'];
+            $GLOBALS['TYPO3_CONF_VARS']['SYS']['caching']['cacheConfigurations']['cloudinary']['options']['defaultLifetime'] = 2592000;
+        }
+
+    }
+);

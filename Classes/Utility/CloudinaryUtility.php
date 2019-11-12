@@ -15,6 +15,7 @@
 namespace Sinso\Cloudinary\Utility;
 
 use DmitryDulepov\Realurl\Utility;
+use Helhum\Typo3Console\Extension\ExtensionConfiguration;
 use Sinso\Cloudinary\CloudinaryException;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
 
@@ -60,6 +61,8 @@ class CloudinaryUtility
      */
     public function __construct()
     {
+        # TODO: change me after TYPO3 v9 migration
+        #       GeneralUtility::makeInstance(ExtensionConfiguration::class)->get('cloudinary')
         $this->extensionConfiguration = (array)unserialize($GLOBALS['TYPO3_CONF_VARS']['EXT']['extConf']['cloudinary']);
 
         // Workaround: dependency injection not supported in userFuncs

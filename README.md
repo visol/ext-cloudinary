@@ -152,6 +152,19 @@ Available targets:
  lint-fix:       Automatically fix code formatting issues
 ```
 
+Web Hook
+--------
+
+Whenever uploading or editing a file through the Cloudinary Manager you can configure an URL
+as a web hook to be called to invalidate the cache in TYPO3. 
+This is highly recommended to keep the data consistent between Cloudinary and TYPO3. 
+
+```shell script
+https://domain.tld/?type=1573555440
+```
+**Beware**: do not rename, move or delete file in the Cloudinary Manager. TYPO3 will not know it as currently
+implement. Uploading a new file will not be a problem though. 
+
 Source of inspiration
 ---------------------
 
@@ -160,5 +173,4 @@ https://github.com/carlosocarvalho/flysystem-cloudinary/blob/master/src/Cloudina
 TODO
 ----
 
- * create an abstract class since we have here duplicate methods with ResponsiveBreakpointsRepository
- * Handle CloudinaryImageDataViewHelper to also support $options
+* Improve Web Hook when file get renamed / deleted / moved through the Cloudinary Manager.
