@@ -1,9 +1,9 @@
 <?php
 
-namespace Sinso\Cloudinary\Cache;
+namespace Visol\Cloudinary\Cache;
 
 /*
- * This file is part of the Sinso/Cloudinary project under GPLv2 or later.
+ * This file is part of the Visol/Cloudinary project under GPLv2 or later.
  *
  * For the full copyright and license information, please read the
  * LICENSE.md file that was distributed with this source code.
@@ -130,7 +130,7 @@ class CloudinaryTypo3Cache
                 self::LIFETIME
             );
 
-            $this->log('Cache tag "%s" - folder identifier "%s"', [$tag, $identifier]);
+            $this->log('Caching "%s" data with folder identifier "%s"', [$tag, $identifier]);
         }
     }
 

@@ -1,5 +1,5 @@
 <?php
-namespace Sinso\Cloudinary\ViewHelpers;
+namespace Visol\Cloudinary\ViewHelpers;
 
 /*                                                                        *
  * This script is part of the TYPO3 project - inspiring people to share!  *
@@ -73,7 +73,7 @@ class ResponsiveImageDataViewHelper extends \TYPO3\CMS\Fluid\Core\ViewHelper\Abs
     protected $imageService;
 
     /**
-     * @var \Sinso\Cloudinary\Utility\CloudinaryUtility
+     * @var \Visol\Cloudinary\Utility\CloudinaryUtility
      * @inject
      */
     protected $cloudinaryUtility;
@@ -87,7 +87,7 @@ class ResponsiveImageDataViewHelper extends \TYPO3\CMS\Fluid\Core\ViewHelper\Abs
     }
 
     /**
-     * @param \Sinso\Cloudinary\Utility\CloudinaryUtility $cloudinaryUtility
+     * @param \Visol\Cloudinary\Utility\CloudinaryUtility $cloudinaryUtility
      */
     public function injectCloudinaryUtility(\TYPO3\CMS\Extbase\Service\ImageService $cloudinaryUtility)
     {

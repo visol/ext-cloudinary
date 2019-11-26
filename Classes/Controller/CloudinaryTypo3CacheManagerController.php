@@ -1,6 +1,6 @@
 <?php
 
-namespace Sinso\Cloudinary\Controller;
+namespace Visol\Cloudinary\Controller;
 
 /*
  * This file is part of the Fab/Mailing project under GPLv2 or later.
@@ -9,8 +9,8 @@ namespace Sinso\Cloudinary\Controller;
  * LICENSE.md file that was distributed with this source code.
  */
 
-use Sinso\Cloudinary\Cache\CloudinaryTypo3Cache;
-use Sinso\Cloudinary\Driver\CloudinaryDriver;
+use Visol\Cloudinary\Cache\CloudinaryTypo3Cache;
+use Visol\Cloudinary\Driver\CloudinaryDriver;
 use TYPO3\CMS\Core\Resource\ResourceStorage;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
 use TYPO3\CMS\Extbase\Mvc\Controller\ActionController;

@@ -1,6 +1,6 @@
 <?php
 
-namespace Sinso\Cloudinary;
+namespace Visol\Cloudinary;
 
 class CloudinaryException extends \Exception
 {

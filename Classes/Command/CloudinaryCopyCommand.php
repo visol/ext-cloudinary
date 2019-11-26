@@ -1,9 +1,9 @@
 <?php
 
-namespace Sinso\Cloudinary\Command;
+namespace Visol\Cloudinary\Command;
 
 /*
- * This file is part of the Sinso/Cloudinary project under GPLv2 or later.
+ * This file is part of the Visol/Cloudinary project under GPLv2 or later.
  *
  * For the full copyright and license information, please read the
  * LICENSE.md file that was distributed with this source code.

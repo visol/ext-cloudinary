@@ -10,7 +10,7 @@ call_user_func(
         );
 
         \TYPO3\CMS\Extbase\Utility\ExtensionUtility::configurePlugin(
-            'Sinso.Cloudinary',
+            'Visol.Cloudinary',
             'Cache',
             [
                 'CloudinaryTypo3CacheManager' => 'flush',
@@ -21,16 +21,16 @@ call_user_func(
             ]
         );
 
-        $GLOBALS['TYPO3_CONF_VARS']['SYS']['fal']['registeredDrivers'][\Sinso\Cloudinary\Driver\CloudinaryDriver::DRIVER_TYPE] = [
-            'class' => \Sinso\Cloudinary\Driver\CloudinaryDriver::class,
+        $GLOBALS['TYPO3_CONF_VARS']['SYS']['fal']['registeredDrivers'][\Visol\Cloudinary\Driver\CloudinaryDriver::DRIVER_TYPE] = [
+            'class' => \Visol\Cloudinary\Driver\CloudinaryDriver::class,
 
             'flexFormDS' => 'FILE:EXT:cloudinary/Configuration/FlexForm/CloudinaryFlexForm.xml',
             'label' => 'Cloudinary',
-            'shortName' => \Sinso\Cloudinary\Driver\CloudinaryDriver::DRIVER_TYPE,
+            'shortName' => \Visol\Cloudinary\Driver\CloudinaryDriver::DRIVER_TYPE,
         ];
 
-        $GLOBALS['TYPO3_CONF_VARS']['LOG']['Sinso']['Cloudinary']['Cache']['writerConfiguration'] =
-        $GLOBALS['TYPO3_CONF_VARS']['LOG']['Sinso']['Cloudinary']['Driver']['writerConfiguration'] = [
+        $GLOBALS['TYPO3_CONF_VARS']['LOG']['Visol']['Cloudinary']['Cache']['writerConfiguration'] =
+        $GLOBALS['TYPO3_CONF_VARS']['LOG']['Visol']['Cloudinary']['Driver']['writerConfiguration'] = [
 
             // configuration for WARNING severity, including all
             // levels with higher severity (ERROR, CRITICAL, EMERGENCY)

@@ -12,11 +12,11 @@
  * The TYPO3 project - inspiring people to share!
  */
 
-namespace Sinso\Cloudinary\Utility;
+namespace Visol\Cloudinary\Utility;
 
 use DmitryDulepov\Realurl\Utility;
 use Helhum\Typo3Console\Extension\ExtensionConfiguration;
-use Sinso\Cloudinary\CloudinaryException;
+use Visol\Cloudinary\CloudinaryException;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
 
 /**
@@ -33,19 +33,19 @@ class CloudinaryUtility
     const HASH_POSITION_PREPEND_FOLDERNAME = 4;
 
     /**
-     * @var \Sinso\Cloudinary\Domain\Repository\MediaRepository
+     * @var \Visol\Cloudinary\Domain\Repository\MediaRepository
      * @inject
      */
     protected $mediaRepository;
 
     /**
-     * @var \Sinso\Cloudinary\Domain\Repository\ResponsiveBreakpointsRepository
+     * @var \Visol\Cloudinary\Domain\Repository\ResponsiveBreakpointsRepository
      * @inject
      */
     protected $responsiveBreakpointsRepository;
 
     /**
-     * @var \Sinso\Cloudinary\Domain\Repository\CloudinaryProcessedResourceRepository
+     * @var \Visol\Cloudinary\Domain\Repository\CloudinaryProcessedResourceRepository
      * @inject
      */
     protected $cloudinaryProcessedResourceRepository;
@@ -66,8 +66,8 @@ class CloudinaryUtility
         $this->extensionConfiguration = (array)unserialize($GLOBALS['TYPO3_CONF_VARS']['EXT']['extConf']['cloudinary']);
 
         // Workaround: dependency injection not supported in userFuncs
-        $this->mediaRepository = GeneralUtility::makeInstance(\Sinso\Cloudinary\Domain\Repository\MediaRepository::class);
-        $this->responsiveBreakpointsRepository = GeneralUtility::makeInstance(\Sinso\Cloudinary\Domain\Repository\ResponsiveBreakpointsRepository::class);
+        $this->mediaRepository = GeneralUtility::makeInstance(\Visol\Cloudinary\Domain\Repository\MediaRepository::class);
+        $this->responsiveBreakpointsRepository = GeneralUtility::makeInstance(\Visol\Cloudinary\Domain\Repository\ResponsiveBreakpointsRepository::class);
 
         \Cloudinary::config([
             'cloud_name' => $this->extensionConfiguration['cloudName'],
