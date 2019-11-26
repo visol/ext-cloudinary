@@ -1,16 +1,16 @@
 <?php
 
-namespace Sinso\Cloudinary\Command;
+namespace Visol\Cloudinary\Command;
 
 /*
- * This file is part of the Sinso/Cloudinary project under GPLv2 or later.
+ * This file is part of the Visol/Cloudinary project under GPLv2 or later.
  *
  * For the full copyright and license information, please read the
  * LICENSE.md file that was distributed with this source code.
  */
 
 use Doctrine\DBAL\Driver\Connection;
-use Sinso\Cloudinary\Utility\CloudinaryPathUtility;
+use Visol\Cloudinary\Utility\CloudinaryPathUtility;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;

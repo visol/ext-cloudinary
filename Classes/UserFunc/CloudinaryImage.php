@@ -1,15 +1,15 @@
 <?php
 
-namespace Sinso\Cloudinary\UserFunc;
+namespace Visol\Cloudinary\UserFunc;
 
-use Sinso\Cloudinary\Utility\CloudinaryUtility;
+use Visol\Cloudinary\Utility\CloudinaryUtility;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
 
 class CloudinaryImage
 {
 
     /**
-     * @var \Sinso\Cloudinary\Utility\CloudinaryUtility
+     * @var \Visol\Cloudinary\Utility\CloudinaryUtility
      * @inject
      */
     protected $cloudinaryUtility;
@@ -27,7 +27,7 @@ class CloudinaryImage
      * @param array $conf
      *
      * @return bool
-     * @throws \Sinso\Cloudinary\CloudinaryException
+     * @throws \Visol\Cloudinary\CloudinaryException
      */
     public function getUrl($content = '', $conf = [])
     {
@@ -47,7 +47,7 @@ class CloudinaryImage
      * @param array $conf
      *
      * @return bool
-     * @throws \Sinso\Cloudinary\CloudinaryException
+     * @throws \Visol\Cloudinary\CloudinaryException
      */
     public function getSrcSet($content = '', $conf = [])
     {

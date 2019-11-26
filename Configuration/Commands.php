@@ -1,9 +1,9 @@
 <?php
 return [
     'cloudinary:copy' => [
-        'class' => \Sinso\Cloudinary\Command\CloudinaryCopyCommand::class,
+        'class' => \Visol\Cloudinary\Command\CloudinaryCopyCommand::class,
     ],
     'cloudinary:move' => [
-        'class' => \Sinso\Cloudinary\Command\CloudinaryMoveCommand::class,
+        'class' => \Visol\Cloudinary\Command\CloudinaryMoveCommand::class,
     ],
 ];

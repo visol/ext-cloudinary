@@ -1,15 +1,15 @@
 <?php
 
-namespace Sinso\Cloudinary\ViewHelpers;
+namespace Visol\Cloudinary\ViewHelpers;
 
 /*
- * This file is part of the Sinso/Cloudinary project under GPLv2 or later.
+ * This file is part of the Visol/Cloudinary project under GPLv2 or later.
  *
  * For the full copyright and license information, please read the
  * LICENSE.md file that was distributed with this source code.
  */
 
-use Sinso\Cloudinary\Utility\CloudinaryPathUtility;
+use Visol\Cloudinary\Utility\CloudinaryPathUtility;
 use TYPO3\CMS\Core\Resource\Exception\ResourceDoesNotExistException;
 use TYPO3\CMS\Core\Resource\FileInterface;
 
@@ -29,7 +29,7 @@ class CloudinaryImageViewHelper extends \TYPO3\CMS\Fluid\Core\ViewHelper\Abstrac
     protected $imageService;
 
     /**
-     * @var \Sinso\Cloudinary\Utility\CloudinaryUtility
+     * @var \Visol\Cloudinary\Utility\CloudinaryUtility
      * @inject
      */
     protected $cloudinaryUtility;
@@ -43,7 +43,7 @@ class CloudinaryImageViewHelper extends \TYPO3\CMS\Fluid\Core\ViewHelper\Abstrac
     }
 
     /**
-     * @param \Sinso\Cloudinary\Utility\CloudinaryUtility $cloudinaryUtility
+     * @param \Visol\Cloudinary\Utility\CloudinaryUtility $cloudinaryUtility
      */
     public function injectCloudinaryUtility(\TYPO3\CMS\Extbase\Service\ImageService $cloudinaryUtility)
     {

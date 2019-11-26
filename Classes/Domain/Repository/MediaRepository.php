@@ -1,6 +1,6 @@
 <?php
 
-namespace Sinso\Cloudinary\Domain\Repository;
+namespace Visol\Cloudinary\Domain\Repository;
 
 /**
  * Class MediaRepository

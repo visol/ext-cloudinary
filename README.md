@@ -16,7 +16,7 @@ Installation
 The extension should be done by Composer
 
 ```
-composer require sinso/cloudinary
+composer require visol/cloudinary
 ```
 
 Note that the extension will require the library `cloudinary/cloudinary_php` and 
@@ -75,7 +75,7 @@ The extension provides ViewHelpers that can be used like that:
 1. Output an images and its source-set.
 
 ```
-<html xmlns:c="http://typo3.org/ns/Sinso/Cloudinary/ViewHelpers">
+<html xmlns:c="http://typo3.org/ns/Visol/Cloudinary/ViewHelpers">
     <c:cloudinaryImage image="{file}"/>
 </html>
 ```
@@ -93,7 +93,7 @@ This will produces the following output:
 2. Generate an array of variants that can be iterated.
 
 ```
-<html xmlns:c="http://typo3.org/ns/Sinso/Cloudinary/ViewHelpers">
+<html xmlns:c="http://typo3.org/ns/Visol/Cloudinary/ViewHelpers">
     <c:cloudinaryImageData image="{file}">
         <f:debug>{responsiveImageData}</f:debug>
     </c:cloudinaryImageData>
@@ -174,3 +174,6 @@ TODO
 ----
 
 * Improve Web Hook when file get renamed / deleted / moved through the Cloudinary Manager.
+
+* Pagination
+* Todo: change namespace 

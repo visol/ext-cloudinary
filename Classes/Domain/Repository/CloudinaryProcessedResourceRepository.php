@@ -1,6 +1,6 @@
 <?php
 
-namespace Sinso\Cloudinary\Domain\Repository;
+namespace Visol\Cloudinary\Domain\Repository;
 
 use TYPO3\CMS\Core\Database\Connection;
 use TYPO3\CMS\Core\Database\ConnectionPool;

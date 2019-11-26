@@ -16,7 +16,7 @@ page_1573555440 {
         10 = USER_INT
         10 {
             userFunc = TYPO3\CMS\Extbase\Core\Bootstrap->run
-            vendorName = Sinso
+            vendorName = Visol
             extensionName = Cloudinary
             pluginName = Cache
             switchableControllerActions {

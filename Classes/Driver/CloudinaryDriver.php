@@ -1,9 +1,9 @@
 <?php
 
-namespace Sinso\Cloudinary\Driver;
+namespace Visol\Cloudinary\Driver;
 
 /*
- * This file is part of the Sinso/Cloudinary project under GPLv2 or later.
+ * This file is part of the Visol/Cloudinary project under GPLv2 or later.
  *
  * For the full copyright and license information, please read the
  * LICENSE.md file that was distributed with this source code.
@@ -11,8 +11,8 @@ namespace Sinso\Cloudinary\Driver;
 
 use Cloudinary\Api;
 use Cloudinary\Search;
-use Sinso\Cloudinary\Cache\CloudinaryTypo3Cache;
-use Sinso\Cloudinary\Utility\CloudinaryPathUtility;
+use Visol\Cloudinary\Cache\CloudinaryTypo3Cache;
+use Visol\Cloudinary\Utility\CloudinaryPathUtility;
 use TYPO3\CMS\Core\Charset\CharsetConverter;
 use TYPO3\CMS\Core\Log\LogLevel;
 use TYPO3\CMS\Core\Log\LogManager;
@@ -33,7 +33,7 @@ use TYPO3\CMS\Extbase\Utility\LocalizationUtility;
  */
 class CloudinaryDriver extends AbstractHierarchicalFilesystemDriver
 {
-    public const DRIVER_TYPE = 'SinsoCloudinary';
+    public const DRIVER_TYPE = 'VisolCloudinary';
 
     const ROOT_FOLDER_IDENTIFIER = '/';
 
@@ -208,16 +208,28 @@ class CloudinaryDriver extends AbstractHierarchicalFilesystemDriver
     public function getFileInfoByIdentifier($fileIdentifier, array $propertiesToExtract = [])
     {
         if (!$this->resourceExists($fileIdentifier)) {
-            throw new \Exception(
-                sprintf(
-                    'I could not retrieve the file info since no file was found for identifier "%s"',
-                    $fileIdentifier
-                ),
-                1574783174
-            );
+
+            // Make a new attempt since caching may interfere...
+            $publicId = CloudinaryPathUtility::computeCloudinaryPublicId($fileIdentifier);
+            $this->log('[API] method "getFileInfoByIdentifier": fetch resource with identifier "%s"', [$fileIdentifier]);
+            $cloudinaryResource = (array)$this->getApi()->resource($publicId);
+
+            $this->flushFileCache(); // We flush the cache again....
+
+            // This time we have a problem...
+            if (!$cloudinaryResource) {
+                throw new \Exception(
+                    sprintf(
+                        'I could not retrieve the file info since no file was found for identifier "%s"',
+                        $fileIdentifier
+                    ),
+                    1574783174
+                );
+            }
+        } else {
+            $cloudinaryResource = $this->getCloudinaryResource($fileIdentifier);
         }
 
-        $cloudinaryResource = $this->getCloudinaryResource($fileIdentifier);
         $canonicalFolderIdentifier = $this->canonicalizeAndCheckFolderIdentifier(dirname($fileIdentifier));
 
         return [
