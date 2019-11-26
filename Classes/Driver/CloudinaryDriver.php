@@ -681,7 +681,7 @@ class CloudinaryDriver extends AbstractHierarchicalFilesystemDriver
     {
         $renamedFiles = [];
 
-        foreach ($this->getFilesInFolder($folderIdentifier) as $fileIdentifier) {
+        foreach ($this->getFilesInFolder($folderIdentifier, 0, -1) as $fileIdentifier) {
             $resource = $this->getCloudinaryResource($fileIdentifier);
             $cloudinaryPublicId = $resource['public_id'];
 
@@ -738,7 +738,7 @@ class CloudinaryDriver extends AbstractHierarchicalFilesystemDriver
         }
 
         $movedFiles = [];
-        $files = $this->getFilesInFolder($sourceFolderIdentifier);
+        $files = $this->getFilesInFolder($sourceFolderIdentifier, 0, -1);
         foreach ($files as $fileIdentifier) {
             $movedFiles[$fileIdentifier] = $this->moveFileWithinStorage($fileIdentifier, $newTargetFolderIdentifier, PathUtility::basename($fileIdentifier));
         }
@@ -764,7 +764,7 @@ class CloudinaryDriver extends AbstractHierarchicalFilesystemDriver
             $this->createFolder($newTargetFolderIdentifier);
         }
 
-        $files = $this->getFilesInFolder($sourceFolderIdentifier);
+        $files = $this->getFilesInFolder($sourceFolderIdentifier, 0, -1);
         foreach ($files as $fileIdentifier) {
             $this->copyFileWithinStorage($fileIdentifier, $newTargetFolderIdentifier, PathUtility::basename($fileIdentifier));
         }
@@ -868,7 +868,7 @@ class CloudinaryDriver extends AbstractHierarchicalFilesystemDriver
      *
      * @return array of FileIdentifiers
      */
-    public function getFilesInFolder($folderIdentifier, $start = 0, $numberOfItems = 0, $recursive = false, array $filenameFilterCallbacks = [], $sort = '', $sortRev = false)
+    public function getFilesInFolder($folderIdentifier, $start = 0, $numberOfItems = 40, $recursive = false, array $filenameFilterCallbacks = [], $sort = '', $sortRev = false)
     {
         if ($folderIdentifier === '') {
             throw new \RuntimeException(
@@ -891,7 +891,16 @@ class CloudinaryDriver extends AbstractHierarchicalFilesystemDriver
             }
         }
 
-        return array_keys($this->cachedCloudinaryResources[$folderIdentifier]);
+        if ($numberOfItems > 0) {
+            $files = array_slice(
+                $this->cachedCloudinaryResources[$folderIdentifier],
+                (int)GeneralUtility::_GP('pointer'),
+                $numberOfItems
+            );
+        } else {
+            $files = $this->cachedCloudinaryResources[$folderIdentifier];
+        }
+        return array_keys($files);
     }
 
     /**
@@ -904,7 +913,10 @@ class CloudinaryDriver extends AbstractHierarchicalFilesystemDriver
      */
     public function countFilesInFolder($folderIdentifier, $recursive = false, array $filenameFilterCallbacks = [])
     {
-        return count($this->getFilesInFolder($folderIdentifier, 0, 0, $recursive, $filenameFilterCallbacks));
+        if (!isset($this->cachedCloudinaryResources[$folderIdentifier])) {
+            $this->getFilesInFolder($folderIdentifier, 0, -1, $recursive, $filenameFilterCallbacks);
+        }
+        return count($this->cachedCloudinaryResources[$folderIdentifier]);
     }
 
     /**
@@ -922,7 +934,7 @@ class CloudinaryDriver extends AbstractHierarchicalFilesystemDriver
      * @param bool $sortRev TRUE to indicate reverse sorting (last to first)
      * @return array
      */
-    public function getFoldersInFolder($folderIdentifier, $start = 0, $numberOfItems = 0, $recursive = false, array $folderNameFilterCallbacks = [], $sort = '', $sortRev = false)
+    public function getFoldersInFolder($folderIdentifier, $start = 0, $numberOfItems = 40, $recursive = false, array $folderNameFilterCallbacks = [], $sort = '', $sortRev = false)
     {
         if (!isset($this->cachedFolders[$folderIdentifier])) {
 
@@ -951,7 +963,7 @@ class CloudinaryDriver extends AbstractHierarchicalFilesystemDriver
      */
     public function countFoldersInFolder($folderIdentifier, $recursive = false, array $folderNameFilterCallbacks = [])
     {
-        return count($this->getFoldersInFolder($folderIdentifier, 0, 0, $recursive, $folderNameFilterCallbacks));
+        return count($this->getFoldersInFolder($folderIdentifier, 0, -1, $recursive, $folderNameFilterCallbacks));
     }
 
     /**
@@ -1132,7 +1144,7 @@ class CloudinaryDriver extends AbstractHierarchicalFilesystemDriver
 
         // Warm up the cache!
         if (!isset($this->cachedCloudinaryResources[$folderIdentifier][$fileIdentifier])) {
-            $this->getFilesInFolder($folderIdentifier);
+            $this->getFilesInFolder($folderIdentifier, 0, -1);
         }
 
         return isset($this->cachedCloudinaryResources[$folderIdentifier][$fileIdentifier])
