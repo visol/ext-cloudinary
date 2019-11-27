@@ -891,6 +891,43 @@ class CloudinaryDriver extends AbstractHierarchicalFilesystemDriver
             }
         }
 
+        // Set default sorting
+        $parameters = (array)GeneralUtility::_GP('SET');
+        if (empty($parameters)) {
+            $parameters['sort'] = 'file';
+            $parameters['reverse'] = 0;
+        }
+
+        // Sort files
+        if ($parameters['sort'] === 'file') {
+
+            if ((int)$parameters['reverse']) {
+                uasort(
+                    $this->cachedCloudinaryResources[$folderIdentifier],
+                    '\Visol\Cloudinary\Utility\SortingUtility::sortByFileNameDesc'
+                );
+            } else {
+                uasort(
+                    $this->cachedCloudinaryResources[$folderIdentifier],
+                    '\Visol\Cloudinary\Utility\SortingUtility::sortByFileNameAsc'
+                );
+            }
+        } elseif ($parameters['sort'] === 'tstamp') {
+
+            if ((int)$parameters['reverse']) {
+                uasort(
+                    $this->cachedCloudinaryResources[$folderIdentifier],
+                    '\Visol\Cloudinary\Utility\SortingUtility::sortByTimeStampDesc'
+                );
+            } else {
+                uasort(
+                    $this->cachedCloudinaryResources[$folderIdentifier],
+                    '\Visol\Cloudinary\Utility\SortingUtility::sortByTimeStampAsc'
+                );
+            }
+        }
+
+        // Pagination
         if ($numberOfItems > 0) {
             $files = array_slice(
                 $this->cachedCloudinaryResources[$folderIdentifier],
@@ -900,6 +937,7 @@ class CloudinaryDriver extends AbstractHierarchicalFilesystemDriver
         } else {
             $files = $this->cachedCloudinaryResources[$folderIdentifier];
         }
+
         return array_keys($files);
     }
 
@@ -948,6 +986,14 @@ class CloudinaryDriver extends AbstractHierarchicalFilesystemDriver
 
                 $this->cachedFolders[$folderIdentifier] = $this->getCloudinaryFolders($folderIdentifier);
             }
+        }
+
+        // Sort
+        $parameters = (array)GeneralUtility::_GP('SET');
+        if (isset($parameters['sort']) && $parameters['sort'] === 'file') {
+            (int)$parameters['reverse']
+                ? krsort($this->cachedFolders[$folderIdentifier])
+                : ksort($this->cachedFolders[$folderIdentifier]);
         }
 
         return $this->cachedFolders[$folderIdentifier];
