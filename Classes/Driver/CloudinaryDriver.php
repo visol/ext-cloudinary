@@ -236,7 +236,6 @@ class CloudinaryDriver extends AbstractHierarchicalFilesystemDriver
             'identifier_hash' => $this->hashIdentifier($fileIdentifier),
             'folder_hash' => sha1($canonicalFolderIdentifier),
             'creation_date' => strtotime($cloudinaryResource['created_at']),
-            'mime' => strtotime($cloudinaryResource['created_at']),
             'modification_date' => strtotime($cloudinaryResource['created_at']),
             'mime_type' => $this->getMimeType($cloudinaryResource),
             'extension' => $cloudinaryResource['format'],
