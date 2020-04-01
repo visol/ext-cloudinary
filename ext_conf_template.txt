@@ -1,16 +1,16 @@
-# cat=basic; type=options[Disabled=0, Append to filename=1, Prepend to filename=2, Append to folder=3, Prepend to folder=4]; label=Position of filehash (SHA1) in public_id/URL - DEPRECATED!: WARNING: Truncate tx_cloudinary_* tables after changing this setting.
+# cat=basic; type=options[Disabled=0, Append to filename=1, Prepend to filename=2, Append to folder=3, Prepend to folder=4]; label=Position of filehash (SHA1) in public_id/URL - OBSOLETE!: WARNING: Truncate tx_cloudinary_* tables after changing this setting.
 hash_position = 1
 
-# cat=cloudinary; type=string; label=Cloudinary Cloud Name
+# cat=cloudinary; type=string; label=Cloudinary Cloud Name - OBSOLETE!:
 cloudName =
 
-# cat=cloudinary; type=string; label=Cloudinary API Key
+# cat=cloudinary; type=string; label=Cloudinary API Key - OBSOLETE!:
 apiKey =
 
-# cat=cloudinary; type=string; label=Cloudinary API Secret
+# cat=cloudinary; type=string; label=Cloudinary API Secret - OBSOLETE!:
 apiSecret =
 
-# cat=cloudinary; type=int; label=Cloudinary API timeout
+# cat=cloudinary; type=int; label=Cloudinary API timeout - OBSOLETE!:
 timeout = 60
 
 # cat=cloudinary; type=boolean; label=Define whether TYPO3 should help to speed up the file admin module by caching Cloudinary resources.

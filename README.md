@@ -1,4 +1,4 @@
-# Cloudinary Integration
+# Cloudinary Integration - FAL Driver
 
 A TYPO3 extension that connect TYPO3 with [Cloudinary](cloudinary.com) services
 by the means of a **Cloudinary Driver for FAL**.
@@ -163,17 +163,11 @@ This is highly recommended to keep the data consistent between Cloudinary and TY
 https://domain.tld/?type=1573555440
 ```
 **Beware**: do not rename, move or delete file in the Cloudinary Manager. TYPO3 will not know it as currently
-implement. Uploading a new file will not be a problem though. 
+implement. Uploading a new file will not be a problem though.
 
 Source of inspiration
 ---------------------
 
-https://github.com/carlosocarvalho/flysystem-cloudinary/blob/master/src/CloudinaryAdapter.php
+Adapter for theleague php flysystem for Cloudinary
 
-TODO
-----
-
-* Improve Web Hook when file get renamed / deleted / moved through the Cloudinary Manager.
-
-* Pagination
-* Todo: change namespace 
+https://github.com/flownative/flow-google-cloudstorage
