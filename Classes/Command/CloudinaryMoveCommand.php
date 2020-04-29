@@ -10,7 +10,7 @@ namespace Visol\Cloudinary\Command;
  */
 
 use Doctrine\DBAL\Driver\Connection;
-use Visol\Cloudinary\Utility\CloudinaryPathUtility;
+use Visol\Cloudinary\Services\FileMoveService;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
@@ -23,7 +23,6 @@ use TYPO3\CMS\Core\Resource\File;
 use TYPO3\CMS\Core\Resource\ResourceFactory;
 use TYPO3\CMS\Core\Resource\ResourceStorage;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
-use TYPO3\CMS\Core\Utility\PathUtility;
 
 /**
  * Class CloudinaryMoveCommand
@@ -111,9 +110,6 @@ class CloudinaryMoveCommand extends Command
         $this->targetStorage = ResourceFactory::getInstance()->getStorageObject(
             $input->getArgument('target')
         );
-
-        // Before calling API, make sure we are connected with the right "bucket"
-        $this->initializeApi();
     }
 
     /**
@@ -141,33 +137,18 @@ class CloudinaryMoveCommand extends Command
 
         $counter = 0;
         foreach ($files as $file) {
+            $this->log('Moving %s', [$file['identifier']]);
+
             $fileObject = ResourceFactory::getInstance()->getFileObjectByStorageAndIdentifier(
                 $this->sourceStorage->getUid(),
                 $file['identifier']
             );
 
-            $fileNameAndAbsolutePath = $this->getAbsolutePath($fileObject);
-            if (file_exists($fileNameAndAbsolutePath)) {
-                $this->log('Moving %s', [$file['identifier']]);
-
-                // Upload the file storage
-                $isUploaded = $this->cloudinaryUploadFile($fileObject);
-
-                if ($isUploaded) {
-
-                    // Update the storage uid
-                    $isUpdated = $this->updateFile($fileObject,
-                        [
-                            'storage' => $this->targetStorage->getUid()
-                        ]
-                    );
-
-                    if ($isUpdated) {
-                        // Delete the file form the local storage
-                        unlink($fileNameAndAbsolutePath);
-                    }
-                }
-
+            $this->log('Moving %s', [$file['identifier']]);
+            $isSuccess = $this->getFileMoveService()->forceMove($fileObject);
+            if (!$isSuccess) {
+                $this->log('WARNING! Missing %s?', [$file['identifier']]);
+            } else {
                 $counter++;
             }
         }
@@ -175,62 +156,6 @@ class CloudinaryMoveCommand extends Command
         $this->log('Number of files moved: %s', [$counter]);
     }
 
-    /**
-     * @param File $fileObject
-     * @return string
-     */
-    protected function getAbsolutePath(File $fileObject): string
-    {
-        // Compute the absolute file name of the file to move
-        $configuration = $this->sourceStorage->getConfiguration();
-        $fileRelativePath = rtrim($configuration['basePath'], '/') . $fileObject->getIdentifier();
-        return GeneralUtility::getFileAbsFileName($fileRelativePath);
-    }
-
-    /**
-     * @param File $fileObject
-     * @return bool
-     */
-    protected function cloudinaryUploadFile(File $fileObject): bool
-    {
-
-        $publicId = PathUtility::basename(
-            CloudinaryPathUtility::computeCloudinaryPublicId($fileObject->getName())
-        );
-
-        $options = [
-            'public_id' => $publicId,
-            'folder' => CloudinaryPathUtility::computeCloudinaryPath(
-                $fileObject->getParentFolder()->getIdentifier()
-            ),
-            'overwrite' => true,
-        ];
-
-        // Upload the file
-        $resource = \Cloudinary\Uploader::upload(
-            $this->getAbsolutePath($fileObject),
-            $options
-        );
-        return !empty($resource);
-    }
-
-    /**
-     * @return void
-     */
-    protected function initializeApi()
-    {
-        // Compute the absolute file name of the file to move
-        $configuration = $this->targetStorage->getConfiguration();
-        \Cloudinary::config(
-            [
-                'cloud_name' => $configuration['cloudName'],
-                'api_key' => $configuration['apiKey'],
-                'api_secret' => $configuration['apiSecret'],
-                'timeout' => $configuration['timeout'],
-                'secure' => true
-            ]
-        );
-    }
     /**
      * @return object|QueryBuilder
      */
@@ -270,23 +195,6 @@ class CloudinaryMoveCommand extends Command
     }
 
     /**
-     * @param File $fileObject
-     * @param array $values
-     * @return int
-     */
-    protected function updateFile(File $fileObject, array $values): int
-    {
-        $connection = $this->getConnection();
-        return $connection->update(
-            $this->tableName,
-            $values,
-            [
-                'uid' => $fileObject->getUid(),
-            ]
-        );
-    }
-
-    /**
      * @param string $message
      * @param array $arguments
      * @param string $severity
@@ -309,5 +217,13 @@ class CloudinaryMoveCommand extends Command
     protected function isSilent(): bool
     {
         return $this->options['silent'] !== false;
+    }
+
+    /**
+     * @return object|FileMoveService
+     */
+    protected function getFileMoveService(): FileMoveService
+    {
+        return GeneralUtility::makeInstance(FileMoveService::class);
     }
 }
