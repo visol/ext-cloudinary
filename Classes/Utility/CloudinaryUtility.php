@@ -14,8 +14,8 @@
 
 namespace Visol\Cloudinary\Utility;
 
-use DmitryDulepov\Realurl\Utility;
-use Helhum\Typo3Console\Extension\ExtensionConfiguration;
+use TYPO3\CMS\Core\Resource\FileReference;
+use TYPO3\CMS\Core\Resource\ResourceStorage;
 use Visol\Cloudinary\CloudinaryException;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
 
@@ -69,6 +69,7 @@ class CloudinaryUtility
         $this->mediaRepository = GeneralUtility::makeInstance(\Visol\Cloudinary\Domain\Repository\MediaRepository::class);
         $this->responsiveBreakpointsRepository = GeneralUtility::makeInstance(\Visol\Cloudinary\Domain\Repository\ResponsiveBreakpointsRepository::class);
 
+        // todo: remove obsolete code since the config is to be found in the storage
         \Cloudinary::config([
             'cloud_name' => $this->extensionConfiguration['cloudName'],
             'api_key' => $this->extensionConfiguration['apiKey'],
@@ -189,6 +190,9 @@ class CloudinaryUtility
     }
 
     /**
+     * Todo check this method if we have to accept $publicIdOrFileReference as method below "getResponsiveBreakpointData"
+     * We might call again "initializeApi".
+     *
      * @param string $publicId
      * @param array $options
      * @return array
@@ -209,13 +213,22 @@ class CloudinaryUtility
     }
 
     /**
-     * @param string $publicId
+     * Todo normalize this method, argument $publicIdOrFileReference should be of one type.
+     * @param string|FileReference $publicIdOrFileReference
      * @param array $options
      * @return array
      */
-    public function getResponsiveBreakpointData(string $publicId, array $options): array
+    public function getResponsiveBreakpointData($publicIdOrFileReference, array $options): array
     {
         $responsiveBreakpoints = null;
+
+        if ($publicIdOrFileReference instanceof FileReference) {
+            $this->initializeApi($publicIdOrFileReference->getStorage());
+            $publicId = CloudinaryPathUtility::computeCloudinaryPublicId($publicIdOrFileReference->getIdentifier());
+        } else {
+            $publicId = $publicIdOrFileReference;
+        }
+
         $responsiveBreakpoints = $this->responsiveBreakpointsRepository->findByPublicIdAndOptions($publicId, $options);
 
         if (!$responsiveBreakpoints) {
@@ -230,6 +243,24 @@ class CloudinaryUtility
         return is_array($breakpoints)
             ? $breakpoints
             : [];
+    }
+
+    /**
+     * @param ResourceStorage $storage
+     */
+    protected function initializeApi(ResourceStorage $storage)
+    {
+        // Compute the absolute file name of the file to move
+        $configuration = $storage->getConfiguration();
+        \Cloudinary::config(
+            [
+                'cloud_name' => $configuration['cloudName'],
+                'api_key' => $configuration['apiKey'],
+                'api_secret' => $configuration['apiSecret'],
+                'timeout' => $configuration['timeout'],
+                'secure' => true
+            ]
+        );
     }
 
     /**
