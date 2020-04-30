@@ -57,4 +57,23 @@ class CloudinaryPathUtility
         // '.' . PathUtility::pathinfo($filename, PATHINFO_EXTENSION)
         return preg_replace('/\\.[^.\\s]{3,4}$/', '', $filename);
     }
+
+    /**
+     * @param string $folderName
+     * @param string $folderIdentifier
+     * @return string
+     */
+    public static function normalizeFolderNameAndPath(string $folderName, string $folderIdentifier): string
+    {
+        return self::normalizeFolderPath($folderIdentifier) . DIRECTORY_SEPARATOR . $folderName;
+    }
+
+    /**
+     * @param string $folderIdentifier
+     * @return string
+     */
+    public static function normalizeFolderPath(string $folderIdentifier): string
+    {
+        return trim($folderIdentifier, DIRECTORY_SEPARATOR);
+    }
 }

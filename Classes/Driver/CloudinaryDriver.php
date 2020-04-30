@@ -273,11 +273,11 @@ class CloudinaryDriver extends AbstractHierarchicalFilesystemDriver
     {
         try {
             // Will trigger an exception if the folder identifier does not exist.
-            $this->getFoldersInFolder($folderIdentifier);
+            $subFolders = $this->getFoldersInFolder($folderIdentifier);
         } catch (\Exception $e) {
             return false;
         }
-        return true;
+        return is_array($subFolders);
     }
 
     /**
@@ -302,7 +302,7 @@ class CloudinaryDriver extends AbstractHierarchicalFilesystemDriver
     public function folderExistsInFolder($folderName, $folderIdentifier)
     {
         return $this->folderExists(
-            $this->normalizeCloudinaryFolderNameWithPath($folderName, $folderIdentifier)
+            CloudinaryPathUtility::normalizeFolderNameAndPath($folderName, $folderIdentifier)
         );
     }
 
@@ -504,6 +504,7 @@ class CloudinaryDriver extends AbstractHierarchicalFilesystemDriver
      * @param string $folderIdentifier
      * @param bool $deleteRecursively
      * @return bool
+     * @throws Api\GeneralError
      */
     public function deleteFolder($folderIdentifier, $deleteRecursively = false)
     {
@@ -593,7 +594,7 @@ class CloudinaryDriver extends AbstractHierarchicalFilesystemDriver
         // Flush the folder cache entries
         $this->flushFolderCache();
 
-        $normalizedFolderIdentifier = $this->normalizeCloudinaryFolderNameWithPath($newFolderName, $parentFolderIdentifier);
+        $normalizedFolderIdentifier = CloudinaryPathUtility::normalizeFolderNameAndPath($newFolderName, $parentFolderIdentifier);
 
         $this->log('[API] method "createFolder": create folder with identifier "%s"', [$normalizedFolderIdentifier]);
         $this->getApi()->create_folder(
@@ -832,7 +833,9 @@ class CloudinaryDriver extends AbstractHierarchicalFilesystemDriver
         $canonicalFolderIdentifier = $this->canonicalizeAndCheckFolderIdentifier($folderIdentifier);
         return [
             'identifier' => $canonicalFolderIdentifier,
-            'name' => PathUtility::basename(rtrim($canonicalFolderIdentifier, DIRECTORY_SEPARATOR)),
+            'name' => PathUtility::basename(
+                CloudinaryPathUtility::normalizeFolderPath($canonicalFolderIdentifier)
+            ),
             'storage' => $this->storageUid
         ];
     }
@@ -973,6 +976,10 @@ class CloudinaryDriver extends AbstractHierarchicalFilesystemDriver
      */
     public function getFoldersInFolder($folderIdentifier, $start = 0, $numberOfItems = 40, $recursive = false, array $folderNameFilterCallbacks = [], $sort = '', $sortRev = false)
     {
+        $folderIdentifier = $folderIdentifier === self::ROOT_FOLDER_IDENTIFIER
+            ? $folderIdentifier
+            : CloudinaryPathUtility::normalizeFolderPath($folderIdentifier);
+
         if (!isset($this->cachedFolders[$folderIdentifier])) {
 
             // Try to fetch from the cache
@@ -981,6 +988,10 @@ class CloudinaryDriver extends AbstractHierarchicalFilesystemDriver
             // If not found in TYPO3 cache, ask Cloudinary
             if (!is_array($this->cachedFolders[$folderIdentifier])) {
 
+                if ($folderIdentifier === '_processed_/6') {
+                    $this->cachedFolders[$folderIdentifier] = $this->getCloudinaryFolders($folderIdentifier);
+                    var_dump($this->cachedFolders[$folderIdentifier]);
+                }
                 $this->log('[API] method "getFoldersInFolder": fetch sub-folders with folder identifier "%s"', [$folderIdentifier]);
 
                 $this->cachedFolders[$folderIdentifier] = $this->getCloudinaryFolders($folderIdentifier);
@@ -1089,6 +1100,7 @@ class CloudinaryDriver extends AbstractHierarchicalFilesystemDriver
     /**
      * @param string $folderIdentifier
      * @return array
+     * @throws Api\GeneralError
      */
     protected function getCloudinaryFolders(string $folderIdentifier): array
     {
@@ -1291,17 +1303,6 @@ class CloudinaryDriver extends AbstractHierarchicalFilesystemDriver
 
         // Handle the special jpg case which does not correspond to the file extension.
         return str_replace('jpg', 'jpeg', $mimeType);
-    }
-
-    /**
-     * @param string $folderName
-     * @param string $folderIdentifier
-     * @return string
-     */
-    protected function normalizeCloudinaryFolderNameWithPath(string $folderName, string $folderIdentifier): string
-    {
-        $normalizedFolderIdentifier = trim($folderIdentifier, DIRECTORY_SEPARATOR);
-        return $normalizedFolderIdentifier . DIRECTORY_SEPARATOR . $folderName;
     }
 
     /**
