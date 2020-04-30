@@ -33,8 +33,6 @@ For a new "file storage" record, then:
 
 * Pick the **Cloudinary** driver in the driver dropdown menu.
 * Fill in the requested fields. Password and secrets can be found from the [Cloudinary Console](https://cloudinary.com/console).
-* **Important!** Configure the "folder for manipulated and temporary images" on a local driver where we have a **writeable** processed folder.
-  Example: `1:/_processed`
 
 
 ![](Documentation/driver-configuration-02.png)
@@ -42,7 +40,7 @@ For a new "file storage" record, then:
 Once the record is saved, you should see a message telling the connection could be successfully established. 
 You can now head to the File module list. 
 Notice the first time you click on a folder in the File list module, 
-it will take some time since the images must be fetched and downloaded for local processing.
+it will take some time since the images must be fetched and put into the cloudinary cache.
 
 ![](Documentation/driver-configuration-01.png)
 
@@ -61,9 +59,6 @@ To decide: we now have log level INFO. We might consider "increasing" the level 
 Caveats and trouble shooting
 ----------------------------
 
-* As said above, the first time a folder is clicked in the File list module, 
- images must be retrieved from Cloudinary to be locally processed and thumbnails generated.
- Be patient if you have many images to display.
 * **Free** Cloudinary account allows 500 API request per day 
 * This cloudinary FAL driver is currently **limited to images**.
 
