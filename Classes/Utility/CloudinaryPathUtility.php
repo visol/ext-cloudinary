@@ -9,6 +9,8 @@ namespace Visol\Cloudinary\Utility;
  * LICENSE.md file that was distributed with this source code.
  */
 
+use TYPO3\CMS\Core\Utility\PathUtility;
+
 /**
  * Class CloudinaryPathUtility
  */
@@ -53,9 +55,8 @@ class CloudinaryPathUtility
      */
     protected static function stripExtension($filename): string
     {
-        // Other possible way of computing the file extension using TYPO3 API
-        // '.' . PathUtility::pathinfo($filename, PATHINFO_EXTENSION)
-        return preg_replace('/\\.[^.\\s]{3,4}$/', '', $filename);
+        $pathParts = PathUtility::pathinfo($filename);
+        return $pathParts['dirname'] . DIRECTORY_SEPARATOR . $pathParts['filename'];
     }
 
     /**
