@@ -15,9 +15,9 @@
 namespace Visol\Cloudinary\Utility;
 
 use TYPO3\CMS\Core\Resource\FileReference;
-use TYPO3\CMS\Core\Resource\ResourceStorage;
 use Visol\Cloudinary\CloudinaryException;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
+use Visol\Cloudinary\Driver\CloudinaryDriver;
 
 /**
  * Class CloudinaryUtility
@@ -213,7 +213,7 @@ class CloudinaryUtility
     }
 
     /**
-     * Todo normalize this method, argument $publicIdOrFileReference should be of one type.
+     * Todo normalize this method, argument $publicIdOrFileReference should be a unique type.
      * @param string|FileReference $publicIdOrFileReference
      * @param array $options
      * @return array
@@ -223,7 +223,7 @@ class CloudinaryUtility
         $responsiveBreakpoints = null;
 
         if ($publicIdOrFileReference instanceof FileReference) {
-            $this->initializeApi($publicIdOrFileReference->getStorage());
+            $this->initializeApi($publicIdOrFileReference);
             $publicId = CloudinaryPathUtility::computeCloudinaryPublicId($publicIdOrFileReference->getIdentifier());
         } else {
             $publicId = $publicIdOrFileReference;
@@ -246,11 +246,26 @@ class CloudinaryUtility
     }
 
     /**
-     * @param ResourceStorage $storage
+     * @param FileReference $fileReference
      */
-    protected function initializeApi(ResourceStorage $storage)
+    protected function initializeApi(FileReference $fileReference)
     {
-        // Compute the absolute file name of the file to move
+        $storage = $fileReference->getStorage();
+
+        // Check the file is stored on the right storage
+        // If not we should trigger an execption
+        if ($storage->getDriverType() !== CloudinaryDriver::DRIVER_TYPE) {
+
+            $message = sprintf(
+                'CloudinaryUtility: wrong storage! Can not initialize Cloudinary API with file reference "%s" original file "%s:%s"',
+                $fileReference->getUid(),
+                $fileReference->getOriginalFile()->getUid(),
+                $fileReference->getOriginalFile()->getIdentifier()
+            );
+            throw new \Exception($message, 1590401459);
+        }
+
+        // Get the configuration
         $configuration = $storage->getConfiguration();
         \Cloudinary::config(
             [
