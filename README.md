@@ -101,18 +101,30 @@ CLI Command
 Move bunch of images from a local storage to a cloudinary storage.
 
 **CAUTIOUS!**
-1. Moving means: we are "manually" uploading a file
-to the Cloudinary storage and "manually" deleting the one from the local storage.
-Finally we are changing the `sys_file.storage value` to the cloudinary storage id.
-Consequently, the file uid will be kept. File references are not touched.
-
-2. The FE might break. Migrate your code that use VH `<f:image />` to `<c:cloudinaryImage />`
+1. Moving means: we are "manually" uploading a file (skipping FAL API)
+to the Cloudinary storage and deleting the one from the local storage (rm -f FILE) 
+Finally we are changing the `sys_file.storage value` to the cloudinary storage.
+The file uid will be kept!
   
-
 ```shell script
 ./vendor/bin/typo3 cloudinary:move 1 2
 # where 1 is the source storage (local)
 # and 2 is the target storage (cloudinary)
+
+# Will all parameters
+./vendor/bin/typo3 cloudinary:move 1 2 https://domain.tld/fileadmin folderFilter
+
+# param 1: the source storage uid (local)
+# param 2: the target storage uid (cloudinary)
+# param 3: the base URL where to download files (the file will be downloaded directly from the remote)
+# param 4: a possible folder filter
+```
+
+Tip: to sync a bunch of files, you can use the Cloudinary CLI which is convenient to upload
+many resources at once.
+
+```bash
+cld sync --push localFolder remoteFolder
 ```
 
 The extension provides a tool to copy a bunch of files (restricted to images) from one storage to an another. 

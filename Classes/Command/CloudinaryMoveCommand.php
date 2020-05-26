@@ -10,6 +10,7 @@ namespace Visol\Cloudinary\Command;
  */
 
 use Doctrine\DBAL\Driver\Connection;
+use TYPO3\CMS\Core\Utility\PathUtility;
 use Visol\Cloudinary\Services\FileMoveService;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
@@ -30,6 +31,9 @@ use TYPO3\CMS\Core\Utility\GeneralUtility;
 class CloudinaryMoveCommand extends Command
 {
 
+    const WARNING = 'warning';
+    const SUCCESS = 'success';
+
     /**
      * @var SymfonyStyle
      */
@@ -44,6 +48,7 @@ class CloudinaryMoveCommand extends Command
      * @var ResourceStorage
      */
     protected $sourceStorage;
+
     /**
      * @var ResourceStorage
      */
@@ -55,17 +60,31 @@ class CloudinaryMoveCommand extends Command
     protected $tableName = 'sys_file';
 
     /**
+     * @var array
+     */
+    private $missingFiles = [];
+
+    /**
+     * @var array
+     */
+    private $faultyUploadedFiles;
+
+    /**
+     * @var array
+     */
+    private $skippedFiles;
+
+    /**
      * Configure the command by defining the name, options and arguments
      */
     protected function configure()
     {
         $message = 'Move bunch of images from a local storage to a cloudinary storage.';
         $message .= ' CAUTIOUS!';
-        $message .= ' 1. Moving means: we are "manually" uploading a file';
-        $message .= ' to the Cloudinary storage and "manually" deleting the one from the local storage';
+        $message .= ' 1. Moving means: we are "manually" uploading a file (skipping FAL API)';
+        $message .= ' to the Cloudinary storage and deleting the one from the local storage (rm -f FILE) ';
         $message .= ' Finally we are changing the `sys_file.storage value` to the cloudinary storage.';
-        $message .= ' Consequently, the file uid will be kept.';
-        $message .= ' 2. The FE might break. Migrate your code that use VH `<f:image />` to `<c:cloudinaryImage />`';
+        $message .= ' The file uid will be kept!';
         $this
             ->setDescription(
                 $message
@@ -77,6 +96,13 @@ class CloudinaryMoveCommand extends Command
                 'Mute output as much as possible',
                 false
             )
+            ->addOption(
+                'skip-confirmation',
+                'y',
+                InputOption::VALUE_OPTIONAL,
+                'Accept everything by default',
+                false
+            )
             ->addArgument(
                 'source',
                 InputArgument::REQUIRED,
@@ -85,6 +111,16 @@ class CloudinaryMoveCommand extends Command
                 'target',
                 InputArgument::REQUIRED,
                 'Target storage identifier'
+            )->addArgument(
+                'baseUrl',
+                InputArgument::OPTIONAL,
+                'A base URL where to download missing files',
+                ''
+            )->addArgument(
+                'folderFilter',
+                InputArgument::OPTIONAL,
+                'A base URL where to download missing files',
+                ''
             )
             ->setHelp(
                 'Usage: ./vendor/bin/typo3 cloudinary:move 1 2'
@@ -118,42 +154,186 @@ class CloudinaryMoveCommand extends Command
      * @param InputInterface $input
      * @param OutputInterface $output
      */
-    protected function execute(InputInterface $input, OutputInterface $output)
+    protected function execute(InputInterface $input, OutputInterface $output): int
     {
 
-        $files = $this->getSourceFiles();
+        $files = $this->getSourceFiles($input->getArgument('folderFilter'));
+
+        if (count($files) === 0) {
+            $this->log('No files found, no work for me!');
+            return 0;
+        }
 
         $this->log(
-            'Moving %s files from storage "%s" (%s) to "%s" (%s)',
+            'I will process %s files to be moved from storage "%s" (%s) to "%s" (%s)',
             [
                 count($files),
-                $this->sourceStorage->getName(),
                 $this->sourceStorage->getUid(),
-                $this->targetStorage->getName(),
+                $this->sourceStorage->getName(),
                 $this->targetStorage->getUid(),
-            ],
-            'info'
+                $this->targetStorage->getName(),
+            ]
         );
+
+        // A chance to the user to confirm the action
+        if ($this->options['skip-confirmation'] === false) {
+
+            $response = $this->io->confirm('Shall I continue?', true);
+
+            if (!$response) {
+                $this->log('Script aborted');
+                return 0;
+            }
+        }
 
         $counter = 0;
         foreach ($files as $file) {
-            $this->log('Moving %s', [$file['identifier']]);
 
+            $this->log();
+            $this->log('Starting migration with %s', [$file['identifier']]);
+
+            /** @var  $fileObject */
             $fileObject = ResourceFactory::getInstance()->getFileObjectByStorageAndIdentifier(
                 $this->sourceStorage->getUid(),
                 $file['identifier']
             );
 
-            $this->log('Moving %s', [$file['identifier']]);
-            $isSuccess = $this->getFileMoveService()->forceMove($fileObject);
-            if (!$isSuccess) {
-                $this->log('WARNING! Missing %s?', [$file['identifier']]);
-            } else {
-                $counter++;
+            if ($this->isFileSkipped($fileObject)) {
+                $this->log('Skipping file ' . $fileObject->getIdentifier());
+                // $this->skippedFiles[] = $fileObject->getIdentifier();
+                continue;
             }
+
+            if ($this->getFileMoveService()->fileExists($fileObject, $this->targetStorage)) {
+                $this->log('File has already been uploaded, good for us %s', [$fileObject->getIdentifier()]);
+            } else {
+
+                // Detect if the file is existing on storage "source" (1)
+                if (!$fileObject->exists() && !$input->getArgument('baseUrl')) {
+
+                    $this->log('Missing file %s', [$fileObject->getIdentifier()], self::WARNING);
+                    // We could log the missing files
+                    $this->missingFiles[] = $fileObject->getIdentifier();
+                    continue;
+                }
+
+                // Upload the file
+                $this->log(
+                    'Uploading file from %s%s',
+                    [
+                        $input->getArgument('baseUrl'),
+                        $fileObject->getIdentifier()
+                    ]
+                );
+                $isUploaded = $this->getFileMoveService()->cloudinaryUploadFile($fileObject, $this->targetStorage, $input->getArgument('baseUrl'));
+
+                if (!$isUploaded) {
+                    $this->log('Mmm..., I could not upload file %s', [$fileObject->getIdentifier()], self::WARNING);
+                     $this->faultyUploadedFiles[] = $fileObject->getIdentifier();
+                    continue;
+                }
+            }
+
+            // changing file storage and hard delete the file from the current storage
+            $this->log('Changing storage for file %s', [$fileObject->getIdentifier()]);
+            $this->getFileMoveService()->changeStorage($fileObject, $this->targetStorage);
+            $counter++;
         }
         $this->log(LF);
         $this->log('Number of files moved: %s', [$counter]);
+
+        // Write possible log
+        if ($this->missingFiles) {
+            $this->writeLog('missing', $this->missingFiles);
+        }
+        if ($this->faultyUploadedFiles) {
+            $this->writeLog('faulty uploaded', $this->faultyUploadedFiles);
+        }
+        if ($this->skippedFiles) {
+            $this->writeLog('skipped', $this->skippedFiles);
+        }
+
+        return 0;
+    }
+
+    /**
+     * @param string $type
+     * @param array $files
+     */
+    protected function writeLog(string $type, array $files)
+    {
+        $logFileName = sprintf(
+            '/tmp/%s-files-%s-%s-log',
+            $type,
+            getmypid(),
+            uniqid()
+        );
+
+        // Write log file
+        file_put_contents($logFileName, var_export($files, true));
+
+        // Display the message
+        $this->log(
+            'Pay attention, I have found %s %s files. A log file has been written at %s',
+            [
+                $type,
+                count($files),
+                $logFileName,
+            ],
+            self::WARNING
+        );
+    }
+
+    /**
+     * @param File $fileObject
+     *
+     * @return bool
+     */
+    protected function isFileSkipped(File $fileObject): bool
+    {
+        $isDisallowedPath = false;
+        foreach ($this->getDisallowedPaths() as $disallowedPath) {
+            $isDisallowedPath = strpos($fileObject->getIdentifier(), $disallowedPath) !== false;
+            if ($isDisallowedPath) {
+                break;
+            }
+        }
+
+        $extension = PathUtility::pathinfo($fileObject->getIdentifier(), PATHINFO_EXTENSION);
+
+        return in_array($extension, $this->getDisallowedExtensions(), true)
+            || in_array($fileObject->getIdentifier(), $this->getDisallowedFileIdentifiers(), true)
+            || $isDisallowedPath;
+    }
+
+    /**
+     * @return array
+     */
+    protected function getDisallowedExtensions(): array
+    {
+        // Empty for now
+        return [];
+    }
+
+    /**
+     * @return array
+     */
+    protected function getDisallowedFileIdentifiers(): array
+    {
+        // Empty for now
+        return [];
+    }
+
+    /**
+     * @return array
+     */
+    protected function getDisallowedPaths(): array
+    {
+        return [
+            'user_upload/_temp_/',
+            '_temp_/',
+            '_processed_/',
+        ];
     }
 
     /**
@@ -177,10 +357,16 @@ class CloudinaryMoveCommand extends Command
     }
 
     /**
+     * @param string $folderFilter
+     *
      * @return array
      */
-    protected function getSourceFiles(): array
+    protected function getSourceFiles(string $folderFilter = ''): array
     {
+        $normalizedFolderFilter = $folderFilter
+            ? DIRECTORY_SEPARATOR . trim($folderFilter, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR . '%'
+            : '';
+
         $query = $this->getQueryBuilder();
         $query
             ->select('*')
@@ -188,7 +374,11 @@ class CloudinaryMoveCommand extends Command
             ->where(
                 $query->expr()->eq('storage', $this->sourceStorage->getUid()),
                 $query->expr()->eq('missing', 0),
-                $query->expr()->eq('type', File::FILETYPE_IMAGE)
+                $query->expr()->eq('type', File::FILETYPE_IMAGE),
+                $query->expr()->like(
+                    'identifier',
+                    $query->expr()->literal($normalizedFolderFilter)
+                )
             );
 
         return $query->execute()->fetchAll();
@@ -197,17 +387,17 @@ class CloudinaryMoveCommand extends Command
     /**
      * @param string $message
      * @param array $arguments
-     * @param string $severity
+     * @param string $severity can be 'warning', 'error', 'success'
      */
-    protected function log(string $message, array $arguments = [], $severity = '')
+    protected function log(string $message = '', array $arguments = [], $severity = '')
     {
         if (!$this->isSilent()) {
+            $formattedMessage = vsprintf($message, $arguments);
             if ($severity) {
-                $message = '<' . $severity . '>' . $message . '</' . $severity . '>';
+                $this->io->$severity($formattedMessage);
+            } else {
+                $this->io->writeln($formattedMessage);
             }
-            $this->io->writeln(
-                vsprintf($message, $arguments)
-            );
         }
     }
 
