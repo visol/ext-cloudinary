@@ -46,7 +46,7 @@ class FileMoveService extends Command
         try {
             $api = new \Cloudinary\Api();
             $resource = $api->resource($publicId);
-            $fileExists = !empty(empty($resource));
+            $fileExists = !empty($resource);
         } catch (\Exception $exception) {
             $fileExists = false;
         }
