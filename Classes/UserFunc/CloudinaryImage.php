@@ -5,6 +5,10 @@ namespace Visol\Cloudinary\UserFunc;
 use Visol\Cloudinary\Utility\CloudinaryUtility;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
 
+/**
+ * Class CloudinaryImage
+ * @deprecated
+ */
 class CloudinaryImage
 {
 
