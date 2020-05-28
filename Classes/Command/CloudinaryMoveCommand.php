@@ -111,13 +111,15 @@ class CloudinaryMoveCommand extends Command
                 'target',
                 InputArgument::REQUIRED,
                 'Target storage identifier'
-            )->addArgument(
-                'baseUrl',
+            )->addOption(
+                'base-url',
+                '',
                 InputArgument::OPTIONAL,
                 'A base URL where to download missing files',
                 ''
-            )->addArgument(
-                'folderFilter',
+            )->addOption(
+                'folder-filter',
+                '',
                 InputArgument::OPTIONAL,
                 'A base URL where to download missing files',
                 ''
@@ -157,7 +159,7 @@ class CloudinaryMoveCommand extends Command
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
 
-        $files = $this->getSourceFiles($input->getArgument('folderFilter'));
+        $files = $this->getSourceFiles($input->getOption('folder-filter'));
 
         if (count($files) === 0) {
             $this->log('No files found, no work for me!');
@@ -209,7 +211,7 @@ class CloudinaryMoveCommand extends Command
             } else {
 
                 // Detect if the file is existing on storage "source" (1)
-                if (!$fileObject->exists() && !$input->getArgument('baseUrl')) {
+                if (!$fileObject->exists() && !$input->getOption('base-url')) {
 
                     $this->log('Missing file %s', [$fileObject->getIdentifier()], self::WARNING);
                     // We could log the missing files
@@ -221,11 +223,11 @@ class CloudinaryMoveCommand extends Command
                 $this->log(
                     'Uploading file from %s%s',
                     [
-                        $input->getArgument('baseUrl'),
+                        $input->getOption('base-url'),
                         $fileObject->getIdentifier()
                     ]
                 );
-                $isUploaded = $this->getFileMoveService()->cloudinaryUploadFile($fileObject, $this->targetStorage, $input->getArgument('baseUrl'));
+                $isUploaded = $this->getFileMoveService()->cloudinaryUploadFile($fileObject, $this->targetStorage, $input->getOption('base-url'));
 
                 if (!$isUploaded) {
                     $this->log('Mmm..., I could not upload file %s', [$fileObject->getIdentifier()], self::WARNING);
@@ -247,7 +249,7 @@ class CloudinaryMoveCommand extends Command
             $this->writeLog('missing', $this->missingFiles);
         }
         if ($this->faultyUploadedFiles) {
-            $this->writeLog('faulty uploaded', $this->faultyUploadedFiles);
+            $this->writeLog('faulty-uploaded', $this->faultyUploadedFiles);
         }
         if ($this->skippedFiles) {
             $this->writeLog('skipped', $this->skippedFiles);
