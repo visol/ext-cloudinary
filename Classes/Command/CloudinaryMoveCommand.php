@@ -40,9 +40,9 @@ class CloudinaryMoveCommand extends Command
     protected $io;
 
     /**
-     * @var array
+     * @var bool
      */
-    protected $options = [];
+    protected $isSilent = false;
 
     /**
      * @var ResourceStorage
@@ -97,32 +97,49 @@ class CloudinaryMoveCommand extends Command
                 false
             )
             ->addOption(
-                'skip-confirmation',
+                'yes',
                 'y',
                 InputOption::VALUE_OPTIONAL,
                 'Accept everything by default',
                 false
             )
-            ->addArgument(
-                'source',
-                InputArgument::REQUIRED,
-                'Source storage identifier'
-            )->addArgument(
-                'target',
-                InputArgument::REQUIRED,
-                'Target storage identifier'
-            )->addOption(
+            ->addOption(
                 'base-url',
                 '',
                 InputArgument::OPTIONAL,
                 'A base URL where to download missing files',
                 ''
-            )->addOption(
-                'folder-filter',
+            )
+            ->addOption(
+                'filter',
                 '',
                 InputArgument::OPTIONAL,
                 'A base URL where to download missing files',
                 ''
+            )
+            ->addOption(
+                'filter-file-type',
+                '',
+                InputArgument::OPTIONAL,
+                'Add a possible filter for file type as defined by FAL (e.g 1,2,3,4,5)',
+                ''
+            )
+            ->addOption(
+                'limit',
+                '',
+                InputArgument::OPTIONAL,
+                'Add a possible offset, limit to restrain the number of files. (eg. 0,100)',
+                ''
+            )
+            ->addArgument(
+                'source',
+                InputArgument::REQUIRED,
+                'Source storage identifier'
+            )
+            ->addArgument(
+                'target',
+                InputArgument::REQUIRED,
+                'Target storage identifier'
             )
             ->setHelp(
                 'Usage: ./vendor/bin/typo3 cloudinary:move 1 2'
@@ -140,7 +157,7 @@ class CloudinaryMoveCommand extends Command
     {
         $this->io = new SymfonyStyle($input, $output);
 
-        $this->options = $input->getOptions();
+        $this->isSilent = $input->getOption('silent');
 
         $this->sourceStorage = ResourceFactory::getInstance()->getStorageObject(
             $input->getArgument('source')
@@ -158,8 +175,7 @@ class CloudinaryMoveCommand extends Command
      */
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
-
-        $files = $this->getSourceFiles($input->getOption('folder-filter'));
+        $files = $this->getFiles($input);
 
         if (count($files) === 0) {
             $this->log('No files found, no work for me!');
@@ -178,7 +194,7 @@ class CloudinaryMoveCommand extends Command
         );
 
         // A chance to the user to confirm the action
-        if ($this->options['skip-confirmation'] === false) {
+        if ($input->getOption('yes') === false) {
 
             $response = $this->io->confirm('Shall I continue?', true);
 
@@ -359,29 +375,57 @@ class CloudinaryMoveCommand extends Command
     }
 
     /**
-     * @param string $folderFilter
+     * @param InputInterface $input
      *
      * @return array
      */
-    protected function getSourceFiles(string $folderFilter = ''): array
+    protected function getFiles(InputInterface $input): array
     {
-        $normalizedFolderFilter = $folderFilter
-            ? DIRECTORY_SEPARATOR . trim($folderFilter, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR . '%'
-            : '';
-
         $query = $this->getQueryBuilder();
         $query
             ->select('*')
             ->from($this->tableName)
             ->where(
                 $query->expr()->eq('storage', $this->sourceStorage->getUid()),
-                $query->expr()->eq('missing', 0),
-                $query->expr()->eq('type', File::FILETYPE_IMAGE),
+                $query->expr()->eq('missing', 0)
+            );
+
+        // Possible custom filter
+        if ($input->getOption('filter')) {
+            $query->andWhere(
                 $query->expr()->like(
                     'identifier',
-                    $query->expr()->literal($normalizedFolderFilter)
+                    $query->expr()->literal($input->getOption('filter'))
                 )
             );
+        }
+
+        // Possible filter by file type
+        if ($input->getOption('filter-file-type')) {
+            $query->andWhere(
+                $query->expr()->eq(
+                    'type',
+                    $input->getOption('filter-file-type')
+                )
+            );
+        }
+
+        // Set a possible offset, limit
+        if ($input->getOption('limit')) {
+            [$offsetOrLimit, $limit] = GeneralUtility::trimExplode(
+                ',',
+                $input->getOption('limit'),
+                true
+            );
+
+            if ($limit !== null) {
+
+                $query->setFirstResult((int)$offsetOrLimit);
+                $query->setMaxResults((int)$limit);
+            } else {
+                $query->setMaxResults((int)$offsetOrLimit);
+            }
+        }
 
         return $query->execute()->fetchAll();
     }
@@ -393,7 +437,7 @@ class CloudinaryMoveCommand extends Command
      */
     protected function log(string $message = '', array $arguments = [], $severity = '')
     {
-        if (!$this->isSilent()) {
+        if (!$this->isSilent) {
             $formattedMessage = vsprintf($message, $arguments);
             if ($severity) {
                 $this->io->$severity($formattedMessage);
@@ -401,14 +445,6 @@ class CloudinaryMoveCommand extends Command
                 $this->io->writeln($formattedMessage);
             }
         }
-    }
-
-    /**
-     * @return bool
-     */
-    protected function isSilent(): bool
-    {
-        return $this->options['silent'] !== false;
     }
 
     /**

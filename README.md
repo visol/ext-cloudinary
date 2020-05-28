@@ -108,16 +108,18 @@ The file uid will be kept!
   
 ```shell script
 ./vendor/bin/typo3 cloudinary:move 1 2
-# where 1 is the source storage (local)
-# and 2 is the target storage (cloudinary)
-
-# Will all parameters
-./vendor/bin/typo3 cloudinary:move 1 2 https://domain.tld/fileadmin folderFilter
-
 # param 1: the source storage uid (local)
 # param 2: the target storage uid (cloudinary)
-# param 3: the base URL where to download files (the file will be downloaded directly from the remote)
-# param 4: a possible folder filter
+
+# Will all parameters
+./vendor/bin/typo3 cloudinary:move 1 2 --base-url=https://domain.tld/fileadmin --folder-filter=folderFilter
+
+# --base-url: the base URL where to download files (the file will be downloaded directly from the remote)
+# --filter: a possible filter, ex. %.youtube, /foo/bar/%
+# --filter-file-type: add a possible filter for file type as defined by FAL (e.g 1,2,3,4,5)
+# --limit: add a possible offset, limit to restrain the number of files. (eg. 0,100)
+# --yes: do not ask question. Just do it!
+# --silent: be quiet!
 ```
 
 Tip: to sync a bunch of files, you can use the Cloudinary CLI which is convenient to upload
