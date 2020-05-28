@@ -18,8 +18,8 @@ use Symfony\Component\Console\Command\Command;
 use TYPO3\CMS\Core\Database\ConnectionPool;
 use TYPO3\CMS\Core\Database\Query\QueryBuilder;
 use TYPO3\CMS\Core\Resource\DuplicationBehavior;
-use TYPO3\CMS\Core\Resource\File;
 use TYPO3\CMS\Core\Resource\ResourceFactory;
+use TYPO3\CMS\Core\Resource\ResourceStorage;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
 
 /**
@@ -34,14 +34,19 @@ class CloudinaryCopyCommand extends Command
     protected $io;
 
     /**
-     * @var array
+     * @var ResourceStorage
      */
-    protected $options = [];
+    protected $sourceStorage;
 
     /**
-     * @var array
+     * @var ResourceStorage
      */
-    protected $arguments = [];
+    protected $targetStorage;
+
+    /**
+     * @var bool
+     */
+    protected $isSilent = false;
 
     /**
      * @var string
@@ -64,11 +69,47 @@ class CloudinaryCopyCommand extends Command
                 'Mute output as much as possible',
                 false
             )
+            ->addOption(
+                'yes',
+                'y',
+                InputOption::VALUE_OPTIONAL,
+                'Accept everything by default',
+                false
+            )
+            ->addOption(
+                'base-url',
+                '',
+                InputArgument::OPTIONAL,
+                'A base URL where to download missing files',
+                ''
+            )
+            ->addOption(
+                'filter',
+                '',
+                InputArgument::OPTIONAL,
+                'A base URL where to download missing files',
+                ''
+            )
+            ->addOption(
+                'filter-file-type',
+                '',
+                InputArgument::OPTIONAL,
+                'Add a possible filter for file type as defined by FAL (e.g 1,2,3,4,5)',
+                ''
+            )
+            ->addOption(
+                'limit',
+                '',
+                InputArgument::OPTIONAL,
+                'Add a possible offset, limit to restrain the number of files. (eg. 0,100)',
+                ''
+            )
             ->addArgument(
                 'source',
                 InputArgument::REQUIRED,
                 'Source storage identifier'
-            )->addArgument(
+            )
+            ->addArgument(
                 'target',
                 InputArgument::REQUIRED,
                 'Target storage identifier'
@@ -89,8 +130,14 @@ class CloudinaryCopyCommand extends Command
     {
         $this->io = new SymfonyStyle($input, $output);
 
-        $this->options = $input->getOptions();
-        $this->arguments = $input->getArguments();
+        $this->isSilent = $input->getOption('silent');
+
+        $this->sourceStorage = ResourceFactory::getInstance()->getStorageObject(
+            $input->getArgument('source')
+        );
+        $this->targetStorage = ResourceFactory::getInstance()->getStorageObject(
+            $input->getArgument('target')
+        );
     }
 
     /**
@@ -99,39 +146,48 @@ class CloudinaryCopyCommand extends Command
      * @param InputInterface $input
      * @param OutputInterface $output
      */
-    protected function execute(InputInterface $input, OutputInterface $output)
+    protected function execute(InputInterface $input, OutputInterface $output): int
     {
-        $source = $input->getArgument('source');
-        $target = $input->getArgument('target');
+        $files = $this->getFiles($input);
 
-
-        $sourceStorage = ResourceFactory::getInstance()->getStorageObject($source);
-        $targetStorage = ResourceFactory::getInstance()->getStorageObject($target);
-
-        $files = $this->getFiles($sourceStorage->getUid());
+        if (count($files) === 0) {
+            $this->log('No files found, no work for me!');
+            return 0;
+        }
 
         $this->log(
             'Copying %s files from storage "%s" (%s) to "%s" (%s)',
             [
                 count($files),
-                $sourceStorage->getName(),
-                $sourceStorage->getUid(),
-                $targetStorage->getName(),
-                $targetStorage->getUid(),
+                $this->sourceStorage->getName(),
+                $this->sourceStorage->getUid(),
+                $this->targetStorage->getName(),
+                $this->targetStorage->getUid(),
             ],
             'info'
         );
 
+        // A chance to the user to confirm the action
+        if ($input->getOption('yes') === false) {
+
+            $response = $this->io->confirm('Shall I continue?', true);
+
+            if (!$response) {
+                $this->log('Script aborted');
+                return 0;
+            }
+        }
+
         $counter = 0;
         foreach ($files as $file) {
             $fileObject = ResourceFactory::getInstance()->getFileObjectByStorageAndIdentifier(
-                $sourceStorage->getUid(),
+                $this->sourceStorage->getUid(),
                 $file['identifier']
             );
 
             if ($fileObject->exists()) {
                 $this->log('Copying %s', [$fileObject->getIdentifier()]);
-                $targetStorage->addFile(
+                $this->targetStorage->addFile(
                     $fileObject->getForLocalProcessing(),
                     $fileObject->getParentFolder(),
                     $fileObject->getName(),
@@ -142,6 +198,8 @@ class CloudinaryCopyCommand extends Command
         }
         $this->log(LF);
         $this->log('Number of files copied: %s', [$counter]);
+
+        return 0;
     }
 
     /**
@@ -155,20 +213,57 @@ class CloudinaryCopyCommand extends Command
     }
 
     /**
-     * @param int $storageIdentifier
+     * @param InputInterface $input
+     *
      * @return array
      */
-    protected function getFiles(int $storageIdentifier): array
+    protected function getFiles(InputInterface $input): array
     {
         $query = $this->getQueryBuilder();
         $query
             ->select('*')
             ->from($this->tableName)
             ->where(
-                $query->expr()->eq('storage', $storageIdentifier),
-                $query->expr()->eq('missing', 0),
-                $query->expr()->eq('type', File::FILETYPE_IMAGE)
+                $query->expr()->eq('storage', $this->sourceStorage->getUid()),
+                $query->expr()->eq('missing', 0)
             );
+
+        // Possible custom filter
+        if ($input->getOption('filter')) {
+            $query->andWhere(
+                $query->expr()->like(
+                    'identifier',
+                    $query->expr()->literal($input->getOption('filter'))
+                )
+            );
+        }
+
+        // Possible filter by file type
+        if ($input->getOption('filter-file-type')) {
+            $query->andWhere(
+                $query->expr()->eq(
+                    'type',
+                    $input->getOption('filter-file-type')
+                )
+            );
+        }
+
+        // Set a possible offset, limit
+        if ($input->getOption('limit')) {
+            [$offsetOrLimit, $limit] = GeneralUtility::trimExplode(
+                ',',
+                $input->getOption('limit'),
+                true
+            );
+
+            if ($limit !== null) {
+
+                $query->setFirstResult((int)$offsetOrLimit);
+                $query->setMaxResults((int)$limit);
+            } else {
+                $query->setMaxResults((int)$offsetOrLimit);
+            }
+        }
 
         return $query->execute()->fetchAll();
     }
@@ -180,7 +275,7 @@ class CloudinaryCopyCommand extends Command
      */
     protected function log(string $message, array $arguments = [], $severity = '')
     {
-        if (!$this->isSilent()) {
+        if (!$this->isSilent) {
             if ($severity) {
                 $message = '<' . $severity . '>' . $message . '</' . $severity . '>';
             }
@@ -188,13 +283,5 @@ class CloudinaryCopyCommand extends Command
                 vsprintf($message, $arguments)
             );
         }
-    }
-
-    /**
-     * @return bool
-     */
-    protected function isSilent(): bool
-    {
-        return $this->options['silent'] !== false;
     }
 }
