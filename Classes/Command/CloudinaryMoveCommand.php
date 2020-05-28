@@ -9,70 +9,30 @@ namespace Visol\Cloudinary\Command;
  * LICENSE.md file that was distributed with this source code.
  */
 
-use Doctrine\DBAL\Driver\Connection;
 use TYPO3\CMS\Core\Utility\PathUtility;
 use Visol\Cloudinary\Services\FileMoveService;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
-use Symfony\Component\Console\Style\SymfonyStyle;
-use Symfony\Component\Console\Command\Command;
-use TYPO3\CMS\Core\Database\ConnectionPool;
-use TYPO3\CMS\Core\Database\Query\QueryBuilder;
 use TYPO3\CMS\Core\Resource\File;
 use TYPO3\CMS\Core\Resource\ResourceFactory;
-use TYPO3\CMS\Core\Resource\ResourceStorage;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
 
 /**
  * Class CloudinaryMoveCommand
  */
-class CloudinaryMoveCommand extends Command
+class CloudinaryMoveCommand extends AbstractCloudinaryCommand
 {
-
-    const WARNING = 'warning';
-    const SUCCESS = 'success';
-
     /**
-     * @var SymfonyStyle
+     * @var array
      */
-    protected $io;
-
-    /**
-     * @var bool
-     */
-    protected $isSilent = false;
-
-    /**
-     * @var ResourceStorage
-     */
-    protected $sourceStorage;
-
-    /**
-     * @var ResourceStorage
-     */
-    protected $targetStorage;
-
-    /**
-     * @var string
-     */
-    protected $tableName = 'sys_file';
+    protected $faultyUploadedFiles;
 
     /**
      * @var array
      */
-    private $missingFiles = [];
-
-    /**
-     * @var array
-     */
-    private $faultyUploadedFiles;
-
-    /**
-     * @var array
-     */
-    private $skippedFiles;
+    protected $skippedFiles;
 
     /**
      * Configure the command by defining the name, options and arguments
@@ -114,7 +74,7 @@ class CloudinaryMoveCommand extends Command
                 'filter',
                 '',
                 InputArgument::OPTIONAL,
-                'A base URL where to download missing files',
+                'A flexible filter containing wild cards, ex. %.youtube, /foo/bar/%',
                 ''
             )
             ->addOption(
@@ -144,27 +104,6 @@ class CloudinaryMoveCommand extends Command
             ->setHelp(
                 'Usage: ./vendor/bin/typo3 cloudinary:move 1 2'
             );
-    }
-
-    /**
-     * Initializes the command after the input has been bound and before the input
-     * is validated.
-     *
-     * @see InputInterface::bind()
-     * @see InputInterface::validate()
-     */
-    protected function initialize(InputInterface $input, OutputInterface $output)
-    {
-        $this->io = new SymfonyStyle($input, $output);
-
-        $this->isSilent = $input->getOption('silent');
-
-        $this->sourceStorage = ResourceFactory::getInstance()->getStorageObject(
-            $input->getArgument('source')
-        );
-        $this->targetStorage = ResourceFactory::getInstance()->getStorageObject(
-            $input->getArgument('target')
-        );
     }
 
     /**
@@ -275,34 +214,6 @@ class CloudinaryMoveCommand extends Command
     }
 
     /**
-     * @param string $type
-     * @param array $files
-     */
-    protected function writeLog(string $type, array $files)
-    {
-        $logFileName = sprintf(
-            '/tmp/%s-files-%s-%s-log',
-            $type,
-            getmypid(),
-            uniqid()
-        );
-
-        // Write log file
-        file_put_contents($logFileName, var_export($files, true));
-
-        // Display the message
-        $this->log(
-            'Pay attention, I have found %s %s files. A log file has been written at %s',
-            [
-                $type,
-                count($files),
-                $logFileName,
-            ],
-            self::WARNING
-        );
-    }
-
-    /**
      * @param File $fileObject
      *
      * @return bool
@@ -352,99 +263,6 @@ class CloudinaryMoveCommand extends Command
             '_temp_/',
             '_processed_/',
         ];
-    }
-
-    /**
-     * @return object|QueryBuilder
-     */
-    protected function getQueryBuilder(): QueryBuilder
-    {
-        /** @var ConnectionPool $connectionPool */
-        $connectionPool = GeneralUtility::makeInstance(ConnectionPool::class);
-        return $connectionPool->getQueryBuilderForTable($this->tableName);
-    }
-
-    /**
-     * @return object|Connection
-     */
-    protected function getConnection(): Connection
-    {
-        /** @var ConnectionPool $connectionPool */
-        $connectionPool = GeneralUtility::makeInstance(ConnectionPool::class);
-        return $connectionPool->getConnectionForTable($this->tableName);
-    }
-
-    /**
-     * @param InputInterface $input
-     *
-     * @return array
-     */
-    protected function getFiles(InputInterface $input): array
-    {
-        $query = $this->getQueryBuilder();
-        $query
-            ->select('*')
-            ->from($this->tableName)
-            ->where(
-                $query->expr()->eq('storage', $this->sourceStorage->getUid()),
-                $query->expr()->eq('missing', 0)
-            );
-
-        // Possible custom filter
-        if ($input->getOption('filter')) {
-            $query->andWhere(
-                $query->expr()->like(
-                    'identifier',
-                    $query->expr()->literal($input->getOption('filter'))
-                )
-            );
-        }
-
-        // Possible filter by file type
-        if ($input->getOption('filter-file-type')) {
-            $query->andWhere(
-                $query->expr()->eq(
-                    'type',
-                    $input->getOption('filter-file-type')
-                )
-            );
-        }
-
-        // Set a possible offset, limit
-        if ($input->getOption('limit')) {
-            [$offsetOrLimit, $limit] = GeneralUtility::trimExplode(
-                ',',
-                $input->getOption('limit'),
-                true
-            );
-
-            if ($limit !== null) {
-
-                $query->setFirstResult((int)$offsetOrLimit);
-                $query->setMaxResults((int)$limit);
-            } else {
-                $query->setMaxResults((int)$offsetOrLimit);
-            }
-        }
-
-        return $query->execute()->fetchAll();
-    }
-
-    /**
-     * @param string $message
-     * @param array $arguments
-     * @param string $severity can be 'warning', 'error', 'success'
-     */
-    protected function log(string $message = '', array $arguments = [], $severity = '')
-    {
-        if (!$this->isSilent) {
-            $formattedMessage = vsprintf($message, $arguments);
-            if ($severity) {
-                $this->io->$severity($formattedMessage);
-            } else {
-                $this->io->writeln($formattedMessage);
-            }
-        }
     }
 
     /**

@@ -13,45 +13,16 @@ use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
-use Symfony\Component\Console\Style\SymfonyStyle;
-use Symfony\Component\Console\Command\Command;
-use TYPO3\CMS\Core\Database\ConnectionPool;
-use TYPO3\CMS\Core\Database\Query\QueryBuilder;
 use TYPO3\CMS\Core\Resource\DuplicationBehavior;
+use TYPO3\CMS\Core\Resource\File;
 use TYPO3\CMS\Core\Resource\ResourceFactory;
-use TYPO3\CMS\Core\Resource\ResourceStorage;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
 
 /**
  * Class CloudinaryCopyCommand
  */
-class CloudinaryCopyCommand extends Command
+class CloudinaryCopyCommand extends AbstractCloudinaryCommand
 {
-
-    /**
-     * @var SymfonyStyle
-     */
-    protected $io;
-
-    /**
-     * @var ResourceStorage
-     */
-    protected $sourceStorage;
-
-    /**
-     * @var ResourceStorage
-     */
-    protected $targetStorage;
-
-    /**
-     * @var bool
-     */
-    protected $isSilent = false;
-
-    /**
-     * @var string
-     */
-    protected $tableName = 'sys_file';
 
     /**
      * Configure the command by defining the name, options and arguments
@@ -87,7 +58,7 @@ class CloudinaryCopyCommand extends Command
                 'filter',
                 '',
                 InputArgument::OPTIONAL,
-                'A base URL where to download missing files',
+                'A flexible filter containing wild cards, ex. %.youtube, /foo/bar/%',
                 ''
             )
             ->addOption(
@@ -120,27 +91,6 @@ class CloudinaryCopyCommand extends Command
     }
 
     /**
-     * Initializes the command after the input has been bound and before the input
-     * is validated.
-     *
-     * @see InputInterface::bind()
-     * @see InputInterface::validate()
-     */
-    protected function initialize(InputInterface $input, OutputInterface $output)
-    {
-        $this->io = new SymfonyStyle($input, $output);
-
-        $this->isSilent = $input->getOption('silent');
-
-        $this->sourceStorage = ResourceFactory::getInstance()->getStorageObject(
-            $input->getArgument('source')
-        );
-        $this->targetStorage = ResourceFactory::getInstance()->getStorageObject(
-            $input->getArgument('target')
-        );
-    }
-
-    /**
      * Move file
      *
      * @param InputInterface $input
@@ -163,8 +113,7 @@ class CloudinaryCopyCommand extends Command
                 $this->sourceStorage->getUid(),
                 $this->targetStorage->getName(),
                 $this->targetStorage->getUid(),
-            ],
-            'info'
+            ]
         );
 
         // A chance to the user to confirm the action
@@ -185,6 +134,14 @@ class CloudinaryCopyCommand extends Command
                 $file['identifier']
             );
 
+            // Get the chance to download it
+            if (!$fileObject->exists() && $input->getOption('base-url')) {
+                $url = rtrim($input->getOption('base-url'), DIRECTORY_SEPARATOR) . $fileObject->getIdentifier();
+                $this->log(
+                    'Missing file, try downloading it from %s%s', [$url]
+                );
+                $this->download($fileObject, $url);
+            }
             if ($fileObject->exists()) {
                 $this->log('Copying %s', [$fileObject->getIdentifier()]);
                 $this->targetStorage->addFile(
@@ -194,94 +151,63 @@ class CloudinaryCopyCommand extends Command
                     DuplicationBehavior::REPLACE
                 );
                 $counter++;
+            } else {
+                $this->log('Missing file %s', [$fileObject->getIdentifier()], self::WARNING);
+                // We could log the missing files
+                $this->missingFiles[] = $fileObject->getIdentifier();
+                continue;
             }
         }
         $this->log(LF);
         $this->log('Number of files copied: %s', [$counter]);
 
+        // Write possible log
+        if ($this->missingFiles) {
+            print_r($this->missingFiles);
+            $this->writeLog('missing', $this->missingFiles);
+        }
+
         return 0;
     }
 
     /**
-     * @return object|QueryBuilder
-     */
-    protected function getQueryBuilder(): QueryBuilder
-    {
-        /** @var ConnectionPool $connectionPool */
-        $connectionPool = GeneralUtility::makeInstance(ConnectionPool::class);
-        return $connectionPool->getQueryBuilderForTable($this->tableName);
-    }
-
-    /**
-     * @param InputInterface $input
+     * @param File $fileObject
+     * @param string $url
      *
-     * @return array
+     * @return bool
      */
-    protected function getFiles(InputInterface $input): array
+    public function download(File $fileObject, string $url): bool
     {
-        $query = $this->getQueryBuilder();
-        $query
-            ->select('*')
-            ->from($this->tableName)
-            ->where(
-                $query->expr()->eq('storage', $this->sourceStorage->getUid()),
-                $query->expr()->eq('missing', 0)
-            );
+        $this->ensureDirectoryExistence($fileObject);
 
-        // Possible custom filter
-        if ($input->getOption('filter')) {
-            $query->andWhere(
-                $query->expr()->like(
-                    'identifier',
-                    $query->expr()->literal($input->getOption('filter'))
-                )
-            );
-        }
-
-        // Possible filter by file type
-        if ($input->getOption('filter-file-type')) {
-            $query->andWhere(
-                $query->expr()->eq(
-                    'type',
-                    $input->getOption('filter-file-type')
-                )
-            );
-        }
-
-        // Set a possible offset, limit
-        if ($input->getOption('limit')) {
-            [$offsetOrLimit, $limit] = GeneralUtility::trimExplode(
-                ',',
-                $input->getOption('limit'),
-                true
-            );
-
-            if ($limit !== null) {
-
-                $query->setFirstResult((int)$offsetOrLimit);
-                $query->setMaxResults((int)$limit);
-            } else {
-                $query->setMaxResults((int)$offsetOrLimit);
-            }
-        }
-
-        return $query->execute()->fetchAll();
+        $contents = file_get_contents($url);
+        return $contents
+            ? (bool)file_put_contents($this->getAbsolutePath($fileObject), $contents)
+            : false;
     }
 
     /**
-     * @param string $message
-     * @param array $arguments
-     * @param string $severity
+     * @param File $fileObject
+     *
+     * @return string
      */
-    protected function log(string $message, array $arguments = [], $severity = '')
+    protected function getAbsolutePath(File $fileObject): string
     {
-        if (!$this->isSilent) {
-            if ($severity) {
-                $message = '<' . $severity . '>' . $message . '</' . $severity . '>';
-            }
-            $this->io->writeln(
-                vsprintf($message, $arguments)
-            );
+        // Compute the absolute file name of the file to move
+        $configuration = $fileObject->getStorage()->getConfiguration();
+        $fileRelativePath = rtrim($configuration['basePath'], '/') . $fileObject->getIdentifier();
+        return GeneralUtility::getFileAbsFileName($fileRelativePath);
+    }
+
+    /**
+     * @param File $fileObject
+     */
+    protected function ensureDirectoryExistence(File $fileObject)
+    {
+        // Make sure the directory exists
+        $directory = dirname($this->getAbsolutePath($fileObject));
+        if (!is_dir($directory)) {
+            GeneralUtility::mkdir_deep($directory);
         }
     }
 }
