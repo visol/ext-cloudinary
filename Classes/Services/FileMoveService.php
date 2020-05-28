@@ -56,37 +56,6 @@ class FileMoveService extends Command
 
     /**
      * @param File $fileObject
-     * @param string $baseUrl
-     *
-     */
-    public function download(File $fileObject, string $baseUrl)
-    {
-        $this->ensureDirectoryExistence($fileObject);
-
-        // Get storage configuration
-        $configuration = $fileObject->getStorage()->getConfiguration();
-
-        $url = sprintf(
-            '%s/%s/%s',
-            $baseUrl,
-            rtrim($configuration['basePath'], DIRECTORY_SEPARATOR),
-            ltrim($fileObject->getIdentifier(), DIRECTORY_SEPARATOR)
-        );
-
-        $contents = file_get_contents($url);
-        $isDownloaded = false;
-
-        if ($contents) {
-            $isDownloaded = (bool)file_put_contents(
-                $this->getAbsolutePath($fileObject),
-                $contents
-            );
-        }
-        return $isDownloaded;
-    }
-
-    /**
-     * @param File $fileObject
      * @param ResourceStorage $targetStorage
      * @param bool $removeFile
      *
