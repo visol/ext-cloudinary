@@ -19,6 +19,7 @@ use TYPO3\CMS\Core\Database\Query\QueryBuilder;
 use TYPO3\CMS\Core\Resource\ResourceFactory;
 use TYPO3\CMS\Core\Resource\ResourceStorage;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
+use Visol\Cloudinary\Driver\CloudinaryDriver;
 
 /**
  * Class AbstractCloudinaryCommand
@@ -26,8 +27,9 @@ use TYPO3\CMS\Core\Utility\GeneralUtility;
 abstract class AbstractCloudinaryCommand extends Command
 {
 
-    const WARNING = 'warning';
     const SUCCESS = 'success';
+    const WARNING = 'warning';
+    const ERROR = 'error';
 
     /**
      * @var SymfonyStyle
@@ -76,7 +78,6 @@ abstract class AbstractCloudinaryCommand extends Command
             $input->getArgument('target')
         );
     }
-
 
     /**
      * @param InputInterface $input
@@ -163,6 +164,14 @@ abstract class AbstractCloudinaryCommand extends Command
     }
 
     /**
+     * @return bool
+     */
+    protected function checkDriverType(): bool
+    {
+        return $this->targetStorage->getDriverType() === CloudinaryDriver::DRIVER_TYPE;
+    }
+
+    /**
      * @param string $message
      * @param array $arguments
      * @param string $severity can be 'warning', 'error', 'success'
@@ -178,6 +187,34 @@ abstract class AbstractCloudinaryCommand extends Command
             }
         }
     }
+
+    /**
+     * @param string $message
+     * @param array $arguments
+     */
+    protected function success(string $message = '', array $arguments = [])
+    {
+        $this->log($message, $arguments, self::SUCCESS);
+    }
+
+    /**
+     * @param string $message
+     * @param array $arguments
+     */
+    protected function warning(string $message = '', array $arguments = [])
+    {
+        $this->log($message, $arguments, self::WARNING);
+    }
+
+    /**
+     * @param string $message
+     * @param array $arguments
+     */
+    protected function error(string $message = '', array $arguments = [])
+    {
+        $this->log($message, $arguments, self::ERROR);
+    }
+
 
     /**
      * @return object|QueryBuilder
