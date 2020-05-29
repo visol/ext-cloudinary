@@ -17,6 +17,7 @@ use TYPO3\CMS\Core\Resource\DuplicationBehavior;
 use TYPO3\CMS\Core\Resource\File;
 use TYPO3\CMS\Core\Resource\ResourceFactory;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
+use Visol\Cloudinary\Driver\CloudinaryDriver;
 
 /**
  * Class CloudinaryCopyCommand
@@ -98,6 +99,12 @@ class CloudinaryCopyCommand extends AbstractCloudinaryCommand
      */
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
+
+        if (!$this->checkDriverType()) {
+            $this->log('Look out! target storage is not of type "cloudinary"');
+            return 1;
+        }
+
         $files = $this->getFiles($input);
 
         if (count($files) === 0) {
@@ -163,8 +170,8 @@ class CloudinaryCopyCommand extends AbstractCloudinaryCommand
 
         // Write possible log
         if ($this->missingFiles) {
-            print_r($this->missingFiles);
             $this->writeLog('missing', $this->missingFiles);
+            print_r($this->missingFiles);
         }
 
         return 0;

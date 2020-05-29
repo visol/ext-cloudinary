@@ -114,6 +114,12 @@ class CloudinaryMoveCommand extends AbstractCloudinaryCommand
      */
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
+
+        if (!$this->checkDriverType()) {
+            $this->log('Look out! target storage is not of type "cloudinary"');
+            return 1;
+        }
+
         $files = $this->getFiles($input);
 
         if (count($files) === 0) {
