@@ -11,6 +11,7 @@ namespace Visol\Cloudinary\Driver;
 
 use Cloudinary\Api;
 use Cloudinary\Search;
+use TYPO3\CMS\Core\Type\File\FileInfo;
 use Visol\Cloudinary\Cache\CloudinaryTypo3Cache;
 use Visol\Cloudinary\Utility\CloudinaryPathUtility;
 use TYPO3\CMS\Core\Charset\CharsetConverter;
@@ -18,7 +19,6 @@ use TYPO3\CMS\Core\Log\LogLevel;
 use TYPO3\CMS\Core\Log\LogManager;
 use TYPO3\CMS\Core\Messaging\FlashMessage;
 use TYPO3\CMS\Core\Messaging\FlashMessageService;
-use TYPO3\CMS\Core\Resource\File;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
 use TYPO3\CMS\Core\Utility\PathUtility;
 use TYPO3\CMS\Core\Resource\Driver\AbstractHierarchicalFilesystemDriver;
@@ -64,6 +64,14 @@ class CloudinaryDriver extends AbstractHierarchicalFilesystemDriver
      * @var array
      */
     protected $cachedPermissions = [];
+
+    /**
+     * Cache to avoid creating multiple local files since it is time consuming.
+     * We must download the file.
+     *
+     * @var array
+     */
+    protected $localProcessingFiles = [];
 
     /**
      * @var \TYPO3\CMS\Core\Resource\ResourceStorage
@@ -154,13 +162,13 @@ class CloudinaryDriver extends AbstractHierarchicalFilesystemDriver
      * @param string $message
      * @param array $arguments
      */
-    public function log(string $message, array $arguments = [])
+    protected function log(string $message, array $arguments = [])
     {
         /** @var \TYPO3\CMS\Core\Log\Logger $logger */
         $logger = GeneralUtility::makeInstance(LogManager::class)->getLogger(__CLASS__);
         $logger->log(
             LogLevel::INFO,
-            vsprintf('[DRIVER] ' . $message, $arguments)
+            vsprintf('[DRIVER]' . $message, $arguments)
         );
     }
 
@@ -207,46 +215,85 @@ class CloudinaryDriver extends AbstractHierarchicalFilesystemDriver
      */
     public function getFileInfoByIdentifier($fileIdentifier, array $propertiesToExtract = [])
     {
+        // True at the indexation of the file
         if (!$this->resourceExists($fileIdentifier)) {
 
-            // Make a new attempt since caching may interfere...
-            $publicId = CloudinaryPathUtility::computeCloudinaryPublicId($fileIdentifier);
-            $this->log('[API] method "getFileInfoByIdentifier": fetch resource with identifier "%s"', [$fileIdentifier]);
-            $cloudinaryResource = (array)$this->getApi()->resource($publicId);
+            // We are force to download the file in order to correctly find the mime type.
+            $localFile = $this->getFileForLocalProcessing($fileIdentifier);
 
+            /** @var FileInfo $fileInfo */
+            $fileInfo = GeneralUtility::makeInstance(FileInfo::class, $localFile);
+            $extension = PathUtility::pathinfo($localFile, PATHINFO_EXTENSION);
+            $mimeType = $fileInfo->getMimeType();
+            if (strstr($mimeType, 'image/')) {
+                $publicId = CloudinaryPathUtility::computeCloudinaryPublicId($fileIdentifier);
+                $options = [];
+            } else {
+                $publicId = $fileIdentifier;
+                $options = [
+                    'resource_type' => 'raw'
+                ];
+            }
+            // Make a new attempt since caching may interfere...
+            $this->log('[API] GetFileInfoByIdentifier: fetch resource "%s"', [$fileIdentifier]);
+
+            // Will throw an exception if the resource is not found
+            $resource = (array)$this->getApi()->resource($publicId, $options);
             $this->flushFileCache(); // We flush the cache again....
 
-            // This time we have a problem...
-            if (!$cloudinaryResource) {
-                throw new \Exception(
-                    sprintf(
-                        'I could not retrieve the file info since no file was found for identifier "%s"',
-                        $fileIdentifier
-                    ),
-                    1574783174
-                );
-            }
         } else {
-            $cloudinaryResource = $this->getCloudinaryResource($fileIdentifier);
+            $resource = $this->getCloudinaryResource($fileIdentifier);
+
+            $mimeType = $this->getCloudinaryResourceMimeType($resource);
+            $extension = $this->getResourceInfo($resource, 'format');
+
+            // If the file is not of type image we have to download to correctly find the mime type.
+            if (!$mimeType) {
+
+                $localFile = $this->getFileForLocalProcessing($fileIdentifier);
+
+                /** @var FileInfo $fileInfo */
+                $fileInfo = GeneralUtility::makeInstance(FileInfo::class, $localFile);
+                $mimeType = $fileInfo->getMimeType();
+
+                $extension = PathUtility::pathinfo($localFile, PATHINFO_EXTENSION);
+            }
         }
 
         $canonicalFolderIdentifier = $this->canonicalizeAndCheckFolderIdentifier(dirname($fileIdentifier));
 
-        return [
+        $values = [
             'identifier_hash' => $this->hashIdentifier($fileIdentifier),
             'folder_hash' => sha1($canonicalFolderIdentifier),
-            'creation_date' => strtotime($cloudinaryResource['created_at']),
-            'modification_date' => strtotime($cloudinaryResource['created_at']),
-            'mime_type' => $this->getMimeType($cloudinaryResource),
-            'extension' => $cloudinaryResource['format'],
-            'size' => $cloudinaryResource['bytes'],
-            'width' => $cloudinaryResource['width'],
-            'height' => $cloudinaryResource['height'],
+            'creation_date' => strtotime($resource['created_at']),
+            'modification_date' => strtotime($resource['created_at']),
+            'mime_type' => $mimeType,
+            'extension' => $extension,
+            'size' => $this->getResourceInfo($resource, 'bytes'),
+            'width' => $this->getResourceInfo($resource, 'width'),
+            'height' => $this->getResourceInfo($resource, 'height'),
             'storage' => $this->storageUid,
             'identifier' => $fileIdentifier,
-            'type' => File::FILETYPE_IMAGE,
-            'name' => PathUtility::basename($cloudinaryResource['secure_url'])
+            'name' => PathUtility::pathinfo(
+                $this->getResourceInfo($resource, 'filename'),
+                PATHINFO_FILENAME
+            ),
         ];
+
+        return $values;
+    }
+
+    /**
+     * @param array $resource
+     * @param string $name
+     *
+     * @return string
+     */
+    protected function getResourceInfo(array $resource, string $name): string
+    {
+        return isset($resource[$name])
+            ? $resource[$name]
+            : '';
     }
 
     /**
@@ -339,17 +386,27 @@ class CloudinaryDriver extends AbstractHierarchicalFilesystemDriver
                 PathUtility::basename($localFilePath)
         );
 
-        $publicId = PathUtility::basename(
-            CloudinaryPathUtility::computeCloudinaryPublicId($fileName)
-        );
+        // Compute a few things for the Cloudinary SDK
+        /** @var FileInfo $fileInfo */
+        $fileInfo = GeneralUtility::makeInstance(FileInfo::class, $localFilePath);
+        if (strstr($fileInfo->getMimeType(), 'image/')) {
+            $resourceType = 'image';
+            $publicId = PathUtility::basename(
+                CloudinaryPathUtility::computeCloudinaryPublicId($fileName)
+            );
+        } else {
+            $resourceType = 'raw';
+            $publicId = $fileName;
+        }
 
         // Before calling API, make sure we are connected with the right "bucket"
         $this->initializeApi();
 
         // Upload the file
-        \Cloudinary\Uploader::upload(
+        $resource = \Cloudinary\Uploader::upload(
             $localFilePath,
             [
+                'resource_type' => $resourceType,
                 'public_id' => $publicId,
                 'folder' => CloudinaryPathUtility::computeCloudinaryPath($targetFolderIdentifier),
                 'overwrite' => true,
@@ -388,17 +445,6 @@ class CloudinaryDriver extends AbstractHierarchicalFilesystemDriver
         // meaning we are wrongly fetching resources from other cloudinary "buckets" because of the singleton behaviour
         // Therefore it is better to create a new instance upon each API call to avoid driver confusion
         return new \Cloudinary\Api();
-    }
-
-    /**
-     * @param $filename
-     * @return string
-     */
-    protected function stripExtension($filename): string
-    {
-        // Other possible way of computing the file extension using TYPO3 API
-        // '.' . PathUtility::pathinfo($filename, PATHINFO_EXTENSION)
-        return preg_replace('/\\.[^.\\s]{3,4}$/', '', $filename);
     }
 
     /**
@@ -490,12 +536,26 @@ class CloudinaryDriver extends AbstractHierarchicalFilesystemDriver
         // Necessary to happen in an early stage.
         $this->flushFileCache();
 
-        $this->log('[API] method "deleteFile": delete resource with identifier "%s"', [$fileIdentifier]);
-        $response = $this->getApi()->delete_resources([
-            CloudinaryPathUtility::computeCloudinaryPublicId($fileIdentifier)
-        ]);
 
-        return is_array($response['deleted']);
+        $fileInfo = $this->getFileInfoByIdentifier($fileIdentifier);
+
+        // todo $this->getOptions()
+        $options = [
+            'resource_type' => 'raw'
+        ];
+
+        $this->log('[API] DeleteFile: delete resource "%s"', [$fileIdentifier]);
+        $response = $this->getApi()->delete_resources(
+            CloudinaryPathUtility::computeCloudinaryPublicId($fileIdentifier, $fileInfo),
+            $options
+        );
+
+        $key = is_array($response['deleted'])
+            ? key($response['deleted'])
+            : '';
+
+        return is_array($response['deleted'])
+            && $response['deleted'][$key] === 'deleted';
     }
 
     /**
@@ -517,24 +577,17 @@ class CloudinaryDriver extends AbstractHierarchicalFilesystemDriver
             $this->getApi()->delete_resources_by_prefix($normalizedFolderIdentifier);
         }
 
-        $this->log('[API] method "deleteFolder": delete folder with folder identifier "%s"', [$folderIdentifier]);
+        $this->log('[API] DeleteFolder: folder "%s"', [$folderIdentifier]);
         $this->getApi()->delete_folder($normalizedFolderIdentifier);
 
         return true;
     }
 
     /**
-     * Returns a path to a local copy of a file for processing it. When changing the
-     * file, you have to take care of replacing the current version yourself!
-     * The file will be removed by the driver automatically on destruction.
-     *
      * @param string $fileIdentifier
-     * @param bool $writable Set this to FALSE if you only need the file for read
-     *                         operations. This might speed up things, e.g. by using
-     *                         a cached local version. Never modify the file if you
-     *                         have set this flag!
-     * @return string The path to the file on the local disk
-     * @throws \RuntimeException
+     * @param bool $writable
+     *
+     * @return string
      */
     public function getFileForLocalProcessing($fileIdentifier, $writable = true)
     {
@@ -544,7 +597,7 @@ class CloudinaryDriver extends AbstractHierarchicalFilesystemDriver
 
             $resource = $this->getCloudinaryResource($fileIdentifier);
 
-            $this->log('Downloading for local processing file "%s"', [$fileIdentifier]);
+            $this->log(' Downloading for local processing "%s"', [$resource['secure_url']]);
             file_put_contents($temporaryPath, fopen($resource['secure_url'], 'r'));
             $this->emitGetFileForLocalProcessingSignal($fileIdentifier, $temporaryPath, $writable);
         }
@@ -577,7 +630,7 @@ class CloudinaryDriver extends AbstractHierarchicalFilesystemDriver
      */
     public function createFile($fileName, $parentFolderIdentifier)
     {
-        throw new \RuntimeException('Not implemented action! Cloudinary Driver is limited to images.', 1570728107);
+        throw new \RuntimeException('createFile: not implemented action! Cloudinary Driver is limited to images.', 1570728107);
     }
 
     /**
@@ -596,7 +649,7 @@ class CloudinaryDriver extends AbstractHierarchicalFilesystemDriver
 
         $normalizedFolderIdentifier = CloudinaryPathUtility::normalizeFolderNameAndPath($newFolderName, $parentFolderIdentifier);
 
-        $this->log('[API] method "createFolder": create folder with identifier "%s"', [$normalizedFolderIdentifier]);
+        $this->log('[API] CreateFolder: folder "%s"', [$normalizedFolderIdentifier]);
         $this->getApi()->create_folder(
             $normalizedFolderIdentifier
         );
@@ -605,17 +658,22 @@ class CloudinaryDriver extends AbstractHierarchicalFilesystemDriver
     }
 
     /**
-     * Returns the contents of a file. Beware that this requires to load the
-     * complete file into memory and also may require fetching the file from an
-     * external location. So this might be an expensive operation (both in terms
-     * of processing resources and money) for large files.
-     *
      * @param string $fileIdentifier
-     * @return string The file contents
+     * @return string
      */
     public function getFileContents($fileIdentifier)
     {
-        throw new \RuntimeException('Not implemented action! Cloudinary Driver is limited to images.', 1570728105);
+        $contents = '';
+        $temporaryPath = $this->getTemporaryPathForFile($fileIdentifier);
+
+        if ((!is_file($temporaryPath) || !filesize($temporaryPath)) && $this->resourceExists($fileIdentifier)) {
+
+            $resource = $this->getCloudinaryResource($fileIdentifier);
+
+            $this->log(' Downloading contents from "%s"', [$resource['secure_url']]);
+            $contents = file_get_contents($resource['secure_url']);
+        }
+        return $contents;
     }
 
     /**
@@ -627,7 +685,7 @@ class CloudinaryDriver extends AbstractHierarchicalFilesystemDriver
      */
     public function setFileContents($fileIdentifier, $contents)
     {
-        throw new \RuntimeException('Not implemented action! Cloudinary Driver is limited to images.', 1570728106);
+        throw new \RuntimeException('setFileContents: not implemented action!', 1570728106);
     }
 
     /**
@@ -781,7 +839,7 @@ class CloudinaryDriver extends AbstractHierarchicalFilesystemDriver
     public function isFolderEmpty($folderIdentifier)
     {
         $normalizedIdentifier = CloudinaryPathUtility::computeCloudinaryPath($folderIdentifier);
-        $this->log('[API] method "isFolderEmpty": fetch files with identifier "%s"', [$normalizedIdentifier]);
+        $this->log('[API] IsFolderEmpty: fetch files from folder "%s"', [$normalizedIdentifier]);
         $response = $this->getApi()->resources([
             'resource_type' => 'image',
             'type' => 'upload',
@@ -887,8 +945,6 @@ class CloudinaryDriver extends AbstractHierarchicalFilesystemDriver
             // If not found in TYPO3 cache, ask Cloudinary
             if (!is_array($this->cachedCloudinaryResources[$folderIdentifier])) {
 
-                $this->log('[API] method "getFilesInFolder": fetch resources with folder identifier "%s"', [$folderIdentifier]);
-
                 $this->cachedCloudinaryResources[$folderIdentifier] = $this->getCloudinaryResources($folderIdentifier);
             }
         }
@@ -988,12 +1044,7 @@ class CloudinaryDriver extends AbstractHierarchicalFilesystemDriver
             // If not found in TYPO3 cache, ask Cloudinary
             if (!is_array($this->cachedFolders[$folderIdentifier])) {
 
-                if ($folderIdentifier === '_processed_/6') {
-                    $this->cachedFolders[$folderIdentifier] = $this->getCloudinaryFolders($folderIdentifier);
-                    var_dump($this->cachedFolders[$folderIdentifier]);
-                }
-                $this->log('[API] method "getFoldersInFolder": fetch sub-folders with folder identifier "%s"', [$folderIdentifier]);
-
+                $this->log('[API] GetFoldersInFolder: fetch sub-folders from folder "%s"', [$folderIdentifier]);
                 $this->cachedFolders[$folderIdentifier] = $this->getCloudinaryFolders($folderIdentifier);
             }
         }
@@ -1023,16 +1074,12 @@ class CloudinaryDriver extends AbstractHierarchicalFilesystemDriver
     }
 
     /**
-     * Directly output the contents of the file to the output
-     * buffer. Should not take care of header files or flushing
-     * buffer before. Will be taken care of by the Storage.
-     *
      * @param string $identifier
      * @return void
      */
     public function dumpFileContents($identifier)
     {
-        throw new \RuntimeException('Not implemented action! Cloudinary Driver is limited to images.', 1570728104);
+        return $this->getFileContents($identifier);
     }
 
     /**
@@ -1139,13 +1186,12 @@ class CloudinaryDriver extends AbstractHierarchicalFilesystemDriver
         $this->initializeApi();
 
         do {
-
             $nextCursor = isset($response)
                 ? $response['next_cursor']
                 : '';
 
             $this->log(
-                '[API] method "getCloudinaryResources": fetch resources with folder identifier "%s" %s',
+                '[API] GetCloudinaryResources: fetch resources from folder "%s" %s',
                 [
                     $folderIdentifier,
                     $nextCursor ? 'and cursor ' . $nextCursor : '',
@@ -1155,7 +1201,7 @@ class CloudinaryDriver extends AbstractHierarchicalFilesystemDriver
             /** @var Search $search */
             $search = new \Cloudinary\Search();
             $response = $search
-                ->expression('resource_type:image AND folder=' . $cloudinaryFolder)
+                ->expression('folder=' . $cloudinaryFolder)
                 ->sort_by('public_id', 'asc')
                 ->max_results(500)
                 ->next_cursor($nextCursor)
@@ -1170,14 +1216,14 @@ class CloudinaryDriver extends AbstractHierarchicalFilesystemDriver
                     );
 
                     // Compute folder identifier
-                    $computedFolderIdentifier = $this->canonicalizeAndCheckFolderIdentifier(
-                        GeneralUtility::dirname($fileIdentifier)
-                    );
+                    #$computedFolderIdentifier = $this->canonicalizeAndCheckFolderIdentifier(
+                    #    GeneralUtility::dirname($fileIdentifier)
+                    #);
 
-                    // We manually filter the resources belonging to the given folder.
-                    if ($computedFolderIdentifier === $folderIdentifier) {
-                        $resources[$fileIdentifier] = $resource;
-                    }
+                    // We manually filter the resources belonging to the given folder to handle the "root" folder case.
+                    #if ($computedFolderIdentifier === $folderIdentifier) {
+                    $resources[$fileIdentifier] = $resource;
+                    #}
                 }
             }
 
@@ -1284,7 +1330,7 @@ class CloudinaryDriver extends AbstractHierarchicalFilesystemDriver
         $resource = $this->getCloudinaryResource($fileIdentifier);
         if (empty($resource)) {
             $this->log(
-                'Method "resourcesExists": I could not find file with identifier "%s"',
+                ' ResourcesExists: no file (yet) with identifier "%s"',
                 [
                     $fileIdentifier,
                 ]
@@ -1294,15 +1340,18 @@ class CloudinaryDriver extends AbstractHierarchicalFilesystemDriver
     }
 
     /**
-     * @param array $cloudinaryResource
+     * @param array $resource
      * @return string
      */
-    protected function getMimeType(array $cloudinaryResource): string
+    protected function getCloudinaryResourceMimeType(array $resource): string
     {
-        $mimeType = $cloudinaryResource['resource_type'] . DIRECTORY_SEPARATOR . $cloudinaryResource['format'];
-
-        // Handle the special jpg case which does not correspond to the file extension.
-        return str_replace('jpg', 'jpeg', $mimeType);
+        $sanitizedMimeType = '';
+        if ($resource['resource_type'] === 'image') {
+            $mimeType = $resource['resource_type'] . DIRECTORY_SEPARATOR . $resource['format'];
+            // Handle the special jpg case which does not correspond to the file extension.
+            $sanitizedMimeType = str_replace('jpg', 'jpeg', $mimeType);
+        }
+        return $sanitizedMimeType;
     }
 
     /**

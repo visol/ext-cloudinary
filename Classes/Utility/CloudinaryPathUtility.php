@@ -23,21 +23,24 @@ class CloudinaryPathUtility
      */
     public static function computeFileIdentifier(array $cloudinaryResource): string
     {
-        return sprintf(
-            '%s.%s',
-            DIRECTORY_SEPARATOR . ltrim($cloudinaryResource['public_id'], DIRECTORY_SEPARATOR),
-            $cloudinaryResource['format']
-        );
+        $baseFileName = DIRECTORY_SEPARATOR . $cloudinaryResource['public_id'];
+        $extension = $cloudinaryResource['resource_type'] === 'image'
+            ? '.' . $cloudinaryResource['format'] // the format (or extension) is only returned for images.
+            : '';
+        return $baseFileName . $extension;
     }
 
     /**
      * @param string $fileIdentifier
      * @return string
      */
-    public static function computeCloudinaryPublicId(string $fileIdentifier): string
+    public static function computeCloudinaryPublicId(string $fileIdentifier, array $fileInfo = []): string
     {
-        $fileIdentifierWithoutExtension = self::stripExtension($fileIdentifier);
-        return self::computeCloudinaryPath($fileIdentifierWithoutExtension);
+        $normalizedFileIdentifier = !isset($fileInfo['mime_type']) || self::isImage($fileInfo['mime_type'])
+            ? self::stripExtension($fileIdentifier)
+            : $fileIdentifier;
+
+        return self::computeCloudinaryPath($normalizedFileIdentifier);
     }
 
     /**
@@ -76,5 +79,14 @@ class CloudinaryPathUtility
     public static function normalizeFolderPath(string $folderIdentifier): string
     {
         return trim($folderIdentifier, DIRECTORY_SEPARATOR);
+    }
+
+    /**
+     * @param string $mimeType
+     * @return bool
+     */
+    protected static function isImage(string $mimeType): bool
+    {
+        return (bool)strstr($mimeType, 'image/');
     }
 }
