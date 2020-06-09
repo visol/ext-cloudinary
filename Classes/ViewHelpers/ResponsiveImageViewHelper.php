@@ -1,4 +1,5 @@
 <?php
+
 namespace Visol\Cloudinary\ViewHelpers;
 
 /*                                                                        *

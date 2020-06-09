@@ -125,7 +125,6 @@ class CloudinaryCopyCommand extends AbstractCloudinaryCommand
 
         // A chance to the user to confirm the action
         if ($input->getOption('yes') === false) {
-
             $response = $this->io->confirm('Shall I continue?', true);
 
             if (!$response) {
@@ -145,7 +144,8 @@ class CloudinaryCopyCommand extends AbstractCloudinaryCommand
             if (!$fileObject->exists() && $input->getOption('base-url')) {
                 $url = rtrim($input->getOption('base-url'), DIRECTORY_SEPARATOR) . $fileObject->getIdentifier();
                 $this->log(
-                    'Missing file, try downloading it from %s%s', [$url]
+                    'Missing file, try downloading it from %s%s',
+                    [$url]
                 );
                 $this->download($fileObject, $url);
             }

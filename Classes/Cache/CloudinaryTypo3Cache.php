@@ -120,7 +120,6 @@ class CloudinaryTypo3Cache
     protected function set(string $identifier, array $data, $tag): void
     {
         if ($this->isCacheEnabled) {
-
             $this->getCacheInstance()->set(
                 $identifier,
                 $data,

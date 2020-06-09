@@ -1,4 +1,5 @@
 <?php
+
 /*
  * This file is part of the TYPO3 CMS project.
  *
@@ -255,7 +256,6 @@ class CloudinaryUtility
         // Check the file is stored on the right storage
         // If not we should trigger an execption
         if ($storage->getDriverType() !== CloudinaryDriver::DRIVER_TYPE) {
-
             $message = sprintf(
                 'CloudinaryUtility: wrong storage! Can not initialize Cloudinary API with file reference "%s" original file "%s:%s"',
                 $fileReference->getUid(),

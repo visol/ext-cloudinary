@@ -140,7 +140,6 @@ class CloudinaryMoveCommand extends AbstractCloudinaryCommand
 
         // A chance to the user to confirm the action
         if ($input->getOption('yes') === false) {
-
             $response = $this->io->confirm('Shall I continue?', true);
 
             if (!$response) {
@@ -151,7 +150,6 @@ class CloudinaryMoveCommand extends AbstractCloudinaryCommand
 
         $counter = 0;
         foreach ($files as $file) {
-
             $this->log();
             $this->log('Starting migration with %s', [$file['identifier']]);
 
@@ -170,10 +168,8 @@ class CloudinaryMoveCommand extends AbstractCloudinaryCommand
             if ($this->getFileMoveService()->fileExists($fileObject, $this->targetStorage)) {
                 $this->log('File has already been uploaded, good for us %s', [$fileObject->getIdentifier()]);
             } else {
-
                 // Detect if the file is existing on storage "source" (1)
                 if (!$fileObject->exists() && !$input->getOption('base-url')) {
-
                     $this->log('Missing file %s', [$fileObject->getIdentifier()], self::WARNING);
                     // We could log the missing files
                     $this->missingFiles[] = $fileObject->getIdentifier();

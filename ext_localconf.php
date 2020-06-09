@@ -1,4 +1,5 @@
 <?php
+
 defined('TYPO3_MODE') || die('Access denied.');
 call_user_func(
     function () {
@@ -48,6 +49,5 @@ call_user_func(
             $GLOBALS['TYPO3_CONF_VARS']['SYS']['caching']['cacheConfigurations']['cloudinary']['groups'] = ['all', 'cloudinary'];
             $GLOBALS['TYPO3_CONF_VARS']['SYS']['caching']['cacheConfigurations']['cloudinary']['options']['defaultLifetime'] = 2592000;
         }
-
     }
 );
