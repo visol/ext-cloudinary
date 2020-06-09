@@ -68,13 +68,11 @@ class FileMoveService extends Command
         $fileNameAndAbsolutePath = $this->getAbsolutePath($fileObject);
 
         if (file_exists($fileNameAndAbsolutePath)) {
-
             $isUploaded = $this->fileExists($fileObject, $targetStorage)
                 ? true
                 : $this->cloudinaryUploadFile($fileObject, $targetStorage);
 
             if ($isUploaded) {
-
                 // Update the storage uid
                 $isUpdated = $this->updateFile(
                     $fileObject,

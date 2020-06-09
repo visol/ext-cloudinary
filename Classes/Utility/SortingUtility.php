@@ -74,5 +74,4 @@ class SortingUtility
         }
         return ($valueA > $valueB) ? -1 : 1;
     }
-
 }

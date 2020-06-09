@@ -6,30 +6,35 @@ namespace Visol\Cloudinary\Domain\Repository;
  * Class MediaRepository
  * @deprecated
  */
-class MediaRepository {
+class MediaRepository
+{
 
-	public function findOneByPublicId($publicId) {
+    public function findOneByPublicId($publicId)
+    {
         $row = $this->getDatabaseConnection()->exec_SELECTgetSingleRow('*', 'tx_cloudinary_media', '`public_id_hash` = "' . sha1($publicId) . '"');
 
         return $row;
     }
 
-    public function findByFilename($filename) {
+    public function findByFilename($filename)
+    {
         $rows = $this->getDatabaseConnection()->exec_SELECTgetRows('*', 'tx_cloudinary_media', '`filename_hash` = "' . sha1($filename) . '"');
 
         return $rows;
     }
 
-    public function findOneByFilenameAndSha1($filename, $sha1) {
+    public function findOneByFilenameAndSha1($filename, $sha1)
+    {
         $row = $this->getDatabaseConnection()->exec_SELECTgetSingleRow('*', 'tx_cloudinary_media', '`filename_hash` = "' . sha1($filename) . '" AND `sha1` = "' . $sha1 . '"');
 
         return $row;
     }
 
-    public function save($filename, $publicId, $sha1, $modification_date) {
+    public function save($filename, $publicId, $sha1, $modification_date)
+    {
         if ($this->findOneByPublicId($publicId)) {
-	        $this->getDatabaseConnection()->exec_DELETEquery('tx_cloudinary_media', 'public_id_hash = "' . sha1($publicId) . '"');
-	        $this->getDatabaseConnection()->exec_DELETEquery('tx_cloudinary_responsivebreakpoints', 'public_id_hash = "' . sha1($publicId) . '"');
+            $this->getDatabaseConnection()->exec_DELETEquery('tx_cloudinary_media', 'public_id_hash = "' . sha1($publicId) . '"');
+            $this->getDatabaseConnection()->exec_DELETEquery('tx_cloudinary_responsivebreakpoints', 'public_id_hash = "' . sha1($publicId) . '"');
         }
 
         $insert = [
@@ -49,7 +54,8 @@ class MediaRepository {
      *
      * @return \TYPO3\CMS\Core\Database\DatabaseConnection
      */
-    protected function getDatabaseConnection() {
+    protected function getDatabaseConnection()
+    {
         return $GLOBALS['TYPO3_DB'];
     }
 }

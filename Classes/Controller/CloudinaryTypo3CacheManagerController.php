@@ -35,9 +35,8 @@ class CloudinaryTypo3CacheManagerController extends ActionController
         /** @var ResourceStorage $storage */
 
         foreach ($this->storageRepository->findAll() as $storage) {
-
             if ($storage->getDriverType() === CloudinaryDriver::DRIVER_TYPE) {
-              $this->getCache($storage->getUid())->flushAll();
+                $this->getCache($storage->getUid())->flushAll();
             }
         }
         return 'success';

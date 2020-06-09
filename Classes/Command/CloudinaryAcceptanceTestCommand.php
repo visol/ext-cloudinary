@@ -116,7 +116,7 @@ class CloudinaryAcceptanceTestCommand extends AbstractCloudinaryCommand
 //        $testSuite->runTests();
 //
         // Read the folder
-        $testSuite = new DeleteFileTests($testingStorage,  $this->io);
+        $testSuite = new DeleteFileTests($testingStorage, $this->io);
         $testSuite->runTests();
 
         // Delete files
@@ -208,5 +208,4 @@ class CloudinaryAcceptanceTestCommand extends AbstractCloudinaryCommand
         $db->truncate('cf_cloudinary');
         $db->truncate('cf_cloudinary_tags');
     }
-
 }

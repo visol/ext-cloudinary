@@ -124,7 +124,6 @@ abstract class AbstractCloudinaryCommand extends Command
             );
 
             if ($limit !== null) {
-
                 $query->setFirstResult((int)$offsetOrLimit);
                 $query->setMaxResults((int)$limit);
             } else {
@@ -235,5 +234,4 @@ abstract class AbstractCloudinaryCommand extends Command
         $connectionPool = GeneralUtility::makeInstance(ConnectionPool::class);
         return $connectionPool->getConnectionForTable($this->tableName);
     }
-
 }

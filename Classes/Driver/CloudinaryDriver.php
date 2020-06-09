@@ -217,7 +217,6 @@ class CloudinaryDriver extends AbstractHierarchicalFilesystemDriver
     {
         // True at the indexation of the file
         if (!$this->resourceExists($fileIdentifier)) {
-
             // We are force to download the file in order to correctly find the mime type.
             $localFile = $this->getFileForLocalProcessing($fileIdentifier);
 
@@ -240,7 +239,6 @@ class CloudinaryDriver extends AbstractHierarchicalFilesystemDriver
             // Will throw an exception if the resource is not found
             $resource = (array)$this->getApi()->resource($publicId, $options);
             $this->flushFileCache(); // We flush the cache again....
-
         } else {
             $resource = $this->getCloudinaryResource($fileIdentifier);
 
@@ -249,7 +247,6 @@ class CloudinaryDriver extends AbstractHierarchicalFilesystemDriver
 
             // If the file is not of type image we have to download to correctly find the mime type.
             if (!$mimeType) {
-
                 $localFile = $this->getFileForLocalProcessing($fileIdentifier);
 
                 /** @var FileInfo $fileInfo */
@@ -594,7 +591,6 @@ class CloudinaryDriver extends AbstractHierarchicalFilesystemDriver
         $temporaryPath = $this->getTemporaryPathForFile($fileIdentifier);
 
         if ((!is_file($temporaryPath) || !filesize($temporaryPath)) && $this->resourceExists($fileIdentifier)) {
-
             $resource = $this->getCloudinaryResource($fileIdentifier);
 
             $this->log(' Downloading for local processing "%s"', [$resource['secure_url']]);
@@ -667,7 +663,6 @@ class CloudinaryDriver extends AbstractHierarchicalFilesystemDriver
         $temporaryPath = $this->getTemporaryPathForFile($fileIdentifier);
 
         if ((!is_file($temporaryPath) || !filesize($temporaryPath)) && $this->resourceExists($fileIdentifier)) {
-
             $resource = $this->getCloudinaryResource($fileIdentifier);
 
             $this->log(' Downloading contents from "%s"', [$resource['secure_url']]);
@@ -705,7 +700,6 @@ class CloudinaryDriver extends AbstractHierarchicalFilesystemDriver
         $newCloudinaryPublicId = CloudinaryPathUtility::computeCloudinaryPublicId($newFileIdentifier);
 
         if ($cloudinaryPublicId !== $newCloudinaryPublicId) {
-
             // Necessary to happen in an early stage.
             $this->flushFileCache();
 
@@ -747,13 +741,11 @@ class CloudinaryDriver extends AbstractHierarchicalFilesystemDriver
 
             $numberOfSegments = count($pathSegments);
             if ($numberOfSegments > 1) {
-
                 // Replace last folder name by the new folder name
                 $pathSegments[$numberOfSegments - 2] = $newFolderName;
                 $newCloudinaryPublicId = implode('/', $pathSegments);
 
                 if ($cloudinaryPublicId !== $newCloudinaryPublicId) {
-
                     // Flush files + folder cache
                     $this->flushCache();
 
@@ -938,13 +930,11 @@ class CloudinaryDriver extends AbstractHierarchicalFilesystemDriver
         }
 
         if (!isset($this->cachedCloudinaryResources[$folderIdentifier])) {
-
             // Try to fetch from the cache
             $this->cachedCloudinaryResources[$folderIdentifier] = $this->getCache()->getCachedFiles($folderIdentifier);
 
             // If not found in TYPO3 cache, ask Cloudinary
             if (!is_array($this->cachedCloudinaryResources[$folderIdentifier])) {
-
                 $this->cachedCloudinaryResources[$folderIdentifier] = $this->getCloudinaryResources($folderIdentifier);
             }
         }
@@ -958,7 +948,6 @@ class CloudinaryDriver extends AbstractHierarchicalFilesystemDriver
 
         // Sort files
         if ($parameters['sort'] === 'file') {
-
             if ((int)$parameters['reverse']) {
                 uasort(
                     $this->cachedCloudinaryResources[$folderIdentifier],
@@ -971,7 +960,6 @@ class CloudinaryDriver extends AbstractHierarchicalFilesystemDriver
                 );
             }
         } elseif ($parameters['sort'] === 'tstamp') {
-
             if ((int)$parameters['reverse']) {
                 uasort(
                     $this->cachedCloudinaryResources[$folderIdentifier],
@@ -1037,13 +1025,11 @@ class CloudinaryDriver extends AbstractHierarchicalFilesystemDriver
             : CloudinaryPathUtility::normalizeFolderPath($folderIdentifier);
 
         if (!isset($this->cachedFolders[$folderIdentifier])) {
-
             // Try to fetch from the cache
             $this->cachedFolders[$folderIdentifier] = $this->getCache()->getCachedFolders($folderIdentifier);
 
             // If not found in TYPO3 cache, ask Cloudinary
             if (!is_array($this->cachedFolders[$folderIdentifier])) {
-
                 $this->log('[API] GetFoldersInFolder: fetch sub-folders from folder "%s"', [$folderIdentifier]);
                 $this->cachedFolders[$folderIdentifier] = $this->getCloudinaryFolders($folderIdentifier);
             }
@@ -1209,7 +1195,6 @@ class CloudinaryDriver extends AbstractHierarchicalFilesystemDriver
 
             if (is_array($response['resources'])) {
                 foreach ($response['resources'] as $resource) {
-
                     // Compute file identifier
                     $fileIdentifier = $this->canonicalizeAndCheckFileIdentifier(
                         CloudinaryPathUtility::computeFileIdentifier($resource)
@@ -1226,7 +1211,6 @@ class CloudinaryDriver extends AbstractHierarchicalFilesystemDriver
                     #}
                 }
             }
-
         } while (!empty($response) && array_key_exists('next_cursor', $response));
 
         // Add result into typo3 cache to spare API calls next time...
