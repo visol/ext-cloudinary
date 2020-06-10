@@ -15,7 +15,9 @@
 
 namespace Visol\Cloudinary\Utility;
 
+use TYPO3\CMS\Core\Resource\File;
 use TYPO3\CMS\Core\Resource\FileReference;
+use TYPO3\CMS\Core\Utility\PathUtility;
 use Visol\Cloudinary\CloudinaryException;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
 use Visol\Cloudinary\Driver\CloudinaryDriver;
@@ -56,7 +58,6 @@ class CloudinaryUtility
      */
     protected $extensionConfiguration;
 
-
     /**
      * CloudinaryUtility constructor.
      */
@@ -71,16 +72,19 @@ class CloudinaryUtility
         $this->responsiveBreakpointsRepository = GeneralUtility::makeInstance(\Visol\Cloudinary\Domain\Repository\ResponsiveBreakpointsRepository::class);
 
         // todo: remove obsolete code since the config is to be found in the storage
-        \Cloudinary::config([
-            'cloud_name' => $this->extensionConfiguration['cloudName'],
-            'api_key' => $this->extensionConfiguration['apiKey'],
-            'api_secret' => $this->extensionConfiguration['apiSecret'],
-            'timeout' => $this->extensionConfiguration['timeout'],
-        ]);
+        \Cloudinary::config(
+            [
+                'cloud_name' => $this->extensionConfiguration['cloudName'],
+                'api_key' => $this->extensionConfiguration['apiKey'],
+                'api_secret' => $this->extensionConfiguration['apiSecret'],
+                'timeout' => $this->extensionConfiguration['timeout'],
+            ]
+        );
     }
 
     /**
      * @param $filename
+     *
      * @return string
      * @throws CloudinaryException
      * @deprecated use FalToCloudinaryConverter::toPublicId instead
@@ -127,6 +131,7 @@ class CloudinaryUtility
 
     /**
      * @param $filename
+     *
      * @return string
      * @throws CloudinaryException
      * @deprecated not used anymore
@@ -196,6 +201,7 @@ class CloudinaryUtility
      *
      * @param string $publicId
      * @param array $options
+     *
      * @return array
      */
     public function getCloudinaryProcessedResource(string $publicId, array $options): array
@@ -215,8 +221,10 @@ class CloudinaryUtility
 
     /**
      * Todo normalize this method, argument $publicIdOrFileReference should be a unique type.
+     *
      * @param string|FileReference $publicIdOrFileReference
      * @param array $options
+     *
      * @return array
      */
     public function getResponsiveBreakpointData($publicIdOrFileReference, array $options): array
@@ -225,7 +233,7 @@ class CloudinaryUtility
 
         if ($publicIdOrFileReference instanceof FileReference) {
             $this->initializeApi($publicIdOrFileReference);
-            $publicId = CloudinaryPathUtility::computeCloudinaryPublicId($publicIdOrFileReference->getIdentifier());
+            $publicId = CloudinaryUtility::computeCloudinaryPublicId($publicIdOrFileReference->getIdentifier());
         } else {
             $publicId = $publicIdOrFileReference;
         }
@@ -280,6 +288,7 @@ class CloudinaryUtility
 
     /**
      * @param array $settings
+     *
      * @return array
      */
     public function generateOptionsFromSettings(array $settings)
@@ -305,6 +314,7 @@ class CloudinaryUtility
 
     /**
      * @param array $breakpoints
+     *
      * @return string
      */
     public function getSrcsetAttribute(array $breakpoints): string
@@ -314,6 +324,7 @@ class CloudinaryUtility
 
     /**
      * @param array $breakpoints
+     *
      * @return array
      */
     public function getSrcset(array $breakpoints): array
@@ -329,6 +340,7 @@ class CloudinaryUtility
 
     /**
      * @param array $breakpoints
+     *
      * @return string
      */
     public function getSizesAttribute(array $breakpoints): string
@@ -339,6 +351,7 @@ class CloudinaryUtility
 
     /**
      * @param array $breakpoints
+     *
      * @return string
      * @deprecated use $file->getPublicUrl() instead
      */
@@ -351,6 +364,7 @@ class CloudinaryUtility
     /**
      * @param array $breakpoints
      * @param string $functionName
+     *
      * @return mixed
      */
     public function getImage(array $breakpoints, string $functionName)
@@ -368,6 +382,7 @@ class CloudinaryUtility
 
     /**
      * @param $items
+     *
      * @return mixed
      */
     public function min($items)
@@ -377,6 +392,7 @@ class CloudinaryUtility
 
     /**
      * @param array $items
+     *
      * @return mixed
      */
     public function median(array $items)
@@ -388,6 +404,7 @@ class CloudinaryUtility
 
     /**
      * @param $items
+     *
      * @return mixed
      */
     public function max($items)
@@ -397,6 +414,7 @@ class CloudinaryUtility
 
     /**
      * @param array $breakpoints
+     *
      * @return array
      */
     public function getImageObjects(array $breakpoints): array
@@ -411,7 +429,9 @@ class CloudinaryUtility
 
     /**
      * @param string $filename
+     *
      * @return string
+     * @deprecated
      */
     public function cleanFilename(string $filename): string
     {
@@ -430,9 +450,10 @@ class CloudinaryUtility
      * TYPO3 probably contain schema and domain.
      *
      * @param string $filename
+     *
      * @return string
      */
-    public function removeAbsRefPrefix(string $filename): string
+    protected function removeAbsRefPrefix(string $filename): string
     {
         $uriPrefix = $GLOBALS['TSFE']->absRefPrefix;
 
@@ -441,5 +462,201 @@ class CloudinaryUtility
         }
 
         return $filename;
+    }
+
+    /**
+     * @param array $cloudinaryResource
+     * @return string
+     */
+    public static function computeFileIdentifier(array $cloudinaryResource): string
+    {
+        $baseFileName = DIRECTORY_SEPARATOR . $cloudinaryResource['public_id'];
+        $extension = $cloudinaryResource['resource_type'] === 'image'
+            ? '.' . $cloudinaryResource['format'] // the format (or extension) is only returned for images.
+            : '';
+        return $baseFileName . $extension;
+    }
+
+    /**
+     * @param string $fileIdentifier
+     *
+     * @return string
+     */
+    public static function computeCloudinaryPublicId(string $fileIdentifier): string
+    {
+        $normalizedFileIdentifier = self::guessIsImage($fileIdentifier)
+            ? self::stripExtension($fileIdentifier)
+            : $fileIdentifier;
+
+        return self::computeCloudinaryPath($normalizedFileIdentifier);
+    }
+
+    /**
+     * See if that is OK like that. The alternatives requires to "heavy" processing
+     * like downloading the file to check the mime time or use the API SDK to fetch whether
+     * we are in presence of an image.
+     *
+     * @param string $fileIdentifier
+     *
+     * @return bool
+     */
+    protected static function guessIsImage(string $fileIdentifier)
+    {
+        $extension = PathUtility::pathinfo($fileIdentifier, PATHINFO_EXTENSION);
+        $commonMimeTypes = [
+            'png' => 'image/png',
+            'jpe' => 'image/jpeg',
+            'jpeg' => 'image/jpeg',
+            'jpg' => 'image/jpeg',
+            'gif' => 'image/gif',
+            'bmp' => 'image/bmp',
+            'ico' => 'image/vnd.microsoft.icon',
+            'tiff' => 'image/tiff',
+            'tif' => 'image/tiff',
+            'svg' => 'image/svg+xml',
+            'svgz' => 'image/svg+xml',
+            'webp' => 'image/image/webp',
+        ];
+
+        return isset($commonMimeTypes[$extension]);
+    }
+
+    /**
+     * @param string $fileIdentifier
+     * @return string
+     */
+    public static function computeCloudinaryPath(string $fileIdentifier): string
+    {
+        return trim($fileIdentifier, DIRECTORY_SEPARATOR);
+    }
+
+    /**
+     * @param $filename
+     * @return string
+     */
+    protected static function stripExtension($filename): string
+    {
+        $pathParts = PathUtility::pathinfo($filename);
+        return $pathParts['dirname'] . DIRECTORY_SEPARATOR . $pathParts['filename'];
+    }
+
+    /**
+     * @param string $folderName
+     * @param string $folderIdentifier
+     * @return string
+     */
+    public static function normalizeFolderNameAndPath(string $folderName, string $folderIdentifier): string
+    {
+        return self::normalizeFolderPath($folderIdentifier) . DIRECTORY_SEPARATOR . $folderName;
+    }
+
+    /**
+     * @param string $folderIdentifier
+     * @return string
+     */
+    public static function normalizeFolderPath(string $folderIdentifier): string
+    {
+        return trim($folderIdentifier, DIRECTORY_SEPARATOR);
+    }
+
+    /**
+     * @param array $fileInfo
+     *
+     * @return string
+     */
+    public static function getMimeType(array $fileInfo): string
+    {
+        return isset($fileInfo['mime_type'])
+            ? $fileInfo['mime_type']
+            : '';
+    }
+
+    /**
+     * @param string $fileIdentifier
+     *
+     * @return string
+     */
+    public static function getResourceType(string $fileIdentifier): string
+    {
+        return self::guessIsImage($fileIdentifier)
+            ? 'image'
+            : 'raw';
+    }
+
+    /**
+     * @param string|array $fileInfoOrMimeType
+     *
+     * @return int
+     */
+//    public static function getFileType($fileInfoOrMimeType): int
+//    {
+//        $fileType = 0;
+//
+//        $mimeType = is_array($fileInfoOrMimeType)
+//            ? self::getMimeType($fileInfoOrMimeType)
+//            : $fileInfoOrMimeType;
+//
+//        if (self::isText($mimeType)) {
+//            $fileType = File::FILETYPE_TEXT;
+//        } elseif (self::isImage($mimeType)) {
+//            $fileType = File::FILETYPE_IMAGE;
+//        } elseif (self::isAudio($mimeType)) {
+//            $fileType = File::FILETYPE_AUDIO;
+//        } elseif (self::isVideo($mimeType)) {
+//            $fileType = File::FILETYPE_VIDEO;
+//        } elseif (self::isApplication($mimeType)) {
+//            $fileType = File::FILETYPE_APPLICATION;
+//        }
+//        return $fileType;
+//    }
+
+    /**
+     * @param string $mimeType
+     *
+     * @return bool
+     */
+    public static function isText(string $mimeType): bool
+    {
+        return (bool)strstr($mimeType, 'text/');
+    }
+
+    /**
+     * @param string $mimeType
+     *
+     * @return bool
+     */
+    public static function isImage(string $mimeType): bool
+    {
+        return (bool)strstr($mimeType, 'image/');
+    }
+
+    /**
+     * @param string $mimeType
+     *
+     * @return bool
+     */
+    public static function isAudio(string $mimeType): bool
+    {
+        return (bool)strstr($mimeType, 'audio/');
+    }
+
+    /**
+     * @param string $mimeType
+     *
+     * @return bool
+     */
+    public static function isVideo(string $mimeType): bool
+    {
+        return (bool)strstr($mimeType, 'video/');
+    }
+
+    /**
+     * @param string $mimeType
+     *
+     * @return bool
+     */
+    public static function isApplication(string $mimeType): bool
+    {
+        return (bool)strstr($mimeType, 'application/');
     }
 }

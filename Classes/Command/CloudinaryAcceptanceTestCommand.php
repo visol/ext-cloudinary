@@ -15,19 +15,28 @@ use Visol\Cloudinary\Driver\CloudinaryDriver;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
-use TYPO3\CMS\Core\Resource\ResourceFactory;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
-use Visol\Cloudinary\Tests\Acceptance\AddFileTests;
-use Visol\Cloudinary\Tests\Acceptance\DeleteFileTests;
-use Visol\Cloudinary\Tests\Acceptance\GetFilesInFolderTests;
-use Visol\Cloudinary\Tests\Acceptance\GetFileTests;
+use Visol\Cloudinary\Tests\Acceptance\OneFileTestSuite;
 
 // Quick autoloader for now...
 spl_autoload_register(
     function ($className) {
-        $parts = explode('\\', $className);
-        $fileNameAndPath = __DIR__ . '/../../Tests/Acceptance/' . array_pop($parts) . '.php';
-        require_once $fileNameAndPath;
+        if (strpos($className, 'Visol\Cloudinary') === 0) {
+            $fileNameAndPath = str_replace(
+                [
+                    'Visol\Cloudinary\Tests\Acceptance\\',
+                    '\\',
+                ],
+                [
+                    '',
+                    '/',
+                ],
+                $className
+            );
+
+            $fileNameAndPath = __DIR__ . '/../../Tests/Acceptance/' . $fileNameAndPath . '.php';
+            require_once $fileNameAndPath;
+        }
     }
 );
 
@@ -67,14 +76,13 @@ class CloudinaryAcceptanceTestCommand extends AbstractCloudinaryCommand
     }
 
     /**
-     * Move file
-     *
      * @param InputInterface $input
      * @param OutputInterface $output
+     *
+     * @return int
      */
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
-
         // We should dynamically inject the configuration. For now use an existing driver
         [$couldName, $apiKey, $apiSecret] = GeneralUtility::trimExplode(':', $input->getArgument('api-configuration'));
         if (!$couldName || !$apiKey || !$apiSecret) {
@@ -101,25 +109,9 @@ class CloudinaryAcceptanceTestCommand extends AbstractCloudinaryCommand
             return 2;
         }
 
-        $testingStorage = ResourceFactory::getInstance()->getStorageObject($storageId);
-
-        // Upload files
-        $testSuite = new AddFileTests($testingStorage, $this->io);
+        // Test case for video file
+        $testSuite = new OneFileTestSuite($storageId, $this->io);
         $testSuite->runTests();
-//
-//        // Read contents
-//        $testSuite = new GetFileTests($testingStorage, $this->io);
-//        $testSuite->runTests();
-
-        // Read files and file contents
-//        $testSuite = new GetFilesInFolderTests($testingStorage,  $this->io);
-//        $testSuite->runTests();
-//
-        // Read the folder
-        $testSuite = new DeleteFileTests($testingStorage, $this->io);
-        $testSuite->runTests();
-
-        // Delete files
 
         $this->tearDown($storageId);
 
@@ -139,7 +131,9 @@ class CloudinaryAcceptanceTestCommand extends AbstractCloudinaryCommand
             'name' => 'cloudinary-acceptance-tests',
             'driver' => CloudinaryDriver::DRIVER_TYPE,
             'is_browsable' => 1,
+            'is_public' => 1,
             'is_writable' => 1,
+            'is_online' => 1,
             'configuration' => sprintf(
                 '<?xml version="1.0" encoding="utf-8" standalone="yes" ?>
 <T3FlexForms>

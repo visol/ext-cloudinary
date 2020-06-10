@@ -10,7 +10,7 @@ namespace Visol\Cloudinary\Services;
  */
 
 use Doctrine\DBAL\Driver\Connection;
-use Visol\Cloudinary\Utility\CloudinaryPathUtility;
+use Visol\Cloudinary\Utility\CloudinaryUtility;
 use Symfony\Component\Console\Command\Command;
 use TYPO3\CMS\Core\Database\ConnectionPool;
 use TYPO3\CMS\Core\Database\Query\QueryBuilder;
@@ -41,7 +41,7 @@ class FileMoveService extends Command
         $this->initializeApi($targetStorage);
 
         // Retrieve the Public Id based on the file identifier
-        $publicId = CloudinaryPathUtility::computeCloudinaryPublicId($fileObject->getIdentifier());
+        $publicId = CloudinaryUtility::computeCloudinaryPublicId($fileObject->getIdentifier());
 
         try {
             $api = new \Cloudinary\Api();
@@ -159,12 +159,12 @@ class FileMoveService extends Command
         $this->initializeApi($targetStorage);
 
         $publicId = PathUtility::basename(
-            CloudinaryPathUtility::computeCloudinaryPublicId($fileObject->getName())
+            CloudinaryUtility::computeCloudinaryPublicId($fileObject->getName())
         );
 
         $options = [
             'public_id' => $publicId,
-            'folder' => CloudinaryPathUtility::computeCloudinaryPath(
+            'folder' => CloudinaryUtility::computeCloudinaryPath(
                 $fileObject->getParentFolder()->getIdentifier()
             ),
             'overwrite' => true,

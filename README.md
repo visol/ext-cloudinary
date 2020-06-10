@@ -145,6 +145,12 @@ Copying /introduction/images/content/content-quote.png
 Number of file copied: 64
 ``` 
 
+Acceptance tests
+
+```bash
+dd exec ./vendor/bin/typo3 cloudinary:run-tests fabidule:1234:ABCD 
+```
+
 Development tools
 -----------------
 
@@ -171,8 +177,9 @@ This is highly recommended to keep the data consistent between Cloudinary and TY
 ```shell script
 https://domain.tld/?type=1573555440
 ```
-**Beware**: do not rename, move or delete file in the Cloudinary Manager. TYPO3 will not know it as currently
-implement. Uploading a new file will not be a problem though.
+
+**Beware**: Do not rename, move or delete files in the Cloudinary Media Library. TYPO3 will not know about the change. 
+We may need to implement a web hook. For now, it is necessary to perform these action in the File module in the Backend.
 
 Source of inspiration
 ---------------------
