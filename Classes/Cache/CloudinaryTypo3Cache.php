@@ -215,9 +215,9 @@ class CloudinaryTypo3Cache
     {
         /** @var \TYPO3\CMS\Core\Log\Logger $logger */
         $logger = GeneralUtility::makeInstance(LogManager::class)->getLogger(__CLASS__);
-        $logger->log(
-            LogLevel::INFO,
-            vsprintf('[CACHE] ' . $message, $arguments)
-        );
+        #$logger->log(
+        #    LogLevel::INFO,
+        #    vsprintf('[CACHE] ' . $message, $arguments)
+        #);
     }
 }

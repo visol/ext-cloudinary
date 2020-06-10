@@ -9,7 +9,7 @@ namespace Visol\Cloudinary\ViewHelpers;
  * LICENSE.md file that was distributed with this source code.
  */
 
-use Visol\Cloudinary\Utility\CloudinaryPathUtility;
+use Visol\Cloudinary\Utility\CloudinaryUtility;
 use TYPO3\CMS\Core\Resource\Exception\ResourceDoesNotExistException;
 use TYPO3\CMS\Core\Resource\FileInterface;
 use TYPO3\CMS\Core\Resource\FileReference;
@@ -107,7 +107,7 @@ class CloudinaryImageDataViewHelper extends \TYPO3\CMS\Fluid\Core\ViewHelper\Abs
                 // decode URLs from RealURL
                 $imageUri = rawurldecode($imageUri);
 
-                $publicId = CloudinaryPathUtility::computeCloudinaryPublicId($image->getIdentifier());
+                $publicId = CloudinaryUtility::computeCloudinaryPublicId($image->getIdentifier());
 
                 $options = $this->cloudinaryUtility->generateOptionsFromSettings(
                     [
