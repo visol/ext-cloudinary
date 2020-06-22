@@ -2,95 +2,162 @@
 
 namespace Visol\Cloudinary\Tests\Acceptance\FileOperation;
 
+use Exception;
 use TYPO3\CMS\Core\Resource\File;
+use TYPO3\CMS\Core\Resource\FileInterface;
 
 class GetFileOperationTest extends AbstractCloudinaryFileOperationTest
 {
 
     /**
+     * @var string
+     */
+    private $fixtureFileIdentifier;
+
+    /**
+     * @var FileInterface
+     */
+    private $fixtureFile;
+
+    /**
      * @return void
-     * @throws \Exception
+     * @throws Exception
      */
     public function run()
     {
-        $fileIdentifier = $this->getFileIdentifier($this->fileName);
-        $file = $this->getStorage()->getFile($fileIdentifier);
+        $this->fixtureFileIdentifier = $this->getFileIdentifier($this->fileName);
+        $this->fixtureFile = $this->getStorage()->getFile($this->fixtureFileIdentifier);
 
-        $this->getStorage()->getPublicUrl($file);
+        $this->assertFileInstance();
+        $this->assertFileIdentifier();
+        $this->assertFileExistence();
+        $this->assertFileMimeType();
+        $this->assertFileName();
+        $this->assertFileType();
+        $this->assertFileContent();
+    }
+
+    /**
+     * @throws Exception
+     */
+    protected function assertFileInstance()
+    {
 
         // Check file instance
         $this->assertTrue(
-            $file instanceof File,
+            $this->fixtureFile instanceof File,
             'storage::getFile() returns a file Object'
         );
+    }
 
+    /**
+     * @throws Exception
+     */
+    protected function assertFileIdentifier()
+    {
         // Check file identifier
         $this->assert(
-            $fileIdentifier,
-            $file->getIdentifier(),
+            $this->fixtureFileIdentifier,
+            $this->fixtureFile->getIdentifier(),
             sprintf(
                 'Given file identifiers corresponds to "%s"',
-                $fileIdentifier
+                $this->fixtureFileIdentifier
             )
         );
+    }
 
+    /**
+     * @throws Exception
+     */
+    protected function assertFileExistence()
+    {
         // Check file existence
         $this->assertTrue(
-            $this->getStorage()->hasFile($fileIdentifier),
+            $this->getStorage()->hasFile($this->fixtureFileIdentifier),
             sprintf(
                 'File has existence "%s"',
-                $fileIdentifier
+                $this->fixtureFileIdentifier
             )
         );
+    }
 
+    /**
+     * @throws Exception
+     */
+    protected function assertFileMimeType()
+    {
         // Check mime type
         $this->assert(
             $this->fixtureFiles[$this->fileName]['mimeType'],
-            $file->getMimeType(),
+            $this->fixtureFile->getMimeType(),
             sprintf(
                 'Mime type corresponds to "%s"',
                 $this->fixtureFiles[$this->fileName]['mimeType']
             )
         );
+    }
+
+    /**
+     * @throws Exception
+     */
+    protected function assertFileName()
+    {
+
+        $expectedFileName = $this->sanitizeFileName(
+            $this->fixtureFiles[$this->fileName]['fileName']
+        );
 
         // Check name
         $this->assert(
-            $this->fixtureFiles[$this->fileName]['fileName'],
-            $file->getName(),
+            $expectedFileName,
+            $this->fixtureFile->getName(),
             sprintf(
-                'File name correspond to "%s"',
-                $this->fixtureFiles[$this->fileName]['fileName']
+                'File name corresponds to "%s"',
+                $expectedFileName
             )
         );
 
         // Check file name without extension
         $this->assert(
             $this->fixtureFiles[$this->fileName]['fileNameWithoutExtension'],
-            $file->getNameWithoutExtension(),
+            $this->fixtureFile->getNameWithoutExtension(),
             sprintf(
                 'File names without extension correspond to "%s"',
                 $this->fixtureFiles[$this->fileName]['fileNameWithoutExtension']
             )
         );
 
+    }
+
+    /**
+     * @throws Exception
+     */
+    protected function assertFileType()
+    {
         // File type
         $this->assert(
             $this->fixtureFiles[$this->fileName]['type'],
-            $file->getType(),
+            $this->fixtureFile->getType(),
             sprintf(
                 'File type correspond to "%s"',
                 $this->fixtureFiles[$this->fileName]['type']
             )
         );
+    }
 
+    /**
+     * @throws Exception
+     */
+    protected function assertFileContent()
+    {
         // Only applicable for online video
-        if ($file->getMimeType() === 'video/youtube') {
+        if ($this->fixtureFile->getMimeType() === 'video/youtube') {
 
             // Get contents
             $expectedContent = file_get_contents($this->getFilePath($this->fileName));
             $this->assert(
                 $expectedContent,
-                $file->getContents(),
+                $this->fixtureFile->getContents(),
                 sprintf(
                     'Given contents corresponds to "%s"',
                     $expectedContent
@@ -99,13 +166,13 @@ class GetFileOperationTest extends AbstractCloudinaryFileOperationTest
         } else {
 
             $this->assertTrue(
-                (bool)preg_match('/^https:\/\/res.cloudinary.com\/' . $this->getCloudinaryName() . '/', $file->getPublicUrl()),
+                (bool)preg_match('/^https:\/\/res.cloudinary.com\/' . $this->getCloudinaryName() . '/', $this->fixtureFile->getPublicUrl()),
                 'Public URL contains cloudinary cloud name'
             );
 
             $this->assertTrue(
-                (bool)preg_match('/' . str_replace('/', '\/', $fileIdentifier) . '$/', $file->getPublicUrl()),
-                'Public URL ends like file identifier ' . $fileIdentifier
+                (bool)preg_match('/' . str_replace('/', '\/', $this->fixtureFileIdentifier) . '$/', $this->fixtureFile->getPublicUrl()),
+                'Public URL ends like file identifier ' . $this->fixtureFileIdentifier
             );
         }
     }
@@ -113,27 +180,9 @@ class GetFileOperationTest extends AbstractCloudinaryFileOperationTest
     /**
      * @return string
      */
-    public function getCloudinaryName(): string
+    protected function getCloudinaryName(): string
     {
         $configuration = $this->getStorage()->getConfiguration();
         return $configuration['cloudName'];
-    }
-
-    /**
-     * @param string $fileIdentifier
-     * @param string $fileVersion
-     *
-     * @return string
-     */
-    public function getExpectedPublicUrl(string $fileIdentifier, string $fileVersion): string
-    {
-
-        $configuration = $this->getStorage()->getConfiguration();
-        return sprintf(
-            'https://res.cloudinary.com/%s/raw/upload/%s%s',
-            $configuration['cloudName'],
-            $fileVersion,
-            $fileIdentifier
-        );
     }
 }

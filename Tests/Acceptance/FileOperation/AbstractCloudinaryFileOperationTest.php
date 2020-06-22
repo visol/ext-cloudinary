@@ -20,71 +20,53 @@ abstract class AbstractCloudinaryFileOperationTest
      * @var array
      */
     protected $fixtureFiles = [
-        'images.jpeg' => [
-            'fileName' => 'images.jpeg',
-            'fileNameWithoutExtension' => 'images',
+        'image-jpg.jpg' => [
+            'fileName' => 'image-jpg.jpg',
+            'fileNameWithoutExtension' => 'image-jpg',
             'type' => 2,
             'mimeType' => 'image/jpeg',
         ],
-        'images.jpg' => [
-            'fileName' => 'images.jpg',
-            'fileNameWithoutExtension' => 'images',
-            'type' => 2,
-            'mimeType' => 'image/jpeg',
-        ],
-        'sample.odt' => [
-            'fileName' => 'sample.odt',
-            'fileNameWithoutExtension' => 'sample',
-            'type' => 5,
-            'mimeType' => 'application/vnd.oasis.opendocument.text',
-        ],
-        'sample.pdf' => [
-            'fileName' => 'sample.pdf',
-            'fileNameWithoutExtension' => 'sample',
-            'type' => 5,
-            'mimeType' => 'application/pdf',
-        ],
-        'sample.png' => [
-            'fileName' => 'sample.png',
-            'fileNameWithoutExtension' => 'sample',
+        'image-png.png' => [
+            'fileName' => 'image-png.png',
+            'fileNameWithoutExtension' => 'image-png',
             'type' => 2,
             'mimeType' => 'image/png',
         ],
-        'sample.youtube' => [
-            'fileName' => 'sample.youtube',
-            'fileNameWithoutExtension' => 'sample',
+        'document.odt' => [
+            'fileName' => 'document.odt',
+            'fileNameWithoutExtension' => 'document',
+            'type' => 5,
+            'mimeType' => 'application/vnd.oasis.opendocument.text',
+        ],
+        'document.pdf' => [
+            'fileName' => 'document.pdf',
+            'fileNameWithoutExtension' => 'document',
+            'type' => 5,
+            'mimeType' => 'application/pdf',
+        ],
+        'video.youtube' => [
+            'fileName' => 'video.youtube',
+            'fileNameWithoutExtension' => 'video',
             'type' => 4,
             'mimeType' => 'video/youtube',
         ],
-        'sample.mp4' => [
-            'fileName' => 'sample.mp4',
-            'fileNameWithoutExtension' => 'sample',
+        'video.mp4' => [
+            'fileName' => 'video.mp4',
+            'fileNameWithoutExtension' => 'video',
             'type' => 4,
             'mimeType' => 'video/mp4',
         ],
-        'DummyFolder/dummy.jpg' => [
-            'fileName' => 'dummy.jpg',
-            'fileNameWithoutExtension' => 'dummy',
+        'sub-folder/image-jpeg.jpeg' => [
+            'fileName' => 'image-jpeg.jpeg',
+            'fileNameWithoutExtension' => 'image-jpeg',
             'type' => 2,
-            'mimeType' => 'image/jpg',
+            'mimeType' => 'image/jpeg',
         ],
-        'DummyFolder/dummy.odt' => [
-            'fileName' => 'dummy.odt',
-            'fileNameWithoutExtension' => 'dummy',
+        'sub-folder/image-tiff.tiff' => [
+            'fileName' => 'image-tiff.tiff',
+            'fileNameWithoutExtension' => 'image-tiff',
             'type' => 2,
-            'mimeType'=> 'image/jpg',
-        ],
-        'DummyFolder/dummy.pdf' => [
-            'fileName' => 'dummy.pdf',
-            'fileNameWithoutExtension' => 'dummy',
-            'type' => 5,
-            'mimeType' => 'applicaton/pdf',
-        ],
-        'DummyFolder/dummy.youtube' => [
-            'fileName' => 'dummy.youtube',
-            'fileNameWithoutExtension' => 'dummy',
-            'type' => 2,
-            'mimeType' => 'image/jpg',
+            'mimeType' => 'image/tiff',
         ],
     ];
 
@@ -97,11 +79,6 @@ abstract class AbstractCloudinaryFileOperationTest
      * @var string
      */
     protected $fixtureDirectory = __DIR__ . '/../../Fixtures';
-
-    /**
-     * @var string
-     */
-    protected $remoteBaseDirectory = 'acceptance-tests-1590756100';
 
     /**
      * AbstractCloudinaryFileOperationTest constructor.
@@ -158,20 +135,48 @@ abstract class AbstractCloudinaryFileOperationTest
      */
     protected function getFileIdentifier(string $fileName): string
     {
-        return DIRECTORY_SEPARATOR . $this->remoteBaseDirectory . DIRECTORY_SEPARATOR . $fileName;
+        return DIRECTORY_SEPARATOR . $this->sanitizeFileName($fileName);
     }
 
     /**
+     * @param string $fileName
+     *
+     * @return string
+     */
+    protected function sanitizeFileName(string $fileName): string
+    {
+        return preg_replace('/jpeg$/', 'jpg', $fileName);
+    }
+
+    /**
+     * @param string $fileNameAndPath
+     *
+     * @return string
+     */
+    protected function computeFolderIdentifier(string $fileNameAndPath): string
+    {
+        return DIRECTORY_SEPARATOR . str_replace(
+                '.',
+                '',
+                dirname($this->fileName)
+            );
+    }
+
+    /**
+     * @param string $fileNameAndPath
+     *
      * @return object|Folder
      */
-    protected function getBaseFolder(): Folder
+    protected function getFolder($fileNameAndPath): Folder
     {
-        $folderIdentifier = DIRECTORY_SEPARATOR . $this->remoteBaseDirectory . DIRECTORY_SEPARATOR;
+        $folderIdentifier = $this->computeFolderIdentifier($fileNameAndPath);
         return GeneralUtility::makeInstance(
             Folder::class,
             $this->getStorage(),
             $folderIdentifier,
-            $this->remoteBaseDirectory
+            $folderIdentifier === DIRECTORY_SEPARATOR
+                ? ''
+                : $folderIdentifier
         );
     }
 

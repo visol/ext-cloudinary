@@ -12,10 +12,10 @@ class AddFileOperationTest extends AbstractCloudinaryFileOperationTest
      */
     public function run()
     {
-        $fixtureVideoFile = $this->getFilePath($this->fileName);
+        $fixtureFile = $this->getFilePath($this->fileName);
         $file = $this->getStorage()->addFile(
-            $fixtureVideoFile,
-            $this->getBaseFolder()
+            $fixtureFile,
+            $this->getFolder($this->fileName)
         );
 
         $this->assertTrue(

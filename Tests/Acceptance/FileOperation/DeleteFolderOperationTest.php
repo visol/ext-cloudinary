@@ -11,8 +11,8 @@ class DeleteFolderOperationTest extends AbstractCloudinaryFileOperationTest
      */
     public function run()
     {
-        $this->getStorage()->deleteFolder($this->getBaseFolder(), true);
-        $files = $this->getStorage()->getFilesInFolder($this->getBaseFolder());
+        $this->getStorage()->deleteFolder($this->getFolder(DIRECTORY_SEPARATOR), true);
+        $files = $this->getStorage()->getFilesInFolder($this->getFolder(DIRECTORY_SEPARATOR));
         $this->assert(
             0,
             count($files),

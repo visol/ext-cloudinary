@@ -41,7 +41,9 @@ class FileMoveService extends Command
         $this->initializeApi($targetStorage);
 
         // Retrieve the Public Id based on the file identifier
-        $publicId = CloudinaryUtility::computeCloudinaryPublicId($fileObject->getIdentifier());
+        $publicId = $this->getCloudinaryUtility()
+            ->setStorage($fileObject->getStorage())
+            ->computeCloudinaryPublicId($fileObject->getIdentifier());
 
         try {
             $api = new \Cloudinary\Api();
@@ -158,13 +160,14 @@ class FileMoveService extends Command
 
         $this->initializeApi($targetStorage);
 
-        $publicId = PathUtility::basename(
-            CloudinaryUtility::computeCloudinaryPublicId($fileObject->getName())
-        );
+        $publicId = $this->getCloudinaryUtility()
+            ->setStorage($fileObject->getStorage())
+            ->computeCloudinaryPublicId($fileObject->getIdentifier());
+
 
         $options = [
             'public_id' => $publicId,
-            'folder' => CloudinaryUtility::computeCloudinaryPath(
+            'folder' => $this->getCloudinaryUtility()->computeCloudinaryFolderPath(
                 $fileObject->getParentFolder()->getIdentifier()
             ),
             'overwrite' => true,
@@ -241,5 +244,13 @@ class FileMoveService extends Command
                 'uid' => $fileObject->getUid(),
             ]
         );
+    }
+
+    /**
+     * @return object|CloudinaryUtility
+     */
+    protected function getCloudinaryUtility()
+    {
+        return GeneralUtility::makeInstance(CloudinaryUtility::class);
     }
 }

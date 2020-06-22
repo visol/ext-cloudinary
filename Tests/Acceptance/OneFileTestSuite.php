@@ -16,16 +16,14 @@ class OneFileTestSuite extends AbstractCloudinaryTestSuite
      * @var
      */
     protected $files = [
-//        'images.jpeg',
-        'images.jpg',
-//        'sample.mp4',
-        'sample.odt',
-        'sample.pdf',
-        'sample.png',
-//        'sample.tiff',
-//        'sample.tif',
-//        'sample.svg',
-        'sample.youtube',
+        'sub-folder/image-jpeg.jpeg',
+        'sub-folder/image-tiff.tiff',
+        'image-jpg.jpg',
+        'image-png.png',
+        'document.odt',
+        'document.pdf',
+        'video.youtube',
+        'video.mp4',
     ];
 
     public function runTests()

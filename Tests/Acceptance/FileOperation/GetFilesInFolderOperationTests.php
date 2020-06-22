@@ -12,7 +12,7 @@ class GetFilesInFolderOperationTests extends AbstractCloudinaryFileOperationTest
 
     public function run()
     {
-        $files = $this->getStorage()->getFilesInFolder($this->getBaseFolder());
+        $files = $this->getStorage()->getFilesInFolder($this->getFolder(DIRECTORY_SEPARATOR));
         $this->assert(
             $this->numberOfFiles,
             count($files),

@@ -15,8 +15,8 @@
 
 namespace Visol\Cloudinary\Utility;
 
-use TYPO3\CMS\Core\Resource\File;
 use TYPO3\CMS\Core\Resource\FileReference;
+use TYPO3\CMS\Core\Resource\ResourceStorage;
 use TYPO3\CMS\Core\Utility\PathUtility;
 use Visol\Cloudinary\CloudinaryException;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
@@ -59,10 +59,19 @@ class CloudinaryUtility
     protected $extensionConfiguration;
 
     /**
-     * CloudinaryUtility constructor.
+     * @var ResourceStorage|null
      */
-    public function __construct()
+    protected $storage;
+
+    /**
+     * CloudinaryUtility constructor.
+     *
+     * @param ResourceStorage|null $storage
+     */
+    public function __construct(ResourceStorage $storage = null)
     {
+        $this->storage = $storage;
+
         # TODO: change me after TYPO3 v9 migration
         #       GeneralUtility::makeInstance(ExtensionConfiguration::class)->get('cloudinary')
         $this->extensionConfiguration = (array)unserialize($GLOBALS['TYPO3_CONF_VARS']['EXT']['extConf']['cloudinary']);
@@ -233,7 +242,8 @@ class CloudinaryUtility
 
         if ($publicIdOrFileReference instanceof FileReference) {
             $this->initializeApi($publicIdOrFileReference);
-            $publicId = CloudinaryUtility::computeCloudinaryPublicId($publicIdOrFileReference->getIdentifier());
+            $publicId = $this->setStorage($publicIdOrFileReference->getStorage())
+                ->computeCloudinaryPublicId($publicIdOrFileReference->getIdentifier());
         } else {
             $publicId = $publicIdOrFileReference;
         }
@@ -381,38 +391,6 @@ class CloudinaryUtility
     }
 
     /**
-     * @param $items
-     *
-     * @return mixed
-     */
-    public function min($items)
-    {
-        return min($items);
-    }
-
-    /**
-     * @param array $items
-     *
-     * @return mixed
-     */
-    public function median(array $items)
-    {
-        sort($items);
-        $medianIndex = ceil((count($items) / 2)) - 1;
-        return $items[$medianIndex];
-    }
-
-    /**
-     * @param $items
-     *
-     * @return mixed
-     */
-    public function max($items)
-    {
-        return max($items);
-    }
-
-    /**
      * @param array $breakpoints
      *
      * @return array
@@ -433,7 +411,7 @@ class CloudinaryUtility
      * @return string
      * @deprecated
      */
-    public function cleanFilename(string $filename): string
+    protected function cleanFilename(string $filename): string
     {
         $filename = $this->removeAbsRefPrefix($filename);
         $parsedUrl = parse_url($filename);
@@ -465,16 +443,96 @@ class CloudinaryUtility
     }
 
     /**
+     * Cloudinary to FAL identifier
+     *
      * @param array $cloudinaryResource
+     *
      * @return string
      */
-    public static function computeFileIdentifier(array $cloudinaryResource): string
+    public function computeFileIdentifier(array $cloudinaryResource): string
     {
-        $baseFileName = DIRECTORY_SEPARATOR . $cloudinaryResource['public_id'];
         $extension = $cloudinaryResource['resource_type'] === 'image'
             ? '.' . $cloudinaryResource['format'] // the format (or extension) is only returned for images.
             : '';
-        return $baseFileName . $extension;
+
+        $rawFileIdentifier = DIRECTORY_SEPARATOR . $cloudinaryResource['public_id'] . $extension;
+        return str_replace($this->getBasePath(), '', $rawFileIdentifier);
+    }
+
+    /**
+     * @return string
+     */
+    protected function getBasePath(): string
+    {
+        $basePath = (string)$this->storage->getConfiguration()['basePath'];
+        return $basePath
+            ? DIRECTORY_SEPARATOR . trim($basePath, DIRECTORY_SEPARATOR)
+            : '';
+    }
+
+    /**
+     * FAL to Cloudinary identifier
+     *
+     * @param string $fileIdentifier
+     *
+     * @return string
+     */
+    public function computeCloudinaryPublicId(string $fileIdentifier): string
+    {
+        $normalizedFileIdentifier = $this->guessIsImage($fileIdentifier)
+            ? $this->stripExtension($fileIdentifier)
+            : $fileIdentifier;
+
+        return $this->normalizeCloudinaryPath($normalizedFileIdentifier);
+    }
+
+    /**
+     * FAL to Cloudinary identifier
+     *
+     * @param string $folderIdentifier
+     *
+     * @return string
+     */
+    public function computeCloudinaryFolderPath(string $folderIdentifier): string
+    {
+        return $this->normalizeCloudinaryPath($folderIdentifier);
+    }
+
+    /**
+     * @param string $folderName
+     * @param string $folderIdentifier
+     *
+     * @return string
+     */
+    public function normalizeFolderNameAndPath(string $folderName, string $folderIdentifier): string
+    {
+        return $this->normalizeCloudinaryPath($folderIdentifier) . DIRECTORY_SEPARATOR . $folderName;
+    }
+
+    /**
+     * @param string $cloudinaryPath
+     *
+     * @return string
+     */
+    public function normalizeCloudinaryPath(string $cloudinaryPath): string
+    {
+        $normalizedCloudinaryPath = trim($cloudinaryPath, DIRECTORY_SEPARATOR);
+        $basePath = $this->getBasePath();
+        return $basePath
+            ? trim($basePath . DIRECTORY_SEPARATOR . $normalizedCloudinaryPath, DIRECTORY_SEPARATOR)
+            : $normalizedCloudinaryPath;
+    }
+
+    /**
+     * @param array $fileInfo
+     *
+     * @return string
+     */
+    public function getMimeType(array $fileInfo): string
+    {
+        return isset($fileInfo['mime_type'])
+            ? $fileInfo['mime_type']
+            : '';
     }
 
     /**
@@ -482,13 +540,11 @@ class CloudinaryUtility
      *
      * @return string
      */
-    public static function computeCloudinaryPublicId(string $fileIdentifier): string
+    public function getResourceType(string $fileIdentifier): string
     {
-        $normalizedFileIdentifier = self::guessIsImage($fileIdentifier)
-            ? self::stripExtension($fileIdentifier)
-            : $fileIdentifier;
-
-        return self::computeCloudinaryPath($normalizedFileIdentifier);
+        return $this->guessIsImage($fileIdentifier)
+            ? 'image'
+            : 'raw';
     }
 
     /**
@@ -500,7 +556,7 @@ class CloudinaryUtility
      *
      * @return bool
      */
-    protected static function guessIsImage(string $fileIdentifier)
+    protected function guessIsImage(string $fileIdentifier)
     {
         $extension = PathUtility::pathinfo($fileIdentifier, PATHINFO_EXTENSION);
         $commonMimeTypes = [
@@ -522,141 +578,25 @@ class CloudinaryUtility
     }
 
     /**
-     * @param string $fileIdentifier
-     * @return string
-     */
-    public static function computeCloudinaryPath(string $fileIdentifier): string
-    {
-        return trim($fileIdentifier, DIRECTORY_SEPARATOR);
-    }
-
-    /**
      * @param $filename
+     *
      * @return string
      */
-    protected static function stripExtension($filename): string
+    protected function stripExtension($filename): string
     {
         $pathParts = PathUtility::pathinfo($filename);
         return $pathParts['dirname'] . DIRECTORY_SEPARATOR . $pathParts['filename'];
     }
 
     /**
-     * @param string $folderName
-     * @param string $folderIdentifier
-     * @return string
-     */
-    public static function normalizeFolderNameAndPath(string $folderName, string $folderIdentifier): string
-    {
-        return self::normalizeFolderPath($folderIdentifier) . DIRECTORY_SEPARATOR . $folderName;
-    }
-
-    /**
-     * @param string $folderIdentifier
-     * @return string
-     */
-    public static function normalizeFolderPath(string $folderIdentifier): string
-    {
-        return trim($folderIdentifier, DIRECTORY_SEPARATOR);
-    }
-
-    /**
-     * @param array $fileInfo
+     * @param ResourceStorage|null $storage
      *
-     * @return string
+     * @return $this
      */
-    public static function getMimeType(array $fileInfo): string
+    public function setStorage(?ResourceStorage $storage): self
     {
-        return isset($fileInfo['mime_type'])
-            ? $fileInfo['mime_type']
-            : '';
+        $this->storage = $storage;
+        return $this;
     }
 
-    /**
-     * @param string $fileIdentifier
-     *
-     * @return string
-     */
-    public static function getResourceType(string $fileIdentifier): string
-    {
-        return self::guessIsImage($fileIdentifier)
-            ? 'image'
-            : 'raw';
-    }
-
-    /**
-     * @param string|array $fileInfoOrMimeType
-     *
-     * @return int
-     */
-//    public static function getFileType($fileInfoOrMimeType): int
-//    {
-//        $fileType = 0;
-//
-//        $mimeType = is_array($fileInfoOrMimeType)
-//            ? self::getMimeType($fileInfoOrMimeType)
-//            : $fileInfoOrMimeType;
-//
-//        if (self::isText($mimeType)) {
-//            $fileType = File::FILETYPE_TEXT;
-//        } elseif (self::isImage($mimeType)) {
-//            $fileType = File::FILETYPE_IMAGE;
-//        } elseif (self::isAudio($mimeType)) {
-//            $fileType = File::FILETYPE_AUDIO;
-//        } elseif (self::isVideo($mimeType)) {
-//            $fileType = File::FILETYPE_VIDEO;
-//        } elseif (self::isApplication($mimeType)) {
-//            $fileType = File::FILETYPE_APPLICATION;
-//        }
-//        return $fileType;
-//    }
-
-    /**
-     * @param string $mimeType
-     *
-     * @return bool
-     */
-    public static function isText(string $mimeType): bool
-    {
-        return (bool)strstr($mimeType, 'text/');
-    }
-
-    /**
-     * @param string $mimeType
-     *
-     * @return bool
-     */
-    public static function isImage(string $mimeType): bool
-    {
-        return (bool)strstr($mimeType, 'image/');
-    }
-
-    /**
-     * @param string $mimeType
-     *
-     * @return bool
-     */
-    public static function isAudio(string $mimeType): bool
-    {
-        return (bool)strstr($mimeType, 'audio/');
-    }
-
-    /**
-     * @param string $mimeType
-     *
-     * @return bool
-     */
-    public static function isVideo(string $mimeType): bool
-    {
-        return (bool)strstr($mimeType, 'video/');
-    }
-
-    /**
-     * @param string $mimeType
-     *
-     * @return bool
-     */
-    public static function isApplication(string $mimeType): bool
-    {
-        return (bool)strstr($mimeType, 'application/');
-    }
 }
