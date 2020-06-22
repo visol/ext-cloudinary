@@ -11,7 +11,6 @@
                     <label>LLL:EXT:cloudinary/Resources/Private/Language/backend.xlf:driverConfiguration.cloudName</label>
                     <config>
                         <type>input</type>
-                        <size>30</size>
                     </config>
                 </TCEforms>
             </cloudName>
@@ -20,7 +19,6 @@
                     <label>LLL:EXT:cloudinary/Resources/Private/Language/backend.xlf:driverConfiguration.apiKey</label>
                     <config>
                         <type>input</type>
-                        <size>30</size>
                     </config>
                 </TCEforms>
             </apiKey>
@@ -29,10 +27,17 @@
                     <label>LLL:EXT:cloudinary/Resources/Private/Language/backend.xlf:driverConfiguration.apiSecret</label>
                     <config>
                         <type>input</type>
-                        <size>30</size>
                     </config>
                 </TCEforms>
             </apiSecret>
+            <basePath>
+                <TCEforms>
+                    <label>LLL:EXT:cloudinary/Resources/Private/Language/backend.xlf:driverConfiguration.basePath</label>
+                    <config>
+                        <type>input</type>
+                    </config>
+                </TCEforms>
+            </basePath>
             <timeout>
                 <TCEforms>
                     <label>LLL:EXT:cloudinary/Resources/Private/Language/backend.xlf:driverConfiguration.timeout</label>

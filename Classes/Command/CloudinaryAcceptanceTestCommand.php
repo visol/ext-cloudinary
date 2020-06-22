@@ -149,6 +149,9 @@ class CloudinaryAcceptanceTestCommand extends AbstractCloudinaryCommand
                 <field index="apiSecret">
                     <value index="vDEF">%s</value>
                 </field>
+                <field index="basePath">
+                    <value index="vDEF">acceptance-tests-1590756100</value>
+                </field>
                 <field index="timeout">
                     <value index="vDEF">60</value>
                 </field>
