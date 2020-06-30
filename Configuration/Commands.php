@@ -9,7 +9,7 @@ return [
     'cloudinary:run-tests' => [
         'class' => \Visol\Cloudinary\Command\CloudinaryAcceptanceTestCommand::class,
     ],
-    'cloudinary:fix-jpeg' => [
+    'cloudinary:fix' => [
         'class' => \Visol\Cloudinary\Command\CloudinaryFixJpegCommand::class,
     ],
 ];

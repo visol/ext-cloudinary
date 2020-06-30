@@ -39,12 +39,7 @@ class CloudinaryMoveCommand extends AbstractCloudinaryCommand
      */
     protected function configure()
     {
-        $message = 'Move bunch of images from a local storage to a cloudinary storage.';
-        $message .= ' CAUTIOUS!';
-        $message .= ' 1. Moving means: we are "manually" uploading a file (skipping FAL API)';
-        $message .= ' to the Cloudinary storage and deleting the one from the local storage (rm -f FILE) ';
-        $message .= ' Finally we are changing the `sys_file.storage value` to the cloudinary storage.';
-        $message .= ' The file uid will be kept!';
+        $message = 'Move bunch of images to a cloudinary storage. Consult the README.md for more info.';
         $this
             ->setDescription(
                 $message
@@ -114,7 +109,6 @@ class CloudinaryMoveCommand extends AbstractCloudinaryCommand
      */
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
-
         if (!$this->checkDriverType()) {
             $this->log('Look out! target storage is not of type "cloudinary"');
             return 1;
