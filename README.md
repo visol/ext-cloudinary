@@ -122,14 +122,28 @@ The file uid will be kept!
 # --silent: be quiet!
 ```
 
-Tip: to sync a bunch of files, you can use the Cloudinary CLI which is convenient to upload
+After "moving" files you should fix the jpeg extension for the Cloudinary storage by running
+the command below.
+It is worth mentioning that Cloudinary stripped the file extension for images. For instance
+a file `image.jpg` or `image.jpeg` uploaded on Cloudinary will be stored as `image`
+without the file extension. By inspecting the file, we will see that Cloudinary only consider 
+the "jpg" extension. Consequently `image.jpeg` will be served as `image.jpg`. 
+This has an implication for us. Record from table `sys_file` must be adjusted and occurrences
+`jpeg` in file identifier or file name must be changed to `jpg` for consistency.
+
+```shell script
+./vendor/bin/typo3 cloudinary:fix 2
+# where "2" is the target storage uid (cloudinary)
+```
+
+Tip: to sync / upload a bunch of files, you can use the Cloudinary CLI which is convenient to upload
 many resources at once.
 
 ```bash
 cld sync --push localFolder remoteFolder
 ```
 
-The extension provides a tool to copy a bunch of files (restricted to images) from one storage to an another. 
+The extension provides also a tool to copy a bunch of files (restricted to images) from one storage to an another. 
 This can be achieved with this command:
 
 ```shell script
@@ -145,10 +159,11 @@ Copying /introduction/images/content/content-quote.png
 Number of file copied: 64
 ``` 
 
-Acceptance tests
+For your information a set of acceptance tests has been implemented to validate the functionnalities
+of the driver.
 
 ```bash
-dd exec ./vendor/bin/typo3 cloudinary:run-tests fabidule:1234:ABCD 
+./vendor/bin/typo3 cloudinary:run-tests fabidule:1234:ABCD 
 ```
 
 Development tools
