@@ -499,17 +499,6 @@ class CloudinaryUtility
     }
 
     /**
-     * @param string $folderName
-     * @param string $folderIdentifier
-     *
-     * @return string
-     */
-    public function normalizeFolderNameAndPath(string $folderName, string $folderIdentifier): string
-    {
-        return $this->normalizeCloudinaryPath($folderIdentifier) . DIRECTORY_SEPARATOR . $folderName;
-    }
-
-    /**
      * @param string $cloudinaryPath
      *
      * @return string

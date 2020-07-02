@@ -11,7 +11,7 @@ class DeleteFileOperationTest extends AbstractCloudinaryFileOperationTest
      */
     public function run()
     {
-        $fileIdentifier = $this->getFileIdentifier($this->fileName);
+        $fileIdentifier = $this->getFileIdentifier($this->resourceName);
         $file = $this->getStorage()->getFile($fileIdentifier);
         $this->assertTrue(
             $this->getStorage()->deleteFile($file),

@@ -51,4 +51,21 @@ abstract class AbstractCloudinaryTestSuite
     {
         return $this->io;
     }
+
+    /**
+     * @param string $fileName
+     * @param string $suffix
+     *
+     * @return string
+     */
+    protected function getAlternativeName(string $fileName, string $suffix): string
+    {
+        $pathParts = pathinfo($fileName);
+        return str_replace(
+            '.' . $pathParts['extension'],
+            '-' . $suffix . '.' . $pathParts['extension'],
+            $fileName
+        );
+    }
+
 }

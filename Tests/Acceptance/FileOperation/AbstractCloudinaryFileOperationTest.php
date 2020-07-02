@@ -14,7 +14,7 @@ abstract class AbstractCloudinaryFileOperationTest
     /**
      * @var string
      */
-    protected $fileName = '';
+    protected $resourceName = '';
 
     /**
      * @var array
@@ -84,12 +84,12 @@ abstract class AbstractCloudinaryFileOperationTest
      * AbstractCloudinaryFileOperationTest constructor.
      *
      * @param AbstractCloudinaryTestSuite $testSuite
-     * @param string $fileName
+     * @param string $resourceName
      */
-    public function __construct(AbstractCloudinaryTestSuite $testSuite, string $fileName = '')
+    public function __construct(AbstractCloudinaryTestSuite $testSuite, string $resourceName = '')
     {
         $this->testSuiteInstance = $testSuite;
-        $this->fileName = $fileName;
+        $this->resourceName = $resourceName;
     }
 
     /**
@@ -158,7 +158,7 @@ abstract class AbstractCloudinaryFileOperationTest
         return DIRECTORY_SEPARATOR . str_replace(
                 '.',
                 '',
-                dirname($this->fileName)
+                dirname($this->resourceName)
             );
     }
 
@@ -167,9 +167,23 @@ abstract class AbstractCloudinaryFileOperationTest
      *
      * @return object|Folder
      */
-    protected function getFolder($fileNameAndPath): Folder
+    protected function getContainingFolder($fileNameAndPath): Folder
     {
         $folderIdentifier = $this->computeFolderIdentifier($fileNameAndPath);
+        return $this->getFolder($folderIdentifier);
+    }
+
+    /**
+     * @param string $folderIdentifier
+     *
+     * @return object|Folder
+     */
+    protected function getFolder($folderIdentifier): Folder
+    {
+        $folderIdentifier = $folderIdentifier === DIRECTORY_SEPARATOR
+            ? $folderIdentifier
+            : DIRECTORY_SEPARATOR . trim($folderIdentifier, '/') . DIRECTORY_SEPARATOR;
+
         return GeneralUtility::makeInstance(
             Folder::class,
             $this->getStorage(),
