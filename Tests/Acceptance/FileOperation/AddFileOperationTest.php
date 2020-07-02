@@ -8,14 +8,15 @@ class AddFileOperationTest extends AbstractCloudinaryFileOperationTest
 {
 
     /**
-     *
+     * @return void
+     * @throws \Exception
      */
     public function run()
     {
-        $fixtureFile = $this->getFilePath($this->fileName);
+        $fixtureFile = $this->getFilePath($this->resourceName);
         $file = $this->getStorage()->addFile(
             $fixtureFile,
-            $this->getFolder($this->fileName)
+            $this->getContainingFolder($this->resourceName)
         );
 
         $this->assertTrue(

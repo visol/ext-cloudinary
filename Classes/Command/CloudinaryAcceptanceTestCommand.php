@@ -16,7 +16,8 @@ use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
-use Visol\Cloudinary\Tests\Acceptance\OneFileTestSuite;
+use Visol\Cloudinary\Tests\Acceptance\FolderTestSuite;
+use Visol\Cloudinary\Tests\Acceptance\FileTestSuite;
 
 // Quick autoloader for now...
 spl_autoload_register(
@@ -110,7 +111,10 @@ class CloudinaryAcceptanceTestCommand extends AbstractCloudinaryCommand
         }
 
         // Test case for video file
-        $testSuite = new OneFileTestSuite($storageId, $this->io);
+        $testSuite = new FileTestSuite($storageId, $this->io);
+        $testSuite->runTests();
+
+        $testSuite = new FolderTestSuite($storageId, $this->io);
         $testSuite->runTests();
 
         $this->tearDown($storageId);
