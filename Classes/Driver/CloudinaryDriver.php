@@ -1211,12 +1211,10 @@ class CloudinaryDriver extends AbstractHierarchicalFilesystemDriver
     protected function getCloudinaryResources(string $folderIdentifier): array
     {
         $cloudinaryResources = [];
-
         $cloudinaryFolder = $this->getCloudinaryUtility()->computeCloudinaryFolderPath($folderIdentifier);
         if (!$cloudinaryFolder) {
             $cloudinaryFolder = self::ROOT_FOLDER_IDENTIFIER . '*';
         }
-
         // Before calling the Search API, make sure we are connected with the right cloudinary account
         $this->initializeApi();
 
@@ -1339,7 +1337,13 @@ class CloudinaryDriver extends AbstractHierarchicalFilesystemDriver
         $messageQueue = $this->getMessageQueue();
         $localizationPrefix = $this->languageFile . ':driverConfiguration.message.';
         try {
-            $this->getFilesInFolder(self::ROOT_FOLDER_IDENTIFIER);
+            $this->initializeApi();
+
+            $search = new \Cloudinary\Search();
+            $search
+                ->expression('folder=' . self::ROOT_FOLDER_IDENTIFIER)
+                ->execute();
+
             /** @var \TYPO3\CMS\Core\Messaging\FlashMessage $message */
             $message = GeneralUtility::makeInstance(
                 FlashMessage::class,
