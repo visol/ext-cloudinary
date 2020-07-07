@@ -179,15 +179,18 @@ class CloudinaryMoveCommand extends AbstractCloudinaryCommand
                     ]
                 );
 
-                $isUploaded = $this->getFileMoveService()->cloudinaryUploadFile(
-                    $fileObject,
-                    $this->targetStorage,
-                    $input->getOption('base-url')
-                );
-
-                if (!$isUploaded) {
-                    $this->log('Mmm..., I could not upload file %s', [$fileObject->getIdentifier()], self::WARNING);
-                     $this->faultyUploadedFiles[] = $fileObject->getIdentifier();
+                try {
+                    $start = microtime(true);
+                    $this->getFileMoveService()->cloudinaryUploadFile(
+                        $fileObject,
+                        $this->targetStorage,
+                        $input->getOption('base-url')
+                    );
+                    $timeElapsedSeconds = microtime(true) - $start;
+                    $this->log('File uploaded, Elapsed time %.3f', [$timeElapsedSeconds]);
+                } catch (\Exception $e) {
+                    $this->log('Mmm..., I could not upload file %s. Exception %s: %s', [$fileObject->getIdentifier(), $e->getCode(), $e->getMessage()], self::WARNING);
+                    $this->faultyUploadedFiles[] = $fileObject->getIdentifier();
                     continue;
                 }
             }
