@@ -158,21 +158,21 @@ class FileMoveService extends Command
 
         $this->initializeApi($targetStorage);
 
+        $fileIdentifier = $fileObject->getIdentifier();
         $publicId = $this->getCloudinaryUtility($fileObject)
-            ->computeCloudinaryPublicId($fileObject->getIdentifier());
-
+            ->computeCloudinaryPublicId($fileIdentifier);
 
         $options = [
-            'public_id' => $publicId,
+            'public_id' => basename($publicId),
             'folder' => $this->getCloudinaryUtility($fileObject)
                 ->computeCloudinaryFolderPath(
                     $fileObject->getParentFolder()->getIdentifier()
                 ),
+            'resource_type' => $this->getCloudinaryUtility($fileObject)->getResourceType($fileIdentifier),
             'overwrite' => true,
         ];
-
         $fileNameAndPath = $baseUrl
-            ? rtrim($baseUrl, DIRECTORY_SEPARATOR) . $fileObject->getIdentifier()
+            ? rtrim($baseUrl, DIRECTORY_SEPARATOR) . $fileIdentifier
             : $this->getAbsolutePath($fileObject);
 
         // Upload the file
@@ -184,7 +184,6 @@ class FileMoveService extends Command
         } catch (\Exception $e) {
             $resource = false;
         }
-
         return !empty($resource);
     }
 
