@@ -17,7 +17,6 @@ use TYPO3\CMS\Core\Database\Query\QueryBuilder;
 use TYPO3\CMS\Core\Resource\File;
 use TYPO3\CMS\Core\Resource\ResourceStorage;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
-use TYPO3\CMS\Core\Utility\PathUtility;
 
 /**
  * Class FileMoveService
@@ -41,8 +40,7 @@ class FileMoveService extends Command
         $this->initializeApi($targetStorage);
 
         // Retrieve the Public Id based on the file identifier
-        $publicId = $this->getCloudinaryUtility()
-            ->setStorage($fileObject->getStorage())
+        $publicId = $this->getCloudinaryUtility($fileObject)
             ->computeCloudinaryPublicId($fileObject->getIdentifier());
 
         try {
@@ -160,16 +158,16 @@ class FileMoveService extends Command
 
         $this->initializeApi($targetStorage);
 
-        $publicId = $this->getCloudinaryUtility()
-            ->setStorage($fileObject->getStorage())
+        $publicId = $this->getCloudinaryUtility($fileObject)
             ->computeCloudinaryPublicId($fileObject->getIdentifier());
 
 
         $options = [
             'public_id' => $publicId,
-            'folder' => $this->getCloudinaryUtility()->computeCloudinaryFolderPath(
-                $fileObject->getParentFolder()->getIdentifier()
-            ),
+            'folder' => $this->getCloudinaryUtility($fileObject)
+                ->computeCloudinaryFolderPath(
+                    $fileObject->getParentFolder()->getIdentifier()
+                ),
             'overwrite' => true,
         ];
 
@@ -247,10 +245,12 @@ class FileMoveService extends Command
     }
 
     /**
+     * @param File $file
+     *
      * @return object|CloudinaryUtility
      */
-    protected function getCloudinaryUtility()
+    protected function getCloudinaryUtility(File $file)
     {
-        return GeneralUtility::makeInstance(CloudinaryUtility::class);
+        return GeneralUtility::makeInstance(CloudinaryUtility::class, $file->getStorage());
     }
 }

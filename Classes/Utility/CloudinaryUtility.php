@@ -582,7 +582,7 @@ class CloudinaryUtility
      *
      * @return $this
      */
-    public function setStorage(?ResourceStorage $storage): self
+    public function setStorage(ResourceStorage $storage): self
     {
         $this->storage = $storage;
         return $this;
