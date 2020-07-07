@@ -145,14 +145,12 @@ class FileMoveService extends Command
      * @param File $fileObject
      * @param ResourceStorage $targetStorage
      * @param string $baseUrl
-     *
-     * @return bool
      */
     public function cloudinaryUploadFile(
         File $fileObject,
         ResourceStorage $targetStorage,
         string $baseUrl = ''
-    ): bool {
+    ): void {
 
         $this->ensureDirectoryExistence($fileObject);
 
@@ -176,15 +174,10 @@ class FileMoveService extends Command
             : $this->getAbsolutePath($fileObject);
 
         // Upload the file
-        try {
-            $resource = \Cloudinary\Uploader::upload(
-                $fileNameAndPath,
-                $options
-            );
-        } catch (\Exception $e) {
-            $resource = false;
-        }
-        return !empty($resource);
+        $resource = \Cloudinary\Uploader::upload(
+            $fileNameAndPath,
+            $options
+        );
     }
 
     /**
