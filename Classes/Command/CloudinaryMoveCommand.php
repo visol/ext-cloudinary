@@ -178,7 +178,11 @@ class CloudinaryMoveCommand extends AbstractCloudinaryCommand
                         $fileObject->getIdentifier()
                     ]
                 );
-                $isUploaded = $this->getFileMoveService()->cloudinaryUploadFile($fileObject, $this->targetStorage, $input->getOption('base-url'));
+
+                $isUploaded = $this->getFileMoveService()->cloudinaryUploadFile(
+                    $fileObject,
+                    $this->targetStorage, $input->getOption('base-url')
+                );
 
                 if (!$isUploaded) {
                     $this->log('Mmm..., I could not upload file %s', [$fileObject->getIdentifier()], self::WARNING);
