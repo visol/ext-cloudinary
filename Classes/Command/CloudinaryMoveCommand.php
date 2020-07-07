@@ -181,7 +181,8 @@ class CloudinaryMoveCommand extends AbstractCloudinaryCommand
 
                 $isUploaded = $this->getFileMoveService()->cloudinaryUploadFile(
                     $fileObject,
-                    $this->targetStorage, $input->getOption('base-url')
+                    $this->targetStorage,
+                    $input->getOption('base-url')
                 );
 
                 if (!$isUploaded) {
