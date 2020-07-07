@@ -54,11 +54,6 @@ class CloudinaryUtility
     protected $cloudinaryProcessedResourceRepository;
 
     /**
-     * @var array
-     */
-    protected $extensionConfiguration;
-
-    /**
      * @var ResourceStorage|null
      */
     protected $storage;
@@ -72,23 +67,9 @@ class CloudinaryUtility
     {
         $this->storage = $storage;
 
-        # TODO: change me after TYPO3 v9 migration
-        #       GeneralUtility::makeInstance(ExtensionConfiguration::class)->get('cloudinary')
-        $this->extensionConfiguration = (array)unserialize($GLOBALS['TYPO3_CONF_VARS']['EXT']['extConf']['cloudinary']);
-
         // Workaround: dependency injection not supported in userFuncs
         $this->mediaRepository = GeneralUtility::makeInstance(\Visol\Cloudinary\Domain\Repository\MediaRepository::class);
         $this->responsiveBreakpointsRepository = GeneralUtility::makeInstance(\Visol\Cloudinary\Domain\Repository\ResponsiveBreakpointsRepository::class);
-
-        // todo: remove obsolete code since the config is to be found in the storage
-        \Cloudinary::config(
-            [
-                'cloud_name' => $this->extensionConfiguration['cloudName'],
-                'api_key' => $this->extensionConfiguration['apiKey'],
-                'api_secret' => $this->extensionConfiguration['apiSecret'],
-                'timeout' => $this->extensionConfiguration['timeout'],
-            ]
-        );
     }
 
     /**
@@ -155,28 +136,8 @@ class CloudinaryUtility
 
             $filenameWithoutExtension = preg_replace('/\\.[^.\\s]{3,4}$/', '', $filename);
 
-            switch ($this->extensionConfiguration['hash_position']) {
-                case self::HASH_POSITION_APPEND_FILENAME:
-                    $folder = dirname($filenameWithoutExtension);
-                    $publicId = basename($filenameWithoutExtension) . self::SEPERATOR . $sha1;
-                    break;
-                case self::HASH_POSITION_PREPEND_FILENAME:
-                    $folder = dirname($filenameWithoutExtension);
-                    $publicId = $sha1 . self::SEPERATOR . basename($filenameWithoutExtension);
-                    break;
-                case self::HASH_POSITION_APPEND_FOLDERNAME:
-                    $folder = dirname($filenameWithoutExtension) . '/' . $sha1;
-                    $publicId = basename($filenameWithoutExtension);
-                    break;
-                case self::HASH_POSITION_PREPEND_FOLDERNAME:
-                    $folder = $sha1 . '/' . dirname($filenameWithoutExtension);
-                    $publicId = basename($filenameWithoutExtension);
-                    break;
-                default:
-                    $folder = dirname($filenameWithoutExtension);
-                    $publicId = basename($filenameWithoutExtension);
-            }
-
+            $folder = dirname($filenameWithoutExtension);
+            $publicId = basename($filenameWithoutExtension);
 
             $options = [
                 'public_id' => $publicId,
