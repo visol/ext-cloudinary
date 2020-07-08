@@ -59,7 +59,7 @@ class CloudinaryCopyCommand extends AbstractCloudinaryCommand
                 'filter',
                 '',
                 InputArgument::OPTIONAL,
-                'A flexible filter containing wild cards, ex. %.youtube, /foo/bar/%',
+                'Filter pattern with possible wild cards, --filter="/foo/bar/%"',
                 ''
             )
             ->addOption(
@@ -74,6 +74,13 @@ class CloudinaryCopyCommand extends AbstractCloudinaryCommand
                 '',
                 InputArgument::OPTIONAL,
                 'Add a possible offset, limit to restrain the number of files. (eg. 0,100)',
+                ''
+            )
+            ->addOption(
+                'exclude',
+                '',
+                InputArgument::OPTIONAL,
+                'Exclude pattern, can contain comma separated values e.g. --exclude="/apps/%,/_temp/%"',
                 ''
             )
             ->addArgument(
