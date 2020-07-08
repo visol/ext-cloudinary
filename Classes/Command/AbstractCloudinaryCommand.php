@@ -95,6 +95,19 @@ abstract class AbstractCloudinaryCommand extends Command
                 $query->expr()->eq('missing', 0)
             );
 
+        // Possible custom exclude
+        if ($input->getOption('exclude')) {
+            $expressions = GeneralUtility::trimExplode(',', $input->getOption('exclude'));
+            foreach ($expressions as $expression) {
+                $query->andWhere(
+                    $query->expr()->notLike(
+                        'identifier',
+                        $query->expr()->literal($expression)
+                    )
+                );
+            }
+        }
+
         // Possible custom filter
         if ($input->getOption('filter')) {
             $query->andWhere(
