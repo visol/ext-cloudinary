@@ -1,23 +1,16 @@
 <?php
 
 /*
- * This file is part of the TYPO3 CMS project.
- *
- * It is free software; you can redistribute it and/or modify it under
- * the terms of the GNU General Public License, either version 2
- * of the License, or any later version.
+ * This file is part of the Visol/Cloudinary project under GPLv2 or later.
  *
  * For the full copyright and license information, please read the
- * LICENSE.txt file that was distributed with TYPO3 source code.
- *
- * The TYPO3 project - inspiring people to share!
+ * LICENSE.md file that was distributed with this source code.
  */
 
 namespace Visol\Cloudinary\Utility;
 
 use TYPO3\CMS\Core\Resource\FileReference;
 use TYPO3\CMS\Core\Resource\ResourceStorage;
-use TYPO3\CMS\Core\Utility\PathUtility;
 use Visol\Cloudinary\CloudinaryException;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
 use Visol\Cloudinary\Driver\CloudinaryDriver;
@@ -54,6 +47,12 @@ class CloudinaryUtility
     protected $cloudinaryProcessedResourceRepository;
 
     /**
+     * @var \TYPO3\CMS\Core\Resource\StorageRepository
+     * @inject
+     */
+    protected $storageRepository;
+
+    /**
      * @var ResourceStorage|null
      */
     protected $storage;
@@ -77,16 +76,23 @@ class CloudinaryUtility
      *
      * @return string
      * @throws CloudinaryException
-     * @deprecated use FalToCloudinaryConverter::toPublicId instead
      */
-    public function getPublicId($filename)
+    public function uploadLocalFileAndGetPublicId($filename, ResourceStorage $storage = null)
     {
+        if (!$storage) {
+            $storage = $this->storageRepository->findByUid(2);
+        }
+        $this->initializeApi($storage);
+        if ($storage->getDriverType() !== CloudinaryDriver::DRIVER_TYPE) {
+            throw new \Exception('adsg');
+        }
+
         try {
             $filename = $this->cleanFilename($filename);
             $imagePathAndFilename = GeneralUtility::getFileAbsFileName($filename);
             $modificationDate = filemtime($imagePathAndFilename);
 
-            $possibleMedias = $this->mediaRepository->findByFilename($filename);
+            $possibleMedias = $this->mediaRepository->findByFilename($filename); // TODO: Add storageID
 
             // check modification date
             $media = null;
@@ -202,7 +208,9 @@ class CloudinaryUtility
         $responsiveBreakpoints = null;
 
         if ($publicIdOrFileReference instanceof FileReference) {
-            $this->initializeApi($publicIdOrFileReference);
+            $this->initializeApi($publicIdOrFileReference->getStorage());
+            // todo fix me!
+            throw new \Exception('Fab: refactor me! We could have a service here', 123456789);
             $publicId = $this->setStorage($publicIdOrFileReference->getStorage())
                 ->computeCloudinaryPublicId($publicIdOrFileReference->getIdentifier());
         } else {
@@ -228,18 +236,14 @@ class CloudinaryUtility
     /**
      * @param FileReference $fileReference
      */
-    protected function initializeApi(FileReference $fileReference)
+    protected function initializeApi(ResourceStorage $storage)
     {
-        $storage = $fileReference->getStorage();
-
         // Check the file is stored on the right storage
         // If not we should trigger an execption
         if ($storage->getDriverType() !== CloudinaryDriver::DRIVER_TYPE) {
             $message = sprintf(
-                'CloudinaryUtility: wrong storage! Can not initialize Cloudinary API with file reference "%s" original file "%s:%s"',
-                $fileReference->getUid(),
-                $fileReference->getOriginalFile()->getUid(),
-                $fileReference->getOriginalFile()->getIdentifier()
+                'CloudinaryUtility: wrong storage! Can not initialize with storage type "%s".',
+                $storage->getDriverType()
             );
             throw new \Exception($message, 1590401459);
         }
@@ -401,152 +405,6 @@ class CloudinaryUtility
         }
 
         return $filename;
-    }
-
-    /**
-     * Cloudinary to FAL identifier
-     *
-     * @param array $cloudinaryResource
-     *
-     * @return string
-     */
-    public function computeFileIdentifier(array $cloudinaryResource): string
-    {
-        $extension = $cloudinaryResource['resource_type'] === 'image'
-            ? '.' . $cloudinaryResource['format'] // the format (or extension) is only returned for images.
-            : '';
-
-        $rawFileIdentifier = DIRECTORY_SEPARATOR . $cloudinaryResource['public_id'] . $extension;
-        return str_replace($this->getBasePath(), '', $rawFileIdentifier);
-    }
-
-    /**
-     * @return string
-     */
-    protected function getBasePath(): string
-    {
-        $basePath = (string)$this->storage->getConfiguration()['basePath'];
-        return $basePath
-            ? DIRECTORY_SEPARATOR . trim($basePath, DIRECTORY_SEPARATOR)
-            : '';
-    }
-
-    /**
-     * FAL to Cloudinary identifier
-     *
-     * @param string $fileIdentifier
-     *
-     * @return string
-     */
-    public function computeCloudinaryPublicId(string $fileIdentifier): string
-    {
-        $normalizedFileIdentifier = $this->guessIsImage($fileIdentifier)
-            ? $this->stripExtension($fileIdentifier)
-            : $fileIdentifier;
-
-        return $this->normalizeCloudinaryPath($normalizedFileIdentifier);
-    }
-
-    /**
-     * FAL to Cloudinary identifier
-     *
-     * @param string $folderIdentifier
-     *
-     * @return string
-     */
-    public function computeCloudinaryFolderPath(string $folderIdentifier): string
-    {
-        return $this->normalizeCloudinaryPath($folderIdentifier);
-    }
-
-    /**
-     * @param string $cloudinaryPath
-     *
-     * @return string
-     */
-    public function normalizeCloudinaryPath(string $cloudinaryPath): string
-    {
-        $normalizedCloudinaryPath = trim($cloudinaryPath, DIRECTORY_SEPARATOR);
-        $basePath = $this->getBasePath();
-        return $basePath
-            ? trim($basePath . DIRECTORY_SEPARATOR . $normalizedCloudinaryPath, DIRECTORY_SEPARATOR)
-            : $normalizedCloudinaryPath;
-    }
-
-    /**
-     * @param array $fileInfo
-     *
-     * @return string
-     */
-    public function getMimeType(array $fileInfo): string
-    {
-        return isset($fileInfo['mime_type'])
-            ? $fileInfo['mime_type']
-            : '';
-    }
-
-    /**
-     * @param string $fileIdentifier
-     *
-     * @return string
-     */
-    public function getResourceType(string $fileIdentifier): string
-    {
-        return $this->guessIsImage($fileIdentifier)
-            ? 'image'
-            : 'raw';
-    }
-
-    /**
-     * See if that is OK like that. The alternatives requires to "heavy" processing
-     * like downloading the file to check the mime time or use the API SDK to fetch whether
-     * we are in presence of an image.
-     *
-     * @param string $fileIdentifier
-     *
-     * @return bool
-     */
-    protected function guessIsImage(string $fileIdentifier)
-    {
-        $extension = strtolower(PathUtility::pathinfo($fileIdentifier, PATHINFO_EXTENSION));
-        $commonMimeTypes = [
-            'png' => 'image/png',
-            'jpe' => 'image/jpeg',
-            'jpeg' => 'image/jpeg',
-            'jpg' => 'image/jpeg',
-            'gif' => 'image/gif',
-            'bmp' => 'image/bmp',
-            'ico' => 'image/vnd.microsoft.icon',
-            'tiff' => 'image/tiff',
-            'tif' => 'image/tiff',
-            'svg' => 'image/svg+xml',
-            'svgz' => 'image/svg+xml',
-            'webp' => 'image/image/webp',
-        ];
-
-        return isset($commonMimeTypes[$extension]);
-    }
-
-    /**
-     * @param $filename
-     *
-     * @return string
-     */
-    protected function stripExtension($filename): string
-    {
-        $pathParts = PathUtility::pathinfo($filename);
-        return $pathParts['dirname'] . DIRECTORY_SEPARATOR . $pathParts['filename'];
-    }
-
-    /**
-     * @param ResourceStorage|null $storage
-     *
-     * @return $this
-     */
-    public function setStorage(ResourceStorage $storage): self
-    {
-        $this->storage = $storage;
-        return $this;
     }
 
 }

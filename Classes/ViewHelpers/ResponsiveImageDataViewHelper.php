@@ -139,7 +139,7 @@ class ResponsiveImageDataViewHelper extends \TYPO3\CMS\Fluid\Core\ViewHelper\Abs
                 // decode URLs from RealURL
                 $imageUri = rawurldecode($imageUri);
 
-                $publicId = $this->cloudinaryUtility->getPublicId(ltrim($imageUri, '/'));
+                $publicId = $this->cloudinaryUtility->uploadLocalFileAndGetPublicId(ltrim($imageUri, '/'));
 
                 $settings = [
                     'bytesStep' => $bytesStep,
