@@ -508,7 +508,7 @@ class CloudinaryUtility
      */
     protected function guessIsImage(string $fileIdentifier)
     {
-        $extension = PathUtility::pathinfo($fileIdentifier, PATHINFO_EXTENSION);
+        $extension = strtolower(PathUtility::pathinfo($fileIdentifier, PATHINFO_EXTENSION));
         $commonMimeTypes = [
             'png' => 'image/png',
             'jpe' => 'image/jpeg',
