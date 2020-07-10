@@ -9,8 +9,9 @@ namespace Visol\Cloudinary\ViewHelpers;
  * LICENSE.md file that was distributed with this source code.
  */
 
+use TYPO3\CMS\Core\Resource\ResourceStorage;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
-use Visol\Cloudinary\Utility\CloudinaryUtility;
+use Visol\Cloudinary\Services\CloudinaryService;
 use TYPO3\CMS\Core\Resource\Exception\ResourceDoesNotExistException;
 use TYPO3\CMS\Core\Resource\FileInterface;
 
@@ -104,8 +105,7 @@ class CloudinaryImageViewHelper extends \TYPO3\CMS\Fluid\Core\ViewHelper\Abstrac
 
             try {
 
-                $publicId = $this->getCloudinaryUtility()
-                    ->setStorage($image->getStorage())
+                $publicId = $this->getCloudinaryService($image->getStorage())
                     ->computeCloudinaryPublicId($image->getIdentifier());
 
                 $options = $this->cloudinaryUtility->generateOptionsFromSettings(
@@ -172,10 +172,15 @@ class CloudinaryImageViewHelper extends \TYPO3\CMS\Fluid\Core\ViewHelper\Abstrac
     }
 
     /**
-     * @return object|CloudinaryUtility
+     * @param ResourceStorage $storage
+     *
+     * @return object|CloudinaryService
      */
-    protected function getCloudinaryUtility()
+    protected function getCloudinaryService(ResourceStorage $storage)
     {
-        return GeneralUtility::makeInstance(CloudinaryUtility::class);
+        return GeneralUtility::makeInstance(
+            CloudinaryService::class,
+            $storage
+        );
     }
 }

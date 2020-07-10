@@ -71,7 +71,7 @@ class CloudinaryImage
      */
     public function getBreakpointData($content, $conf)
     {
-        $publicId = $this->cloudinaryUtility->getPublicId(ltrim($content, '/'));
+        $publicId = $this->cloudinaryUtility->uploadLocalFileAndGetPublicId(ltrim($content, '/'));
         $options = $this->cloudinaryUtility->generateOptionsFromSettings($conf);
         $breakpointData = $this->cloudinaryUtility->getResponsiveBreakpointData($publicId, $options);
 

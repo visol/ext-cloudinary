@@ -10,8 +10,7 @@ namespace Visol\Cloudinary\Services;
  */
 
 use Doctrine\DBAL\Driver\Connection;
-use Visol\Cloudinary\Utility\CloudinaryUtility;
-use Symfony\Component\Console\Command\Command;
+use Visol\Cloudinary\Services\CloudinaryService;
 use TYPO3\CMS\Core\Database\ConnectionPool;
 use TYPO3\CMS\Core\Database\Query\QueryBuilder;
 use TYPO3\CMS\Core\Resource\File;
@@ -21,13 +20,18 @@ use TYPO3\CMS\Core\Utility\GeneralUtility;
 /**
  * Class FileMoveService
  */
-class FileMoveService extends Command
+class FileMoveService
 {
 
     /**
      * @var string
      */
     protected $tableName = 'sys_file';
+
+    /**
+     * @var CloudinaryService
+     */
+    protected $cloudinaryService;
 
     /**
      * @param File $fileObject
@@ -38,9 +42,10 @@ class FileMoveService extends Command
     public function fileExists(File $fileObject, ResourceStorage $targetStorage): bool
     {
         $this->initializeApi($targetStorage);
+        $this->initializeCloudinaryService($targetStorage);
 
         // Retrieve the Public Id based on the file identifier
-        $publicId = $this->getCloudinaryUtility($fileObject)
+        $publicId = $this->getCloudinaryService()
             ->computeCloudinaryPublicId($fileObject->getIdentifier());
 
         try {
@@ -61,34 +66,34 @@ class FileMoveService extends Command
      *
      * @return bool
      */
-    public function forceMove(File $fileObject, ResourceStorage $targetStorage, $removeFile = true): bool
-    {
-        $isUpdated = $isDeletedFromSourceStorage = false;
-
-        $fileNameAndAbsolutePath = $this->getAbsolutePath($fileObject);
-
-        if (file_exists($fileNameAndAbsolutePath)) {
-            $isUploaded = $this->fileExists($fileObject, $targetStorage)
-                ? true
-                : $this->cloudinaryUploadFile($fileObject, $targetStorage);
-
-            if ($isUploaded) {
-                // Update the storage uid
-                $isUpdated = $this->updateFile(
-                    $fileObject,
-                    [
-                        'storage' => $targetStorage->getUid(),
-                    ]
-                );
-
-                if ($removeFile && $isUpdated) {
-                    // Delete the file form the local storage
-                    $isDeletedFromSourceStorage = unlink($fileNameAndAbsolutePath);
-                }
-            }
-        }
-        return $isUpdated && $isDeletedFromSourceStorage;
-    }
+    #public function forceMove(File $fileObject, ResourceStorage $targetStorage, $removeFile = true): bool
+    #{
+    #    $isUpdated = $isDeletedFromSourceStorage = false;
+    #
+    #    $fileNameAndAbsolutePath = $this->getAbsolutePath($fileObject);
+    #
+    #    if (file_exists($fileNameAndAbsolutePath)) {
+    #        $isUploaded = $this->fileExists($fileObject, $targetStorage)
+    #            ? true
+    #            : $this->cloudinaryUploadFile($fileObject, $targetStorage);
+    #
+    #        if ($isUploaded) {
+    #            // Update the storage uid
+    #            $isUpdated = $this->updateFile(
+    #                $fileObject,
+    #                [
+    #                    'storage' => $targetStorage->getUid(),
+    #                ]
+    #            );
+    #
+    #            if ($removeFile && $isUpdated) {
+    #                // Delete the file form the local storage
+    #                $isDeletedFromSourceStorage = unlink($fileNameAndAbsolutePath);
+    #            }
+    #        }
+    #    }
+    #    return $isUpdated && $isDeletedFromSourceStorage;
+    #}
 
     /**
      * @param File $fileObject
@@ -152,21 +157,23 @@ class FileMoveService extends Command
         string $baseUrl = ''
     ): void {
 
+        $this->initializeCloudinaryService($targetStorage);
+
         $this->ensureDirectoryExistence($fileObject);
 
         $this->initializeApi($targetStorage);
 
         $fileIdentifier = $fileObject->getIdentifier();
-        $publicId = $this->getCloudinaryUtility($fileObject)
+        $publicId = $this->getCloudinaryService()
             ->computeCloudinaryPublicId($fileIdentifier);
 
         $options = [
             'public_id' => basename($publicId),
-            'folder' => $this->getCloudinaryUtility($fileObject)
+            'folder' => $this->getCloudinaryService()
                 ->computeCloudinaryFolderPath(
                     $fileObject->getParentFolder()->getIdentifier()
                 ),
-            'resource_type' => $this->getCloudinaryUtility($fileObject)->getResourceType($fileIdentifier),
+            'resource_type' => $this->getCloudinaryService()->getResourceType($fileIdentifier),
             'overwrite' => true,
         ];
         $fileNameAndPath = $baseUrl
@@ -237,12 +244,21 @@ class FileMoveService extends Command
     }
 
     /**
-     * @param File $file
-     *
-     * @return object|CloudinaryUtility
+     * @return object|CloudinaryService
      */
-    protected function getCloudinaryUtility(File $file)
+    protected function getCloudinaryService()
     {
-        return GeneralUtility::makeInstance(CloudinaryUtility::class, $file->getStorage());
+        return $this->cloudinaryService;
+    }
+
+    /**
+     * @param ResourceStorage $storage
+     */
+    protected function initializeCloudinaryService(ResourceStorage $storage)
+    {
+        $this->cloudinaryService = GeneralUtility::makeInstance(
+                CloudinaryService::class,
+            $storage
+            );
     }
 }

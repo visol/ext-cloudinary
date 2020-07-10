@@ -27,7 +27,7 @@ use TYPO3\CMS\Core\Resource\ResourceStorage;
 use TYPO3\CMS\Extbase\Object\ObjectManager;
 use TYPO3\CMS\Extbase\SignalSlot\Dispatcher;
 use TYPO3\CMS\Extbase\Utility\LocalizationUtility;
-use Visol\Cloudinary\Utility\CloudinaryUtility;
+use Visol\Cloudinary\Services\CloudinaryService;
 
 /**
  * Class CloudinaryDriver
@@ -104,9 +104,9 @@ class CloudinaryDriver extends AbstractHierarchicalFilesystemDriver
     protected $cloudinaryTypo3Cache;
 
     /**
-     * @var CloudinaryUtility
+     * @var CloudinaryService
      */
-    protected $cloudinaryUtility;
+    protected $cloudinaryService;
 
     /**
      * @param array $configuration
@@ -388,7 +388,7 @@ class CloudinaryDriver extends AbstractHierarchicalFilesystemDriver
         $this->log('[CACHE] Flushed as adding file', [], ['addFile']);
         $this->flushFileCache();
 
-        $cloudinaryPublicId = $this->getCloudinaryUtility()->computeCloudinaryPublicId($fileIdentifier);
+        $cloudinaryPublicId = $this->getCloudinaryService()->computeCloudinaryPublicId($fileIdentifier);
 
         $this->log('[API][UPLOAD] Cloudinary\Uploader::upload() - add resource "%s"', [$cloudinaryPublicId], ['addFile()']);
 
@@ -400,8 +400,8 @@ class CloudinaryDriver extends AbstractHierarchicalFilesystemDriver
             $localFilePath,
             [
                 'public_id' => PathUtility::basename($cloudinaryPublicId),
-                'folder' => $this->getCloudinaryUtility()->computeCloudinaryFolderPath($targetFolderIdentifier),
-                'resource_type' => $this->getCloudinaryUtility()->getResourceType($fileIdentifier),
+                'folder' => $this->getCloudinaryService()->computeCloudinaryFolderPath($targetFolderIdentifier),
+                'resource_type' => $this->getCloudinaryService()->getResourceType($fileIdentifier),
                 'overwrite' => true,
             ]
         );
@@ -450,10 +450,10 @@ class CloudinaryDriver extends AbstractHierarchicalFilesystemDriver
             $this->getPublicUrl($fileIdentifier),
             [
                 'public_id' => PathUtility::basename(
-                    $this->getCloudinaryUtility()->computeCloudinaryPublicId($fileName)
+                    $this->getCloudinaryService()->computeCloudinaryPublicId($fileName)
                 ),
-                'folder' => $this->getCloudinaryUtility()->computeCloudinaryFolderPath($targetFolderIdentifier),
-                'resource_type' => $this->getCloudinaryUtility()->getResourceType($fileIdentifier),
+                'folder' => $this->getCloudinaryService()->computeCloudinaryFolderPath($targetFolderIdentifier),
+                'resource_type' => $this->getCloudinaryService()->getResourceType($fileIdentifier),
                 'overwrite' => true,
             ]
         );
@@ -472,15 +472,15 @@ class CloudinaryDriver extends AbstractHierarchicalFilesystemDriver
      */
     public function replaceFile($fileIdentifier, $localFilePath)
     {
-        $cloudinaryPublicId = PathUtility::basename($this->getCloudinaryUtility()->computeCloudinaryPublicId($fileIdentifier));
-        $cloudinaryFolder = $this->getCloudinaryUtility()->computeCloudinaryFolderPath(
+        $cloudinaryPublicId = PathUtility::basename($this->getCloudinaryService()->computeCloudinaryPublicId($fileIdentifier));
+        $cloudinaryFolder = $this->getCloudinaryService()->computeCloudinaryFolderPath(
             PathUtility::dirname($fileIdentifier)
         );
 
         $options = [
             'public_id' => $cloudinaryPublicId,
             'folder' => $cloudinaryFolder,
-            'resource_type' => $this->getCloudinaryUtility()->getResourceType($fileIdentifier),
+            'resource_type' => $this->getCloudinaryService()->getResourceType($fileIdentifier),
             'overwrite' => true,
         ];
 
@@ -512,13 +512,13 @@ class CloudinaryDriver extends AbstractHierarchicalFilesystemDriver
         $this->log('[CACHE] Flushed as deleting file', [], ['deleteFile']);
         $this->flushFileCache();
 
-        $cloudinaryPublicId = $this->getCloudinaryUtility()->computeCloudinaryPublicId($fileIdentifier);
+        $cloudinaryPublicId = $this->getCloudinaryService()->computeCloudinaryPublicId($fileIdentifier);
         $this->log('[API][DELETE] Cloudinary\Api::delete_resources - delete resource "%s"', [$cloudinaryPublicId], ['deleteFile']);
 
         $response = $this->getApi()->delete_resources(
             $cloudinaryPublicId,
             [
-                'resource_type' => $this->getCloudinaryUtility()->getResourceType($fileIdentifier),
+                'resource_type' => $this->getCloudinaryService()->getResourceType($fileIdentifier),
             ]
         );
 
@@ -542,7 +542,7 @@ class CloudinaryDriver extends AbstractHierarchicalFilesystemDriver
      */
     public function deleteFolder($folderIdentifier, $deleteRecursively = false)
     {
-        $cloudinaryFolder = $this->getCloudinaryUtility()->computeCloudinaryFolderPath($folderIdentifier);
+        $cloudinaryFolder = $this->getCloudinaryService()->computeCloudinaryFolderPath($folderIdentifier);
         if ($deleteRecursively) {
             $this->log('[API][DELETE] Cloudinary\Api::delete_resources_by_prefix() - folder "%s"', [$cloudinaryFolder], ['deleteFolder']);
             $this->getApi()->delete_resources_by_prefix($cloudinaryFolder);
@@ -617,7 +617,7 @@ class CloudinaryDriver extends AbstractHierarchicalFilesystemDriver
     public function createFolder($newFolderName, $parentFolderIdentifier = '', $recursive = false)
     {
         $canonicalFolderPath = $this->canonicalizeAndCheckFolderIdentifierAndFolderName($parentFolderIdentifier, $newFolderName);
-        $cloudinaryFolder = $this->getCloudinaryUtility()->normalizeCloudinaryPath($canonicalFolderPath);
+        $cloudinaryFolder = $this->getCloudinaryService()->normalizeCloudinaryPath($canonicalFolderPath);
 
         $this->log('[API][CREATE] Cloudinary\Api::createFolder() - folder "%s"', [$cloudinaryFolder], ['createFolder']);
         $this->getApi()->create_folder(
@@ -674,8 +674,8 @@ class CloudinaryDriver extends AbstractHierarchicalFilesystemDriver
             );
         }
 
-        $cloudinaryPublicId = $this->getCloudinaryUtility()->computeCloudinaryPublicId($fileIdentifier);
-        $newCloudinaryPublicId = $this->getCloudinaryUtility()->computeCloudinaryPublicId($newFileIdentifier);
+        $cloudinaryPublicId = $this->getCloudinaryService()->computeCloudinaryPublicId($fileIdentifier);
+        $newCloudinaryPublicId = $this->getCloudinaryService()->computeCloudinaryPublicId($newFileIdentifier);
 
         if ($cloudinaryPublicId !== $newCloudinaryPublicId) {
             // Necessary to happen in an early stage.
@@ -691,7 +691,7 @@ class CloudinaryDriver extends AbstractHierarchicalFilesystemDriver
                 $cloudinaryPublicId,
                 $newCloudinaryPublicId,
                 [
-                    'resource_type' => $this->getCloudinaryUtility()->getResourceType($fileIdentifier),
+                    'resource_type' => $this->getCloudinaryService()->getResourceType($fileIdentifier),
                 ]
             );
         }
@@ -735,11 +735,11 @@ class CloudinaryDriver extends AbstractHierarchicalFilesystemDriver
                         $cloudinaryPublicId,
                         $newCloudinaryPublicId,
                         [
-                            'resource_type' => $this->getCloudinaryUtility()->getResourceType($fileIdentifier),
+                            'resource_type' => $this->getCloudinaryService()->getResourceType($fileIdentifier),
                         ]
                     );
-                    $oldFileIdentifier = $this->getCloudinaryUtility()->computeFileIdentifier($resource);
-                    $newFileIdentifier = $this->getCloudinaryUtility()->computeFileIdentifier(
+                    $oldFileIdentifier = $this->getCloudinaryService()->computeFileIdentifier($resource);
+                    $newFileIdentifier = $this->getCloudinaryService()->computeFileIdentifier(
                         [
                             'public_id' => $newCloudinaryPublicId,
                             'format' => $resource['format'],
@@ -816,7 +816,7 @@ class CloudinaryDriver extends AbstractHierarchicalFilesystemDriver
      */
     public function isFolderEmpty($folderIdentifier)
     {
-        $cloudinaryFolder = $this->getCloudinaryUtility()->computeCloudinaryFolderPath($folderIdentifier);
+        $cloudinaryFolder = $this->getCloudinaryService()->computeCloudinaryFolderPath($folderIdentifier);
         $this->log('[API] Cloudinary\Api::resources() - fetch files from folder "%s"', [$cloudinaryFolder], ['isFolderEmpty']);
         $response = $this->getApi()->resources(
             [
@@ -874,7 +874,7 @@ class CloudinaryDriver extends AbstractHierarchicalFilesystemDriver
         return [
             'identifier' => $canonicalFolderIdentifier,
             'name' => PathUtility::basename(
-                $this->getCloudinaryUtility()->normalizeCloudinaryPath($canonicalFolderIdentifier)
+                $this->getCloudinaryService()->normalizeCloudinaryPath($canonicalFolderIdentifier)
             ),
             'storage' => $this->storageUid
         ];
@@ -1182,7 +1182,7 @@ class CloudinaryDriver extends AbstractHierarchicalFilesystemDriver
     {
         $folders = [];
 
-        $cloudinaryFolder = $this->getCloudinaryUtility()->computeCloudinaryFolderPath($folderIdentifier);
+        $cloudinaryFolder = $this->getCloudinaryService()->computeCloudinaryFolderPath($folderIdentifier);
 
         $this->log('Fetch subfolders from folder "%s"', [$cloudinaryFolder], ['getCloudinaryFolders']);
 
@@ -1211,7 +1211,7 @@ class CloudinaryDriver extends AbstractHierarchicalFilesystemDriver
     protected function getCloudinaryResources(string $folderIdentifier): array
     {
         $cloudinaryResources = [];
-        $cloudinaryFolder = $this->getCloudinaryUtility()->computeCloudinaryFolderPath($folderIdentifier);
+        $cloudinaryFolder = $this->getCloudinaryService()->computeCloudinaryFolderPath($folderIdentifier);
         if (!$cloudinaryFolder) {
             $cloudinaryFolder = self::ROOT_FOLDER_IDENTIFIER . '*';
         }
@@ -1247,7 +1247,7 @@ class CloudinaryDriver extends AbstractHierarchicalFilesystemDriver
                 foreach ($response['resources'] as $resource) {
                     // Compute file identifier
                     $fileIdentifier = $this->canonicalizeAndCheckFileIdentifier(
-                        $this->getCloudinaryUtility()->computeFileIdentifier($resource)
+                        $this->getCloudinaryService()->computeFileIdentifier($resource)
                     );
 
                     // Compute folder identifier
@@ -1279,8 +1279,8 @@ class CloudinaryDriver extends AbstractHierarchicalFilesystemDriver
         $cloudinaryResource = null;
         try {
             // do a double check since we have an asynchronous mechanism.
-            $cloudinaryPublicId = $this->getCloudinaryUtility()->computeCloudinaryPublicId($fileIdentifier);
-            $resourceType = $this->getCloudinaryUtility()->getResourceType($fileIdentifier);
+            $cloudinaryPublicId = $this->getCloudinaryService()->computeCloudinaryPublicId($fileIdentifier);
+            $resourceType = $this->getCloudinaryService()->getResourceType($fileIdentifier);
             $cloudinaryResource = (array)$this->getApi()->resource(
                 $cloudinaryPublicId,
                 [
@@ -1315,18 +1315,18 @@ class CloudinaryDriver extends AbstractHierarchicalFilesystemDriver
     }
 
     /**
-     * @return CloudinaryUtility
+     * @return CloudinaryService
      */
-    protected function getCloudinaryUtility()
+    protected function getCloudinaryService()
     {
-        if (!$this->cloudinaryUtility) {
-            $this->cloudinaryUtility = GeneralUtility::makeInstance(
-                CloudinaryUtility::class,
+        if (!$this->cloudinaryService) {
+            $this->cloudinaryService = GeneralUtility::makeInstance(
+                CloudinaryService::class,
                 ResourceFactory::getInstance()->getStorageObject($this->storageUid)
             );
         }
 
-        return $this->cloudinaryUtility;
+        return $this->cloudinaryService;
     }
 
     /**
