@@ -10,7 +10,6 @@ namespace Visol\Cloudinary\Services;
  */
 
 use Doctrine\DBAL\Driver\Connection;
-use Visol\Cloudinary\Services\CloudinaryService;
 use TYPO3\CMS\Core\Database\ConnectionPool;
 use TYPO3\CMS\Core\Database\Query\QueryBuilder;
 use TYPO3\CMS\Core\Resource\File;

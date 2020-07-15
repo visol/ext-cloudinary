@@ -30,6 +30,16 @@ call_user_func(
             'shortName' => \Visol\Cloudinary\Driver\CloudinaryDriver::DRIVER_TYPE,
         ];
 
+
+        $GLOBALS['TYPO3_CONF_VARS']['SYS']['fal']['registeredDrivers'][\Visol\Cloudinary\Driver\CloudinaryDriver::DRIVER_TYPE] = [
+            'class' => \Visol\Cloudinary\Driver\CloudinaryFastDriver::class,
+
+            'flexFormDS' => 'FILE:EXT:cloudinary/Configuration/FlexForm/CloudinaryFlexForm.xml',
+            'label' => 'Cloudinary',
+            'shortName' => \Visol\Cloudinary\Driver\CloudinaryDriver::DRIVER_TYPE,
+        ];
+
+        $GLOBALS['TYPO3_CONF_VARS']['LOG']['Visol']['Cloudinary']['Service']['writerConfiguration'] =
         $GLOBALS['TYPO3_CONF_VARS']['LOG']['Visol']['Cloudinary']['Cache']['writerConfiguration'] =
         $GLOBALS['TYPO3_CONF_VARS']['LOG']['Visol']['Cloudinary']['Driver']['writerConfiguration'] = [
 
