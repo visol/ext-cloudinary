@@ -12,4 +12,7 @@ return [
     'cloudinary:fix' => [
         'class' => \Visol\Cloudinary\Command\CloudinaryFixJpegCommand::class,
     ],
+    'cloudinary:scan' => [
+        'class' => \Visol\Cloudinary\Command\CloudinaryScanCommand::class,
+    ],
 ];
