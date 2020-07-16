@@ -163,7 +163,7 @@ For your information a set of acceptance tests has been implemented to validate 
 of the driver.
 
 ```bash
-./vendor/bin/typo3 cloudinary:run-tests fabidule:1234:ABCD 
+./vendor/bin/typo3 cloudinary:tests fabidule:1234:ABCD 
 ```
 
 Development tools

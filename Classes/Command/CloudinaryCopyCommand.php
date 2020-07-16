@@ -13,17 +13,51 @@ use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
+use Symfony\Component\Console\Style\SymfonyStyle;
 use TYPO3\CMS\Core\Resource\DuplicationBehavior;
 use TYPO3\CMS\Core\Resource\File;
 use TYPO3\CMS\Core\Resource\ResourceFactory;
+use TYPO3\CMS\Core\Resource\ResourceStorage;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
-use Visol\Cloudinary\Driver\CloudinaryDriver;
 
 /**
  * Class CloudinaryCopyCommand
  */
 class CloudinaryCopyCommand extends AbstractCloudinaryCommand
 {
+
+    /**
+     * @var array
+     */
+    protected $missingFiles = [];
+
+    /**
+     * @var ResourceStorage
+     */
+    protected $sourceStorage;
+
+    /**
+     * @var ResourceStorage
+     */
+    protected $targetStorage;
+
+    /**
+     * @param InputInterface $input
+     * @param OutputInterface $output
+     */
+    protected function initialize(InputInterface $input, OutputInterface $output)
+    {
+        $this->io = new SymfonyStyle($input, $output);
+
+        $this->isSilent = $input->getOption('silent');
+
+        $this->sourceStorage = ResourceFactory::getInstance()->getStorageObject(
+            $input->getArgument('source')
+        );
+        $this->targetStorage = ResourceFactory::getInstance()->getStorageObject(
+            $input->getArgument('target')
+        );
+    }
 
     /**
      * Configure the command by defining the name, options and arguments
@@ -107,12 +141,12 @@ class CloudinaryCopyCommand extends AbstractCloudinaryCommand
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
 
-        if (!$this->checkDriverType()) {
+        if (!$this->checkDriverType($this->targetStorage)) {
             $this->log('Look out! target storage is not of type "cloudinary"');
             return 1;
         }
 
-        $files = $this->getFiles($input);
+        $files = $this->getFiles($this->sourceStorage, $input);
 
         if (count($files) === 0) {
             $this->log('No files found, no work for me!');

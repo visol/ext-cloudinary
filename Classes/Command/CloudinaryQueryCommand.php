@@ -14,15 +14,16 @@ use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Style\SymfonyStyle;
+use TYPO3\CMS\Core\Resource\Folder;
 use TYPO3\CMS\Core\Resource\ResourceFactory;
 use TYPO3\CMS\Core\Resource\ResourceStorage;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
 use Visol\Cloudinary\Services\CloudinaryScanService;
 
 /**
- * Class CloudinaryScanCommand
+ * Class CloudinaryQueryCommand
  */
-class CloudinaryScanCommand extends AbstractCloudinaryCommand
+class CloudinaryQueryCommand extends AbstractCloudinaryCommand
 {
 
     /**
@@ -63,8 +64,8 @@ class CloudinaryScanCommand extends AbstractCloudinaryCommand
                 false
             )
             ->addOption(
-                'empty',
-                'e',
+                'folder',
+                'f',
                 InputOption::VALUE_OPTIONAL,
                 'Before scanning empty all resources for a given storage',
                 false
@@ -81,6 +82,11 @@ class CloudinaryScanCommand extends AbstractCloudinaryCommand
                 InputArgument::REQUIRED,
                 'Storage identifier'
             )
+            ->addArgument(
+                'action',
+                InputArgument::REQUIRED,
+                'Possible action "list"'
+            )
             ->setHelp(
                 'Usage: ./vendor/bin/typo3 cloudinary:scan [0-9]'
             );
@@ -89,8 +95,6 @@ class CloudinaryScanCommand extends AbstractCloudinaryCommand
     /**
      * @param InputInterface $input
      * @param OutputInterface $output
-     *
-     * @return int
      */
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
@@ -99,60 +103,53 @@ class CloudinaryScanCommand extends AbstractCloudinaryCommand
             return 1;
         }
 
-        if ($input->getOption('empty') === null || $input->getOption('empty')) {
-            $this->log('Emptying all resources for storage %s"', [$this->storage->getUid()]);
-            $this->getCloudinaryScanService()->empty();
-        }
 
-        $result = $this->getCloudinaryScanService()->scan();
+        $folder = $input->getOption('folder');
+        if ($folder === null || $folder) {
 
+            $folderIdentifier = '/'; // we can have a filter here
 
-        $numberOfFiles = $result['created'] + $result['updated'] - $result['deleted'];
-        if ($numberOfFiles !== $result['total']) {
-            $this->error(
-                'Something went wrong. There is a problem with the number of files counted. %s !== %s',
-                [
-                    $numberOfFiles,
-                    $result['total']
-                ]
+            $folders = $this->storage->getFoldersInFolder(
+                $this->getFolder($folderIdentifier)
             );
-        }
 
-        $numberOfFolders = $result['folder_created'] + $result['folder_updated'] - $result['folder_deleted'];
-        if ($numberOfFolders !== $result['folder_total']) {
-            $this->error(
-                'Something went wrong. There is a problem with the number of folders counted. %s !== %s',
-                [
-                    $numberOfFolders,
-                    $result['folder_total']
-                ]
+            foreach ($folders as $folder) {
+                $this->log($folder->getIdentifier());
+            }
+        } else {
+
+            $folderIdentifier = '/'; // we can have a filter here
+
+            $files = $this->storage->getFilesInFolder(
+                $this->getFolder($folderIdentifier)
             );
-        }
 
-        $message = "Statistics for files: \n\n- created: %s\n- updated: %s\n- total: %s\n- deleted: %s";
-        $message .= "\n\nStatistics for folders: \n\n- created: %s\n- updated: %s\n- total: %s\n- deleted: %s";
-        $this->success(
-            $message,
-            [
-                $result['created'],
-                $result['updated'],
-                $result['total'],
-                $result['deleted'],
-                $result['folder_created'],
-                $result['folder_updated'],
-                $result['folder_total'],
-                $result['folder_deleted'],
-            ]
-        );
+            foreach ($files as $file) {
+                $this->log($file->getIdentifier());
+            }
+        }
 
         return 0;
     }
 
     /**
-     * @return object|CloudinaryScanService
+     * @param string $folderIdentifier
+     *
+     * @return object|Folder
      */
-    protected function getCloudinaryScanService(): CloudinaryScanService
+    protected function getFolder($folderIdentifier): Folder
     {
-        return GeneralUtility::makeInstance(CloudinaryScanService::class, $this->storage);
+        $folderIdentifier = $folderIdentifier === DIRECTORY_SEPARATOR
+            ? $folderIdentifier
+            : DIRECTORY_SEPARATOR . trim($folderIdentifier, '/') . DIRECTORY_SEPARATOR;
+
+        return GeneralUtility::makeInstance(
+            Folder::class,
+            $this->storage,
+            $folderIdentifier,
+            $folderIdentifier === DIRECTORY_SEPARATOR
+                ? ''
+                : $folderIdentifier
+        );
     }
 }
