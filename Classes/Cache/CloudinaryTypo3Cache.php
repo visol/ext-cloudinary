@@ -15,6 +15,8 @@ use TYPO3\CMS\Core\Utility\GeneralUtility;
 
 /**
  * Class CloudinaryTypo3Cache
+ *
+ * @obsolete
  */
 class CloudinaryTypo3Cache
 {

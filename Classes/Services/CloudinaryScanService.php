@@ -26,7 +26,6 @@ class CloudinaryScanService
     private const UPDATED = 'updated';
     private const DELETED = 'deleted';
     private const TOTAL = 'total';
-
     private const FOLDER_CREATED = 'folder_created';
     private const FOLDER_UPDATED = 'folder_updated';
     private const FOLDER_DELETED = 'folder_deleted';
@@ -41,6 +40,11 @@ class CloudinaryScanService
      * @var CloudinaryService
      */
     protected $cloudinaryService;
+
+    /**
+     * @var string
+     */
+    protected $processedFolder = '_processed_';
 
     /**
      * @var array
@@ -86,11 +90,19 @@ class CloudinaryScanService
     {
         $this->preScan();
 
-        $cloudinaryFolder = $this->getCloudinaryService()->computeCloudinaryFolderPath(DIRECTORY_SEPARATOR);
-//        $cloudinaryWildCardFolder = $cloudinaryFolder . DIRECTORY_SEPARATOR . '*';
-
         // Before calling the Search API, make sure we are connected with the right cloudinary account
         $this->initializeApi();
+
+        $cloudinaryFolder = $this->getCloudinaryService()->computeCloudinaryFolderPath(DIRECTORY_SEPARATOR);
+
+        // Add a filter if the root directory contains a base path segment
+        // + remove _processed_ folder from the search
+        if ($cloudinaryFolder) {
+            $expressions[] = sprintf('folder=%s/*',  $cloudinaryFolder);
+            $expressions[] = sprintf('NOT folder=%s/%s/*', $cloudinaryFolder, $this->processedFolder);
+        } else {
+            $expressions[] = sprintf('NOT folder=%s/*', $this->processedFolder);
+        }
 
         $folders = [];
 
@@ -113,19 +125,16 @@ class CloudinaryScanService
             /** @var Search $search */
             $search = new \Cloudinary\Search();
 
-            // Add a filter if the root directory contains a base path segment
-            if ($cloudinaryFolder) {
-                $search ->expression('folder=' . $cloudinaryFolder . DIRECTORY_SEPARATOR . '*');
-            }
-
             $response = $search
+                ->expression(implode(' AND ', $expressions))
                 ->sort_by('public_id', 'asc')
                 ->max_results(500)
                 ->next_cursor($nextCursor)
                 ->execute();
 
             if (is_array($response['resources'])) {
-                foreach ($response['resources'] as $resource) {
+                foreach ($response['resources'] as $resource)
+                {
 
                     // Compute file identifier and add the info to the resource
                     $resource['file_identifier'] = $this->getCloudinaryService()->computeFileIdentifier($resource);
@@ -140,8 +149,10 @@ class CloudinaryScanService
                     // Later we can verify the total corresponds to the "created" + "updated" + "deleted" files
                     $this->statistics[self::TOTAL]++;
 
-                    // We collect the folders here...
-                    $folders[$resource['folder']] = '';
+                    // We collect valid folders here...
+                    if ($resource['folder']) {
+                        $folders[$resource['folder']] = '';
+                    }
                 }
             }
         } while (!empty($response) && array_key_exists('next_cursor', $response));
