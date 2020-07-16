@@ -80,6 +80,7 @@ CREATE TABLE tx_cloudinary_folder (
   folder text,
   folder_hash char(40) DEFAULT '' NOT NULL,
   storage int(11) DEFAULT '0' NOT NULL,
+  parent_folder text,
 
   missing int(11) DEFAULT '0' NOT NULL,
 

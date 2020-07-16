@@ -31,6 +31,8 @@ use Visol\Cloudinary\Services\CloudinaryService;
 
 /**
  * Class CloudinaryDriver
+ *
+ * @obsolete
  */
 class CloudinaryDriver extends AbstractHierarchicalFilesystemDriver
 {

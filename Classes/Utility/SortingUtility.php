@@ -11,6 +11,7 @@ namespace Visol\Cloudinary\Utility;
 
 /**
  * Class SortingUtility
+ * @deprecated
  */
 class SortingUtility
 {

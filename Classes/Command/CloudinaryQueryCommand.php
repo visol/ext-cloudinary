@@ -26,6 +26,9 @@ use Visol\Cloudinary\Services\CloudinaryScanService;
 class CloudinaryQueryCommand extends AbstractCloudinaryCommand
 {
 
+    protected const ACTION_LIST = 'list';
+    protected const ACTION_COUNT = 'count';
+
     /**
      * @var ResourceStorage
      */
@@ -39,8 +42,6 @@ class CloudinaryQueryCommand extends AbstractCloudinaryCommand
     {
         $this->io = new SymfonyStyle($input, $output);
 
-        $this->isSilent = $input->getOption('silent');
-
         $this->storage = ResourceFactory::getInstance()->getStorageObject(
             $input->getArgument('storage')
         );
@@ -51,21 +52,21 @@ class CloudinaryQueryCommand extends AbstractCloudinaryCommand
      */
     protected function configure()
     {
-        $message = 'Scan and warm up a cloudinary storage.';
+        $message = 'Query a given storage such a list, count files or folders';
         $this
             ->setDescription(
                 $message
             )
             ->addOption(
-                'silent',
-                's',
+                'path',
+                '',
                 InputOption::VALUE_OPTIONAL,
-                'Mute output as much as possible',
-                false
+                'Give a folder identifier as a base path',
+                '/'
             )
             ->addOption(
                 'folder',
-                'f',
+                '',
                 InputOption::VALUE_OPTIONAL,
                 'Before scanning empty all resources for a given storage',
                 false
@@ -85,7 +86,7 @@ class CloudinaryQueryCommand extends AbstractCloudinaryCommand
             ->addArgument(
                 'action',
                 InputArgument::REQUIRED,
-                'Possible action "list"'
+                'Possible action: list, count'
             )
             ->setHelp(
                 'Usage: ./vendor/bin/typo3 cloudinary:scan [0-9]'
@@ -103,14 +104,30 @@ class CloudinaryQueryCommand extends AbstractCloudinaryCommand
             return 1;
         }
 
+        if ($input->getArgument('action') === self::ACTION_LIST) {
+            $this->listAction($input);
+        } elseif ($input->getArgument('action') === self::ACTION_COUNT) {
+            $this->countAction($input);
+        }
 
+
+        return 0;
+    }
+
+    /**
+     * @param InputInterface $input
+     *
+     * @return void
+     */
+    protected function listAction(InputInterface $input): void
+    {
         $folder = $input->getOption('folder');
         if ($folder === null || $folder) {
 
-            $folderIdentifier = '/'; // we can have a filter here
-
             $folders = $this->storage->getFoldersInFolder(
-                $this->getFolder($folderIdentifier)
+                $this->getFolder(
+                    $input->getOption('path')
+                )
             );
 
             foreach ($folders as $folder) {
@@ -118,18 +135,45 @@ class CloudinaryQueryCommand extends AbstractCloudinaryCommand
             }
         } else {
 
-            $folderIdentifier = '/'; // we can have a filter here
-
             $files = $this->storage->getFilesInFolder(
-                $this->getFolder($folderIdentifier)
+                $this->getFolder(
+                    $input->getOption('path')
+                )
             );
 
             foreach ($files as $file) {
                 $this->log($file->getIdentifier());
             }
         }
+    }
 
-        return 0;
+    /**
+     * @param InputInterface $input
+     *
+     * @return void
+     */
+    protected function countAction(InputInterface $input): void
+    {
+        $folder = $input->getOption('folder');
+        if ($folder === null || $folder) {
+
+            $numberOfFolders = $this->storage->countFoldersInFolder(
+                $this->getFolder(
+                    $input->getOption('path')
+                )
+            );
+
+            $this->log('I found %s folder(s)', [$numberOfFolders,]);
+        } else {
+
+            $numberOfFiles = $this->storage->countFilesInFolder(
+                $this->getFolder(
+                    $input->getOption('path')
+                )
+            );
+
+            $this->log('I found %s files(s)', [$numberOfFiles,]);
+        }
     }
 
     /**
