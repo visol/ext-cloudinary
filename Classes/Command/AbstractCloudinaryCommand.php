@@ -10,6 +10,7 @@ namespace Visol\Cloudinary\Command;
  */
 
 use Doctrine\DBAL\Driver\Connection;
+use Sinso\Smartimport\Domain\Model\Resource;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Style\SymfonyStyle;
@@ -42,56 +43,24 @@ abstract class AbstractCloudinaryCommand extends Command
     protected $isSilent = false;
 
     /**
-     * @var ResourceStorage
-     */
-    protected $sourceStorage;
-
-    /**
-     * @var ResourceStorage
-     */
-    protected $targetStorage;
-
-    /**
      * @var string
      */
     protected $tableName = 'sys_file';
 
     /**
-     * @var array
-     */
-    protected $missingFiles = [];
-
-    /**
-     * @param InputInterface $input
-     * @param OutputInterface $output
-     */
-    protected function initialize(InputInterface $input, OutputInterface $output)
-    {
-        $this->io = new SymfonyStyle($input, $output);
-
-        $this->isSilent = $input->getOption('silent');
-
-        $this->sourceStorage = ResourceFactory::getInstance()->getStorageObject(
-            $input->getArgument('source')
-        );
-        $this->targetStorage = ResourceFactory::getInstance()->getStorageObject(
-            $input->getArgument('target')
-        );
-    }
-
-    /**
+     * @param ResourceStorage $storage
      * @param InputInterface $input
      *
      * @return array
      */
-    protected function getFiles(InputInterface $input): array
+    protected function getFiles(ResourceStorage $storage, InputInterface $input): array
     {
         $query = $this->getQueryBuilder();
         $query
             ->select('*')
             ->from($this->tableName)
             ->where(
-                $query->expr()->eq('storage', $this->sourceStorage->getUid()),
+                $query->expr()->eq('storage', $storage->getUid()),
                 $query->expr()->eq('missing', 0)
             );
 
@@ -176,11 +145,13 @@ abstract class AbstractCloudinaryCommand extends Command
     }
 
     /**
+     * @param ResourceStorage $storage
+     *
      * @return bool
      */
-    protected function checkDriverType(): bool
+    protected function checkDriverType(ResourceStorage $storage): bool
     {
-        return $this->targetStorage->getDriverType() === CloudinaryDriver::DRIVER_TYPE;
+        return $storage->getDriverType() === CloudinaryDriver::DRIVER_TYPE;
     }
 
     /**

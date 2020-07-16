@@ -15,21 +15,18 @@ use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Style\SymfonyStyle;
 use TYPO3\CMS\Core\Resource\ResourceFactory;
+use TYPO3\CMS\Core\Resource\ResourceStorage;
 
 /**
  * Class CloudinaryFixJpegCommand
  */
 class CloudinaryFixJpegCommand extends AbstractCloudinaryCommand
 {
-    /**
-     * @var array
-     */
-    protected $faultyUploadedFiles;
 
     /**
-     * @var array
+     * @var ResourceStorage
      */
-    protected $skippedFiles;
+    protected $targetStorage;
 
     /**
      * @param InputInterface $input
@@ -85,16 +82,18 @@ class CloudinaryFixJpegCommand extends AbstractCloudinaryCommand
      *
      * @param InputInterface $input
      * @param OutputInterface $output
+     *
+     * @return int
      */
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
 
-        if (!$this->checkDriverType()) {
+        if (!$this->checkDriverType($this->targetStorage)) {
             $this->log('Look out! target storage is not of type "cloudinary"');
             return 1;
         }
 
-        $files = $this->getJpegFiles($input);
+        $files = $this->getJpegFiles();
 
 
         if (count($files) === 0) {
@@ -136,11 +135,9 @@ WHERE storage = " . $this->targetStorage->getUid();
     }
 
     /**
-     * @param InputInterface $input
-     *
      * @return array
      */
-    protected function getJpegFiles(InputInterface $input): array
+    protected function getJpegFiles(): array
     {
         $query = $this->getQueryBuilder();
         $query

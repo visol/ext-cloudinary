@@ -9,6 +9,8 @@ namespace Visol\Cloudinary\Command;
  * LICENSE.md file that was distributed with this source code.
  */
 
+use Exception;
+use TYPO3\CMS\Core\Resource\ResourceStorage;
 use TYPO3\CMS\Core\Utility\PathUtility;
 use Visol\Cloudinary\Services\FileMoveService;
 use Symfony\Component\Console\Input\InputArgument;
@@ -33,6 +35,21 @@ class CloudinaryMoveCommand extends AbstractCloudinaryCommand
      * @var array
      */
     protected $skippedFiles;
+
+    /**
+     * @var array
+     */
+    protected $missingFiles = [];
+
+    /**
+     * @var ResourceStorage
+     */
+    protected $sourceStorage;
+
+    /**
+     * @var ResourceStorage
+     */
+    protected $targetStorage;
 
     /**
      * Configure the command by defining the name, options and arguments
@@ -113,15 +130,17 @@ class CloudinaryMoveCommand extends AbstractCloudinaryCommand
      *
      * @param InputInterface $input
      * @param OutputInterface $output
+     *
+     * @return int
      */
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
-        if (!$this->checkDriverType()) {
+        if (!$this->checkDriverType($this->targetStorage)) {
             $this->log('Look out! target storage is not of type "cloudinary"');
             return 1;
         }
 
-        $files = $this->getFiles($input);
+        $files = $this->getFiles($this->sourceStorage, $input);
 
         if (count($files) === 0) {
             $this->log('No files found, no work for me!');
@@ -195,7 +214,7 @@ class CloudinaryMoveCommand extends AbstractCloudinaryCommand
                     );
                     $timeElapsedSeconds = microtime(true) - $start;
                     $this->log('File uploaded, Elapsed time %.3f', [$timeElapsedSeconds]);
-                } catch (\Exception $e) {
+                } catch (Exception $e) {
                     $this->log('Mmm..., I could not upload file %s. Exception %s: %s', [$fileObject->getIdentifier(), $e->getCode(), $e->getMessage()], self::WARNING);
                     $this->faultyUploadedFiles[] = $fileObject->getIdentifier();
                     continue;

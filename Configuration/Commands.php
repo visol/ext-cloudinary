@@ -6,7 +6,7 @@ return [
     'cloudinary:move' => [
         'class' => \Visol\Cloudinary\Command\CloudinaryMoveCommand::class,
     ],
-    'cloudinary:run-tests' => [
+    'cloudinary:tests' => [
         'class' => \Visol\Cloudinary\Command\CloudinaryAcceptanceTestCommand::class,
     ],
     'cloudinary:fix' => [
@@ -14,5 +14,8 @@ return [
     ],
     'cloudinary:scan' => [
         'class' => \Visol\Cloudinary\Command\CloudinaryScanCommand::class,
+    ],
+    'cloudinary:query' => [
+        'class' => \Visol\Cloudinary\Command\CloudinaryQueryCommand::class,
     ],
 ];

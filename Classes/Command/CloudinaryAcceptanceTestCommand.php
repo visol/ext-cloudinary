@@ -46,7 +46,6 @@ spl_autoload_register(
  */
 class CloudinaryAcceptanceTestCommand extends AbstractCloudinaryCommand
 {
-
     /**
      * Configure the command by defining the name, options and arguments
      */
@@ -63,7 +62,7 @@ class CloudinaryAcceptanceTestCommand extends AbstractCloudinaryCommand
                 'The API configuration'
             )
             ->setHelp(
-                'Usage: ./vendor/bin/typo3 cloudinary:run-tests '
+                'Usage: ./vendor/bin/typo3 cloudinary:tests'
             );
     }
 
