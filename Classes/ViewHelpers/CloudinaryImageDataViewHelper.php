@@ -11,7 +11,7 @@ namespace Visol\Cloudinary\ViewHelpers;
 
 use TYPO3\CMS\Core\Resource\ResourceStorage;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
-use Visol\Cloudinary\Services\CloudinaryService;
+use Visol\Cloudinary\Services\CloudinaryPathService;
 use TYPO3\CMS\Core\Resource\Exception\ResourceDoesNotExistException;
 use TYPO3\CMS\Core\Resource\FileInterface;
 use TYPO3\CMS\Core\Resource\FileReference;
@@ -114,7 +114,7 @@ class CloudinaryImageDataViewHelper extends \TYPO3\CMS\Fluid\Core\ViewHelper\Abs
                 // decode URLs from RealURL
                 $imageUri = rawurldecode($imageUri);
 
-                $publicId = $this->getCloudinaryService($image->getStorage())
+                $publicId = $this->getCloudinaryPathService($image->getStorage())
                     ->computeCloudinaryPublicId($image->getIdentifier());
 
                 $options = $this->cloudinaryUtility->generateOptionsFromSettings(
@@ -183,12 +183,12 @@ class CloudinaryImageDataViewHelper extends \TYPO3\CMS\Fluid\Core\ViewHelper\Abs
     /**
      * @param ResourceStorage $storage
      *
-     * @return object|CloudinaryService
+     * @return object|CloudinaryPathService
      */
-    protected function getCloudinaryService(ResourceStorage $storage)
+    protected function getCloudinaryPathService(ResourceStorage $storage)
     {
         return GeneralUtility::makeInstance(
-            CloudinaryService::class,
+            CloudinaryPathService::class,
             $storage
         );
     }

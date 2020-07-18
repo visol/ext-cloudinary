@@ -52,7 +52,6 @@ CREATE TABLE tx_cloudinary_resource (
   created_at DATETIME DEFAULT '1970-01-01 00:00:00' NOT NULL,
   uploaded_at DATETIME DEFAULT '1970-01-01 00:00:00' NOT NULL,
   bytes int(11) DEFAULT '0' NOT NULL,
-  backup_bytes  int(11) DEFAULT '0' NOT NULL,
   width  int(11) DEFAULT '0' NOT NULL,
   height  int(11) DEFAULT '0' NOT NULL,
   aspect_ratio double(5,2) DEFAULT '0.00000' NOT NULL,
@@ -63,14 +62,11 @@ CREATE TABLE tx_cloudinary_resource (
   access_mode tinytext,
   access_control tinytext,
   etag tinytext,
-  file_identifier tinytext,
-  file_identifier_hash char(40) DEFAULT '' NOT NULL,
-  storage int(11) DEFAULT '0' NOT NULL,
 
+  storage int(11) DEFAULT '0' NOT NULL,
   missing int(11) DEFAULT '0' NOT NULL,
 
-  PRIMARY KEY (public_id_hash, storage),
-  KEY file_identifier_hash (file_identifier_hash)
+  PRIMARY KEY (public_id_hash, storage)
 );
 
 #
@@ -79,9 +75,9 @@ CREATE TABLE tx_cloudinary_resource (
 CREATE TABLE tx_cloudinary_folder (
   folder text,
   folder_hash char(40) DEFAULT '' NOT NULL,
-  storage int(11) DEFAULT '0' NOT NULL,
   parent_folder text,
 
+  storage int(11) DEFAULT '0' NOT NULL,
   missing int(11) DEFAULT '0' NOT NULL,
 
   PRIMARY KEY (folder_hash, storage)

@@ -17,7 +17,9 @@ class RenameFolderOperationTests extends AbstractCloudinaryFileOperationTest
     public function run()
     {
         $folder = $this->getStorage()->renameFolder(
-            $this->getFolder($this->resourceName),
+            $this->getFolder(
+                $this->resourceName
+            ),
             $this->targetFolderName
         );
 
@@ -28,7 +30,6 @@ class RenameFolderOperationTests extends AbstractCloudinaryFileOperationTest
             $folder->getIdentifier(),
             'Renamed folder identifier corresponds to ' . $expectedFolderIdentifier
         );
-
     }
 
     /**
