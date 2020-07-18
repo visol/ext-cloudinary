@@ -2,6 +2,7 @@
 
 namespace Visol\Cloudinary\Tests\Acceptance\FileOperation;
 
+use TYPO3\CMS\Core\Resource\DuplicationBehavior;
 use TYPO3\CMS\Core\Resource\File;
 
 class AddFileOperationTest extends AbstractCloudinaryFileOperationTest
@@ -16,7 +17,9 @@ class AddFileOperationTest extends AbstractCloudinaryFileOperationTest
         $fixtureFile = $this->getFilePath($this->resourceName);
         $file = $this->getStorage()->addFile(
             $fixtureFile,
-            $this->getContainingFolder($this->resourceName)
+            $this->getContainingFolder($this->resourceName),
+            basename($this->resourceName),
+            DuplicationBehavior::REPLACE
         );
 
         $this->assertTrue(

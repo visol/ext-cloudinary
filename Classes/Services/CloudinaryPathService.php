@@ -13,9 +13,9 @@ use TYPO3\CMS\Core\Utility\PathUtility;
 use TYPO3\CMS\Core\Resource\ResourceStorage;
 
 /**
- * Class CloudinaryService
+ * Class CloudinaryPathService
  */
-class CloudinaryService
+class CloudinaryPathService
 {
 
 

@@ -9,7 +9,6 @@ use Visol\Cloudinary\Tests\Acceptance\FileOperation\DeleteFileOperationTest;
 use Visol\Cloudinary\Tests\Acceptance\FileOperation\DeleteFolderOperationTest;
 use Visol\Cloudinary\Tests\Acceptance\FileOperation\MoveFileOperationTest;
 use Visol\Cloudinary\Tests\Acceptance\FileOperation\ReadFileOperationTest;
-use Visol\Cloudinary\Tests\Acceptance\FileOperation\GetFilesInFolderOperationTests;
 
 class FileTestSuite extends AbstractCloudinaryTestSuite
 {
@@ -30,8 +29,6 @@ class FileTestSuite extends AbstractCloudinaryTestSuite
 
     public function runTests()
     {
-        $test = new DeleteFolderOperationTest($this);
-        $test->run();
 
         // Basic access file such as read, write, delete
         foreach ($this->files as $fileNameAndPath) {
@@ -55,5 +52,8 @@ class FileTestSuite extends AbstractCloudinaryTestSuite
             $test = new DeleteFileOperationTest($this, $fileNameAndPath);
             $test->run();
         }
+
+        $test = new DeleteFolderOperationTest($this);
+        $test->run();
     }
 }

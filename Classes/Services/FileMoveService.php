@@ -28,9 +28,9 @@ class FileMoveService
     protected $tableName = 'sys_file';
 
     /**
-     * @var CloudinaryService
+     * @var CloudinaryPathService
      */
-    protected $cloudinaryService;
+    protected $cloudinaryPathService;
 
     /**
      * @param File $fileObject
@@ -44,7 +44,7 @@ class FileMoveService
         $this->initializeCloudinaryService($targetStorage);
 
         // Retrieve the Public Id based on the file identifier
-        $publicId = $this->getCloudinaryService()
+        $publicId = $this->getCloudinaryPathService()
             ->computeCloudinaryPublicId($fileObject->getIdentifier());
 
         try {
@@ -163,16 +163,16 @@ class FileMoveService
         $this->initializeApi($targetStorage);
 
         $fileIdentifier = $fileObject->getIdentifier();
-        $publicId = $this->getCloudinaryService()
+        $publicId = $this->getCloudinaryPathService()
             ->computeCloudinaryPublicId($fileIdentifier);
 
         $options = [
             'public_id' => basename($publicId),
-            'folder' => $this->getCloudinaryService()
+            'folder' => $this->getCloudinaryPathService()
                 ->computeCloudinaryFolderPath(
                     $fileObject->getParentFolder()->getIdentifier()
                 ),
-            'resource_type' => $this->getCloudinaryService()->getResourceType($fileIdentifier),
+            'resource_type' => $this->getCloudinaryPathService()->getResourceType($fileIdentifier),
             'overwrite' => true,
         ];
         $fileNameAndPath = $baseUrl
@@ -243,11 +243,11 @@ class FileMoveService
     }
 
     /**
-     * @return object|CloudinaryService
+     * @return object|CloudinaryPathService
      */
-    protected function getCloudinaryService()
+    protected function getCloudinaryPathService()
     {
-        return $this->cloudinaryService;
+        return $this->cloudinaryPathService;
     }
 
     /**
@@ -255,8 +255,8 @@ class FileMoveService
      */
     protected function initializeCloudinaryService(ResourceStorage $storage)
     {
-        $this->cloudinaryService = GeneralUtility::makeInstance(
-                CloudinaryService::class,
+        $this->cloudinaryPathService = GeneralUtility::makeInstance(
+                CloudinaryPathService::class,
             $storage
             );
     }

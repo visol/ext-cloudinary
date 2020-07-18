@@ -37,9 +37,9 @@ class CloudinaryScanService
     protected $storage;
 
     /**
-     * @var CloudinaryService
+     * @var CloudinaryPathService
      */
-    protected $cloudinaryService;
+    protected $cloudinaryPathService;
 
     /**
      * @var string
@@ -79,8 +79,8 @@ class CloudinaryScanService
      */
     public function empty(): void
     {
-        $this->getCloudinaryResourceService()->deleteResources();
-        $this->getCloudinaryResourceService()->deleteFolders();
+        $this->getCloudinaryResourceService()->deleteAll();
+        $this->getCloudinaryFolderService()->deleteAll();
     }
 
     /**
@@ -93,7 +93,7 @@ class CloudinaryScanService
         // Before calling the Search API, make sure we are connected with the right cloudinary account
         $this->initializeApi();
 
-        $cloudinaryFolder = $this->getCloudinaryService()->computeCloudinaryFolderPath(DIRECTORY_SEPARATOR);
+        $cloudinaryFolder = $this->getCloudinaryPathService()->computeCloudinaryFolderPath(DIRECTORY_SEPARATOR);
 
         // Add a filter if the root directory contains a base path segment
         // + remove _processed_ folder from the search
@@ -136,9 +136,6 @@ class CloudinaryScanService
                 foreach ($response['resources'] as $resource)
                 {
 
-                    // Compute file identifier and add the info to the resource
-                    $resource['file_identifier'] = $this->getCloudinaryService()->computeFileIdentifier($resource);
-
                     $result = $this->getCloudinaryResourceService()->save($resource);
 
                     // For the stats, we collect the number of files touched
@@ -159,7 +156,7 @@ class CloudinaryScanService
 
         // Persist previously collected folders
         foreach (array_keys($folders) as $folder) {
-            $result = $this->getCloudinaryResourceService()->saveFolder($folder);
+            $result = $this->getCloudinaryFolderService()->save($folder);
 
             // For the stats, we collect the number of files touched
             $key = key($result);
@@ -180,9 +177,8 @@ class CloudinaryScanService
      */
     protected function preScan(): void
     {
-        $values = ['missing' => 1];
-        $this->getCloudinaryResourceService()->updateResources($values);
-        $this->getCloudinaryResourceService()->updateFolders($values);
+        $this->getCloudinaryResourceService()->markAsMissing();
+        $this->getCloudinaryFolderService()->markAsMissing();
     }
 
     /**
@@ -191,8 +187,8 @@ class CloudinaryScanService
     protected function postScan(): void
     {
         $identifier = ['missing' => 1];
-        $this->statistics[self::DELETED] = $this->getCloudinaryResourceService()->deleteResources($identifier);
-        $this->statistics[self::FOLDER_DELETED] = $this->getCloudinaryResourceService()->deleteFolders($identifier);
+        $this->statistics[self::DELETED] = $this->getCloudinaryResourceService()->deleteAll($identifier);
+        $this->statistics[self::FOLDER_DELETED] = $this->getCloudinaryFolderService()->deleteAll($identifier);
     }
 
     /**
@@ -221,18 +217,26 @@ class CloudinaryScanService
     }
 
     /**
-     * @return CloudinaryService
+     * @return object|CloudinaryFolderService
      */
-    protected function getCloudinaryService(): CloudinaryService
+    protected function getCloudinaryFolderService(): CloudinaryFolderService
     {
-        if (!$this->cloudinaryService) {
-            $this->cloudinaryService = GeneralUtility::makeInstance(
-                CloudinaryService::class,
+        return GeneralUtility::makeInstance(CloudinaryFolderService::class, $this->storage);
+    }
+
+    /**
+     * @return CloudinaryPathService
+     */
+    protected function getCloudinaryPathService(): CloudinaryPathService
+    {
+        if (!$this->cloudinaryPathService) {
+            $this->cloudinaryPathService = GeneralUtility::makeInstance(
+                CloudinaryPathService::class,
                 $this->storage
             );
         }
 
-        return $this->cloudinaryService;
+        return $this->cloudinaryPathService;
     }
 
     /**

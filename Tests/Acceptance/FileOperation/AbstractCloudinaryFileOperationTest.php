@@ -68,6 +68,18 @@ abstract class AbstractCloudinaryFileOperationTest
             'type' => 2,
             'mimeType' => 'image/tiff',
         ],
+        'sub-folder/sub-sub-folder/image-jpeg.jpeg' => [
+            'fileName' => 'image-jpeg.jpeg',
+            'fileNameWithoutExtension' => 'image-jpeg',
+            'type' => 2,
+            'mimeType' => 'image/jpeg',
+        ],
+        'sub-folder/sub-sub-folder/image-tiff.tiff' => [
+            'fileName' => 'image-tiff.tiff',
+            'fileNameWithoutExtension' => 'image-tiff',
+            'type' => 2,
+            'mimeType' => 'image/tiff',
+        ],
     ];
 
     /**

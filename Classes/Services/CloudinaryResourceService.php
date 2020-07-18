@@ -27,11 +27,6 @@ class CloudinaryResourceService
     protected $tableName = 'tx_cloudinary_resource';
 
     /**
-     * @var string
-     */
-    protected $folderTableName = 'tx_cloudinary_folder';
-
-    /**
      * @var ResourceStorage
      */
     protected $storage;
@@ -47,25 +42,11 @@ class CloudinaryResourceService
     }
 
     /**
-     * @param array $values
-     * @param array $identifier
-     *
      * @return int
      */
-    public function updateFolders(array $values, array $identifier = []): int
+    public function markAsMissing(): int
     {
-        $identifier['storage'] = $this->storage->getUid();
-        return $this->getFolderConnection()->update($this->folderTableName, $values, $identifier);
-    }
-
-    /**
-     * @param array $values
-     * @param array $identifier
-     *
-     * @return int
-     */
-    public function updateResources(array $values, array $identifier = []): int
-    {
+        $values = ['missing' => 1];
         $identifier['storage'] = $this->storage->getUid();
         return $this->getConnection()->update($this->tableName, $values, $identifier);
     }
@@ -89,30 +70,46 @@ class CloudinaryResourceService
                 )
             );
 
-        return (array)$query->execute()->fetch();
+        $resource = $query->execute()->fetch();
+        return $resource
+            ? $resource
+            : [];
     }
 
     /**
-     * @param string $folderPath
+     * @param string $folder
      * @param array $orderings
      * @param array $pagination
+     * @param bool $recursive
      *
      * @return array
      */
-    public function getResources(string $folderPath, array $orderings, array $pagination): array
+    public function getResources(string $folder, array $orderings = [], array $pagination = [], bool $recursive = false): array
     {
         $query = $this->getQueryBuilder();
         $query
             ->select('*')
             ->from($this->tableName)
             ->where(
-                $query->expr()->eq('storage', $this->storage->getUid()),
-                $query->expr()->eq(
-                    'folder',
-                    $query->expr()->literal($folderPath)
-                )
+                $query->expr()->eq('storage', $this->storage->getUid())
+            );
+
+        // We should handle recursion
+        $expresion = $recursive
+            ? $query->expr()->like(
+                'folder',
+                $query->expr()->literal($folder . '%')
             )
-            ->orderBy($orderings['fieldName'], $orderings['direction']);
+            : $query->expr()->eq(
+                'folder',
+                $query->expr()->literal($folder)
+            );
+        $query->andWhere($expresion);
+
+        if ($orderings) {
+            $query->orderBy($orderings['fieldName'], $orderings['direction']);
+        }
+
 
         if ($pagination && (int)$pagination['maxResult'] > 0) {
             $query->setMaxResults((int)$pagination['maxResult']);
@@ -122,62 +119,47 @@ class CloudinaryResourceService
     }
 
     /**
-     * @param string $folderPath
-     * @param array $orderings
-     *
-     * @return array
-     */
-    public function getSubFolders(string $folderPath, array $orderings): array
-    {
-        $query = $this->getQueryBuilder();
-        $query
-            ->select('*')
-            ->from($this->folderTableName)
-            ->where(
-                $query->expr()->eq('storage', $this->storage->getUid()),
-                $query->expr()->eq(
-                    'parent_folder',
-                    $query->expr()->literal($folderPath)
-                )
-            )
-            ->orderBy($orderings['fieldName'], $orderings['direction']);
-
-        return $query->execute()->fetchAll();
-    }
-
-    /**
-     * @param string $folderPath
+     * @param string $folder
+     * @param bool $recursive
      *
      * @return int
      */
-    public function countSubFolders(string $folderPath): int
+    public function count(string $folder, bool $recursive = false): int
     {
         $query = $this->getQueryBuilder();
         $query
             ->count('*')
-            ->from($this->folderTableName)
+            ->from($this->tableName)
             ->where(
-                $query->expr()->eq('storage', $this->storage->getUid()),
-                $query->expr()->eq(
-                    'parent_folder',
-                    $query->expr()->literal($folderPath)
-                )
+                $query->expr()->eq('storage', $this->storage->getUid())
             );
+
+        // We should handle recursion
+        $expresion = $recursive
+            ? $query->expr()->like(
+                'folder',
+                $query->expr()->literal($folder . '%')
+            )
+            : $query->expr()->eq(
+                'folder',
+                $query->expr()->literal($folder)
+            );
+        $query->andWhere($expresion);
+
 
         return (int)$query->execute()->fetchColumn(0);
     }
 
     /**
-     * @param array $identifier
+     * @param string $publicId
      *
      * @return int
      */
-    public
-    function deleteFolders(
-        array $identifier = []
-    ): int {
+    public function delete(string $publicId): int
+    {
+        $identifier['public_id'] = $publicId;
         $identifier['storage'] = $this->storage->getUid();
-        return $this->getFolderConnection()->delete($this->folderTableName, $identifier);
+        return $this->getConnection()->delete($this->tableName, $identifier);
     }
 
     /**
@@ -185,10 +167,8 @@ class CloudinaryResourceService
      *
      * @return int
      */
-    public
-    function deleteResources(
-        array $identifier = []
-    ): int {
+    public function deleteAll(array $identifier = []): int
+    {
         $identifier['storage'] = $this->storage->getUid();
         return $this->getConnection()->delete($this->tableName, $identifier);
     }
@@ -198,91 +178,45 @@ class CloudinaryResourceService
      *
      * @return array
      */
-    public
-    function save(
-        array $cloudinaryResource
-    ): array {
-        $publicId = $this->getValue('public_id', $cloudinaryResource);
-        $publicIdHash = sha1($publicId);
-        $fileIdentifier = $this->getValue('file_identifier', $cloudinaryResource);
-        $fileIdentifierHash = sha1($fileIdentifier);
+    public function save(array $cloudinaryResource): array
+    {
+        $publicIdHash = $this->getPublicIdHash($cloudinaryResource);
 
-        $values = [
-            'public_id' => $publicId,
-            'public_id_hash' => $publicIdHash,
-            'folder' => $cloudinaryResource['folder'],
-            'filename' => $this->getValue('filename', $cloudinaryResource),
-            'format' => $this->getValue('format', $cloudinaryResource),
-            'version' => (int)$this->getValue('version', $cloudinaryResource),
-            'resource_type' => $this->getValue('resource_type', $cloudinaryResource),
-            'type' => $this->getValue('type', $cloudinaryResource),
-            'created_at' => date(
-                'Y-m-d h:i:s',
-                strtotime(
-                    $this->getValue('created_at', $cloudinaryResource)
-                )
-            ),
-            'uploaded_at' => date(
-                'Y-m-d h:i:s',
-                strtotime(
-                    $this->getValue('uploaded_at', $cloudinaryResource)
-                )
-            ),
-            'bytes' => (int)$this->getValue('bytes', $cloudinaryResource),
-            'backup_bytes' => (int)$this->getValue('backup_bytes', $cloudinaryResource),
-            'width' => (int)$this->getValue('width', $cloudinaryResource),
-            'height' => (int)$this->getValue('height', $cloudinaryResource),
-            'aspect_ratio' => (double)$this->getValue('aspect_ratio', $cloudinaryResource),
-            'pixels' => (int)$this->getValue('pixels', $cloudinaryResource),
-            'url' => $this->getValue('url', $cloudinaryResource),
-            'secure_url' => $this->getValue('secure_url', $cloudinaryResource),
-            'status' => $this->getValue('status', $cloudinaryResource),
-            'access_mode' => $this->getValue('access_mode', $cloudinaryResource),
-            'access_control' => $this->getValue('access_control', $cloudinaryResource),
-            'etag' => $this->getValue('etag', $cloudinaryResource),
-            'missing' => 0,
-
-            // typo3 info
-            'file_identifier' => $fileIdentifier,
-            'file_identifier_hash' => $fileIdentifierHash,
-            'storage' => $this->storage->getUid(),
-        ];
+        // We must also save the folder here
+        $folder = $this->getFolder($cloudinaryResource);
+        if ($folder) {
+            $this->getCloudinaryFolderService()->save($folder);
+        }
 
         return $this->exists($publicIdHash)
-            ? ['updated' => $this->update($publicIdHash, $values)]
-            : ['created' => $this->create($values)];
+            ? ['updated' => $this->update($cloudinaryResource, $publicIdHash)]
+            : ['created' => $this->add($cloudinaryResource)];
     }
 
     /**
-     * @param array $values
+     * @param array $cloudinaryResource
      *
      * @return int
      */
-    protected
-    function create(
-        array $values
-    ): int {
-        $connection = $this->getConnection();
-        return $connection->insert(
+    protected function add(array $cloudinaryResource): int
+    {
+        return $this->getConnection()->insert(
             $this->tableName,
-            $values
+            $this->getValues($cloudinaryResource)
         );
     }
 
     /**
+     * @param array $cloudinaryResource
      * @param string $publicIdHash
-     * @param array $values
      *
      * @return int
      */
-    protected
-    function update(
-        string $publicIdHash, array $values
-    ): int {
-        $connection = $this->getConnection();
-        return $connection->update(
+    protected function update(array $cloudinaryResource, string $publicIdHash): int
+    {
+        return $this->getConnection()->update(
             $this->tableName,
-            $values,
+            $this->getValues($cloudinaryResource),
             [
                 'public_id_hash' => $publicIdHash,
                 'storage' => $this->storage->getUid(),
@@ -295,10 +229,8 @@ class CloudinaryResourceService
      *
      * @return int
      */
-    protected
-    function exists(
-        string $publicIdHash
-    ): int {
+    protected function exists(string $publicIdHash): int
+    {
         $query = $this->getQueryBuilder();
         $query
             ->count('*')
@@ -315,103 +247,41 @@ class CloudinaryResourceService
     }
 
     /**
-     * @param string $folderPath
+     * @param array $cloudinaryResource
      *
      * @return array
      */
-    public
-    function saveFolder(
-        string $folderPath
-    ): array {
-        $folderHash = sha1($folderPath);
-        $values = [
-            'folder' => $folderPath,
-            'folder_hash' => sha1($folderPath),
-            'missing' => 0,
-            'parent_folder' => $this->computeParentFolder($folderPath),
+    protected function getValues(array $cloudinaryResource): array
+    {
+        $publicIdHash = $this->getPublicIdHash($cloudinaryResource);
+
+        return [
+            'public_id' => $this->getValue('public_id', $cloudinaryResource),
+            'public_id_hash' => $publicIdHash,
+            'folder' => $this->getFolder($cloudinaryResource),
+            'filename' => $this->getFileName($cloudinaryResource),
+            'format' => $this->getValue('format', $cloudinaryResource),
+            'version' => (int)$this->getValue('version', $cloudinaryResource),
+            'resource_type' => $this->getValue('resource_type', $cloudinaryResource),
+            'type' => $this->getValue('type', $cloudinaryResource),
+            'created_at' => $this->getCreatedAt($cloudinaryResource),
+            'uploaded_at' => $this->getUpdatedAt($cloudinaryResource),
+            'bytes' => (int)$this->getValue('bytes', $cloudinaryResource),
+            'width' => (int)$this->getValue('width', $cloudinaryResource),
+            'height' => (int)$this->getValue('height', $cloudinaryResource),
+            'aspect_ratio' => (double)$this->getValue('aspect_ratio', $cloudinaryResource),
+            'pixels' => (int)$this->getValue('pixels', $cloudinaryResource),
+            'url' => $this->getValue('url', $cloudinaryResource),
+            'secure_url' => $this->getValue('secure_url', $cloudinaryResource),
+            'status' => $this->getValue('status', $cloudinaryResource),
+            'access_mode' => $this->getValue('access_mode', $cloudinaryResource),
+            'access_control' => $this->getValue('access_control', $cloudinaryResource),
+            'etag' => $this->getValue('etag', $cloudinaryResource),
 
             // typo3 info
+            'missing' => 0,
             'storage' => $this->storage->getUid(),
         ];
-
-        return $this->folderExists($folderHash)
-            ? ['folder_updated' => $this->folderUpdate($folderHash, $values)]
-            : ['folder_created' => $this->folderCreate($values)];
-    }
-
-    /**
-     * @param $folderPath
-     *
-     * @return string
-     */
-    protected
-    function computeParentFolder(
-        $folderPath
-    ): string {
-        return dirname($folderPath) === '.'
-            ? ''
-            : dirname($folderPath);
-    }
-
-    /**
-     * @param array $values
-     *
-     * @return int
-     */
-    protected
-    function folderCreate(
-        array $values
-    ): int {
-        $connection = $this->getConnection();
-        return $connection->insert(
-            $this->folderTableName,
-            $values
-        );
-    }
-
-    /**
-     * @param string $folderHash
-     * @param array $values
-     *
-     * @return int
-     */
-    protected
-    function folderUpdate(
-        string $folderHash, array $values
-    ): int {
-        $connection = $this->getConnection();
-        return $connection->update(
-            $this->folderTableName,
-            $values,
-            [
-                'folder_hash' => $folderHash,
-                'storage' => $this->storage->getUid(),
-            ]
-        );
-    }
-
-    /**
-     * @param string $folderHash
-     *
-     * @return int
-     */
-    protected
-    function folderExists(
-        string $folderHash
-    ): int {
-        $query = $this->getQueryBuilder();
-        $query
-            ->count('*')
-            ->from($this->folderTableName)
-            ->where(
-                $query->expr()->eq('storage', $this->storage->getUid()),
-                $query->expr()->eq(
-                    'folder_hash',
-                    $query->expr()->literal($folderHash)
-                )
-            );
-
-        return (int)$query->execute()->fetchColumn(0);
     }
 
     /**
@@ -420,20 +290,90 @@ class CloudinaryResourceService
      *
      * @return string
      */
-    protected
-    function getValue(
-        string $key, array $cloudinaryResource
-    ): string {
+    protected function getValue(string $key, array $cloudinaryResource): string
+    {
         return isset($cloudinaryResource[$key])
             ? (string)$cloudinaryResource[$key]
             : '';
     }
 
     /**
+     * @param array $cloudinaryResource
+     *
+     * @return string
+     */
+    protected function getFileName(array $cloudinaryResource): string
+    {
+        return basename($this->getValue('public_id', $cloudinaryResource));
+    }
+
+    /**
+     * @param array $cloudinaryResource
+     *
+     * @return string
+     */
+    protected function getFolder(array $cloudinaryResource): string
+    {
+        $folder = dirname($this->getValue('public_id', $cloudinaryResource));
+        return $folder === '.'
+            ? ''
+            : $folder;
+    }
+
+    /**
+     * @param array $cloudinaryResource
+     *
+     * @return string
+     */
+    protected function getCreatedAt(array $cloudinaryResource): string
+    {
+        $createdAt = $this->getValue('created_at', $cloudinaryResource);
+        return date(
+            'Y-m-d h:i:s',
+            strtotime($createdAt)
+        );
+    }
+
+    /**
+     * @param array $cloudinaryResource
+     *
+     * @return string
+     */
+    protected function getPublicIdHash(array $cloudinaryResource): string
+    {
+        $publicId = $this->getValue('public_id', $cloudinaryResource);
+        return sha1($publicId);
+    }
+
+    /**
+     * @param array $cloudinaryResource
+     *
+     * @return string
+     */
+    protected function getUpdatedAt(array $cloudinaryResource): string
+    {
+        $updatedAt = $this->getValue('updated_at', $cloudinaryResource)
+            ? $this->getValue('updated_at', $cloudinaryResource)
+            : $this->getValue('created_at', $cloudinaryResource);
+
+        return date(
+            'Y-m-d h:i:s',
+            strtotime($updatedAt)
+        );
+    }
+
+    /**
+     * @return object|CloudinaryFolderService
+     */
+    protected function getCloudinaryFolderService(): CloudinaryFolderService
+    {
+        return GeneralUtility::makeInstance(CloudinaryFolderService::class, $this->storage);
+    }
+
+    /**
      * @return object|QueryBuilder
      */
-    protected
-    function getQueryBuilder(): QueryBuilder
+    protected function getQueryBuilder(): QueryBuilder
     {
         /** @var ConnectionPool $connectionPool */
         $connectionPool = GeneralUtility::makeInstance(ConnectionPool::class);
@@ -443,22 +383,10 @@ class CloudinaryResourceService
     /**
      * @return object|Connection
      */
-    protected
-    function getConnection(): Connection
+    protected function getConnection(): Connection
     {
         /** @var ConnectionPool $connectionPool */
         $connectionPool = GeneralUtility::makeInstance(ConnectionPool::class);
         return $connectionPool->getConnectionForTable($this->tableName);
-    }
-
-    /**
-     * @return object|Connection
-     */
-    protected
-    function getFolderConnection(): Connection
-    {
-        /** @var ConnectionPool $connectionPool */
-        $connectionPool = GeneralUtility::makeInstance(ConnectionPool::class);
-        return $connectionPool->getConnectionForTable($this->folderTableName);
     }
 }
