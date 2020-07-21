@@ -28,6 +28,7 @@ use TYPO3\CMS\Extbase\Utility\LocalizationUtility;
 use Visol\Cloudinary\Services\CloudinaryFolderService;
 use Visol\Cloudinary\Services\CloudinaryResourceService;
 use Visol\Cloudinary\Services\CloudinaryPathService;
+use Visol\Cloudinary\Services\CloudinaryTestConnectionService;
 
 /**
  * Class CloudinaryFastDriver
@@ -82,11 +83,6 @@ class CloudinaryFastDriver extends AbstractHierarchicalFilesystemDriver
      * @var \TYPO3\CMS\Core\Charset\CharsetConverter
      */
     protected $charsetConversion = null;
-
-    /**
-     * @var string
-     */
-    protected $languageFile = 'LLL:EXT:cloudinary/Resources/Private/Language/backend.xlf';
 
     /**
      * @var Dispatcher
@@ -154,7 +150,7 @@ class CloudinaryFastDriver extends AbstractHierarchicalFilesystemDriver
     {
         // Test connection if we are in the edit view of this storage
         if (TYPO3_MODE === 'BE' && !empty($_GET['edit']['sys_file_storage'])) {
-            $this->testConnection();
+            $this->getCloudinaryTestConnectionService()->test();
         }
     }
 
@@ -1223,6 +1219,17 @@ class CloudinaryFastDriver extends AbstractHierarchicalFilesystemDriver
     }
 
     /**
+     * @return object|CloudinaryTestConnectionService
+     */
+    protected function getCloudinaryTestConnectionService()
+    {
+        return GeneralUtility::makeInstance(
+            CloudinaryTestConnectionService::class,
+            $this->configuration
+        );
+    }
+
+    /**
      * @return CloudinaryFolderService
      */
     protected function getCloudinaryFolderService()
@@ -1235,52 +1242,6 @@ class CloudinaryFastDriver extends AbstractHierarchicalFilesystemDriver
         }
 
         return $this->cloudinaryFolderService;
-    }
-
-    /**
-     * Test the connection
-     */
-    protected function testConnection()
-    {
-        $messageQueue = $this->getMessageQueue();
-        $localizationPrefix = $this->languageFile . ':driverConfiguration.message.';
-        try {
-            $this->initializeApi();
-
-            $search = new \Cloudinary\Search();
-            $search
-                ->expression('folder=' . self::ROOT_FOLDER_IDENTIFIER)
-                ->execute();
-
-            /** @var \TYPO3\CMS\Core\Messaging\FlashMessage $message */
-            $message = GeneralUtility::makeInstance(
-                FlashMessage::class,
-                LocalizationUtility::translate($localizationPrefix . 'connectionTestSuccessful.message'),
-                LocalizationUtility::translate($localizationPrefix . 'connectionTestSuccessful.title'),
-                FlashMessage::OK
-            );
-            $messageQueue->addMessage($message);
-        } catch (\Exception $exception) {
-            /** @var \TYPO3\CMS\Core\Messaging\FlashMessage $message */
-            $message = GeneralUtility::makeInstance(
-                FlashMessage::class,
-                $exception->getMessage(),
-                LocalizationUtility::translate($localizationPrefix . 'connectionTestFailed.title'),
-                FlashMessage::WARNING
-            );
-            $messageQueue->addMessage($message);
-        }
-    }
-
-    /**
-     * @return \TYPO3\CMS\Core\Messaging\FlashMessageQueue
-     */
-    protected function getMessageQueue()
-    {
-        $objectManager = GeneralUtility::makeInstance(ObjectManager::class);
-        /** @var FlashMessageService $flashMessageService */
-        $flashMessageService = $objectManager->get(FlashMessageService::class);
-        return $flashMessageService->getMessageQueueByIdentifier();
     }
 
     /**
