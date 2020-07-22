@@ -32,7 +32,7 @@ call_user_func(
 
 
         $GLOBALS['TYPO3_CONF_VARS']['SYS']['fal']['registeredDrivers'][\Visol\Cloudinary\Driver\CloudinaryDriver::DRIVER_TYPE] = [
-            'class' => \Visol\Cloudinary\Driver\CloudinaryFastDriver::class,
+            'class' => \Visol\Cloudinary\Driver\CloudinaryDriver::class,
 
             'flexFormDS' => 'FILE:EXT:cloudinary/Configuration/FlexForm/CloudinaryFlexForm.xml',
             'label' => 'Cloudinary',
