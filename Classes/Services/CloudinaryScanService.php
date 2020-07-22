@@ -10,8 +10,10 @@ namespace Visol\Cloudinary\Services;
  */
 
 use Cloudinary\Search;
+use Symfony\Component\Console\Style\SymfonyStyle;
 use TYPO3\CMS\Core\Log\LogLevel;
 use TYPO3\CMS\Core\Log\LogManager;
+use TYPO3\CMS\Core\Resource\ResourceFactory;
 use TYPO3\CMS\Core\Resource\ResourceStorage;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
 use Visol\Cloudinary\Driver\CloudinaryDriver;
@@ -55,23 +57,32 @@ class CloudinaryScanService
         self::DELETED => 0,
         self::TOTAL => 0,
 
-        self::FOLDER_CREATED => 0,
-        self::FOLDER_UPDATED => 0,
+//        self::FOLDER_CREATED => 0,
+//        self::FOLDER_UPDATED => 0,
         self::FOLDER_DELETED => 0,
-        self::FOLDER_TOTAL => 0,
+//        self::FOLDER_TOTAL => 0,
     ];
+
+    /**
+     * @var SymfonyStyle|null
+     */
+    protected $io;
 
     /**
      * CloudinaryScanService constructor.
      *
      * @param ResourceStorage $storage
+     * @param SymfonyStyle|null $io
+     *
+     * @throws \Exception
      */
-    public function __construct(ResourceStorage $storage)
+    public function __construct(ResourceStorage $storage, SymfonyStyle $io = null)
     {
         if ($storage->getDriverType() !== CloudinaryDriver::DRIVER_TYPE) {
             throw new \Exception('Storage is not of type "cloudinary"', 1594714337);
         }
         $this->storage = $storage;
+        $this->io = $io;
     }
 
     /**
@@ -98,13 +109,15 @@ class CloudinaryScanService
         // Add a filter if the root directory contains a base path segment
         // + remove _processed_ folder from the search
         if ($cloudinaryFolder) {
-            $expressions[] = sprintf('folder=%s/*',  $cloudinaryFolder);
+            $expressions[] = sprintf('folder=%s/*', $cloudinaryFolder);
             $expressions[] = sprintf('NOT folder=%s/%s/*', $cloudinaryFolder, $this->processedFolder);
         } else {
             $expressions[] = sprintf('NOT folder=%s/*', $this->processedFolder);
         }
 
-        $folders = [];
+        if ($this->io) {
+            $this->io->writeln('Mirroring...' . chr(10));
+        }
 
         do {
             $nextCursor = isset($response)
@@ -133,10 +146,35 @@ class CloudinaryScanService
                 ->execute();
 
             if (is_array($response['resources'])) {
-                foreach ($response['resources'] as $resource)
-                {
+                foreach ($response['resources'] as $resource) {
 
+                    if ($this->io) {
+                        $this->io->writeln($resource['public_id']);
+                    }
+
+                    // Save mirrored file
                     $result = $this->getCloudinaryResourceService()->save($resource);
+
+                    // Find if the file exists in sys_file already
+                    $fileIdentifier = $this->getCloudinaryPathService()->computeFileIdentifier($resource);
+                    $file = ResourceFactory::getInstance()->getFileObjectByStorageAndIdentifier(
+                        $this->storage->getUid(),
+                        $fileIdentifier
+                    );
+
+                    if (!$file) {
+
+//                        var_dump($fileIdentifier);
+//                        var_dump($this->storage->hasFile($fileIdentifier));
+//                        print_r($resource);
+//                        exit();
+//                        $this->storage->getFile($fileIdentifier);
+
+                        if ($this->io) {
+                            $this->io->writeln('Indexing new file: ' . $fileIdentifier);
+                            $this->io->writeln('');
+                        }
+                    }
 
                     // For the stats, we collect the number of files touched
                     $key = key($result);
@@ -145,27 +183,9 @@ class CloudinaryScanService
                     // In any case we can add a file to the counter.
                     // Later we can verify the total corresponds to the "created" + "updated" + "deleted" files
                     $this->statistics[self::TOTAL]++;
-
-                    // We collect valid folders here...
-                    if ($resource['folder']) {
-                        $folders[$resource['folder']] = '';
-                    }
                 }
             }
         } while (!empty($response) && array_key_exists('next_cursor', $response));
-
-        // Persist previously collected folders
-        foreach (array_keys($folders) as $folder) {
-            $result = $this->getCloudinaryFolderService()->save($folder);
-
-            // For the stats, we collect the number of files touched
-            $key = key($result);
-            $this->statistics[$key] += $result[$key];
-
-            // In any case we can add a file to the counter.
-            // Later we can verify the total corresponds to the "created" + "updated" + "deleted" files
-            $this->statistics[self::FOLDER_TOTAL]++;
-        }
 
         $this->postScan();
 

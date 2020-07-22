@@ -1,6 +1,6 @@
 <?php
 
-namespace Visol\Cloudinary\Tests\Unit\Utility;
+namespace Visol\Cloudinary\Tests\Unit\Services;
 
 /*
  * This file is part of the Visol/Cloudinary project under GPLv2 or later.
@@ -9,18 +9,15 @@ namespace Visol\Cloudinary\Tests\Unit\Utility;
  * LICENSE.md file that was distributed with this source code.
  */
 
-use FluidTYPO3\Flux\Utility\ExtensionConfigurationUtility;
-use TYPO3\CMS\Core\Utility\GeneralUtility;
-use TYPO3\CMS\Extbase\Utility\ExtensionUtility;
 use TYPO3\TestingFramework\Core\Unit\UnitTestCase;
-use Visol\Cloudinary\Utility\CloudinaryUtility;
+use Visol\Cloudinary\Services\CloudinaryImageService;
 
 /**
- * Class CloudinaryUtilityTest
+ * Class CloudinaryImageServiceTest
  *
- * @package Visol\Cloudinary\Tests\Unit\Utility
+ * @package Visol\Cloudinary\Tests\Unit\Services
  */
-class CloudinaryUtilityTest extends UnitTestCase
+class CloudinaryImageServiceTest extends UnitTestCase
 {
 
     /**
@@ -44,8 +41,8 @@ class CloudinaryUtilityTest extends UnitTestCase
      */
     public function instantiateMe()
     {
-        $fixture = new \Visol\Cloudinary\Utility\CloudinaryUtility();
-        $this->assertInstanceOf(CloudinaryUtility::class, $fixture);
+        $fixture = new \Visol\Cloudinary\Services\CloudinaryImageService();
+        $this->assertInstanceOf(CloudinaryImageService::class, $fixture);
     }
 
     /**
@@ -60,7 +57,7 @@ class CloudinaryUtilityTest extends UnitTestCase
         $fakeFileIdentifier = '/foo/bar';
         $expected = 'foo/bar';
 
-        $fixture = new CloudinaryUtility();
+        $fixture = new CloudinaryImageService();
         $actual = $fixture->computeCloudinaryFolderPath($fakeFileIdentifier);
         $this->assertEquals($expected, $actual);
     }
@@ -77,7 +74,7 @@ class CloudinaryUtilityTest extends UnitTestCase
         $this->markTestSkipped(
             'Database is not initialized, we should rather use `nemut/testing-framework`'
         );
-        $fixture = new CloudinaryUtility();
+        $fixture = new CloudinaryImageService();
         $actual = $fixture->computeCloudinaryPublicId($fakeFileIdentifier);
         $this->assertEquals($expected, $actual);
     }

@@ -11,6 +11,7 @@ namespace Visol\Cloudinary\ViewHelpers;
 
 use TYPO3\CMS\Core\Resource\ResourceStorage;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
+use Visol\Cloudinary\Services\CloudinaryImageService;
 use Visol\Cloudinary\Services\CloudinaryPathService;
 use TYPO3\CMS\Core\Resource\Exception\ResourceDoesNotExistException;
 use TYPO3\CMS\Core\Resource\FileInterface;
@@ -31,25 +32,11 @@ class CloudinaryImageViewHelper extends \TYPO3\CMS\Fluid\Core\ViewHelper\Abstrac
     protected $imageService;
 
     /**
-     * @var \Visol\Cloudinary\Utility\CloudinaryUtility
-     * @inject
-     */
-    protected $cloudinaryUtility;
-
-    /**
      * @param \TYPO3\CMS\Extbase\Service\ImageService $imageService
      */
     public function injectImageService(\TYPO3\CMS\Extbase\Service\ImageService $imageService)
     {
         $this->imageService = $imageService;
-    }
-
-    /**
-     * @param \Visol\Cloudinary\Utility\CloudinaryUtility $cloudinaryUtility
-     */
-    public function injectCloudinaryUtility(\TYPO3\CMS\Extbase\Service\ImageService $cloudinaryUtility)
-    {
-        $this->cloudinaryUtility = $cloudinaryUtility;
     }
 
     /**
@@ -96,7 +83,6 @@ class CloudinaryImageViewHelper extends \TYPO3\CMS\Fluid\Core\ViewHelper\Abstrac
 
         try {
 
-            /** @var FileInterface $image */
             $image = $this->imageService->getImage(
                 $src,
                 $image,
@@ -105,10 +91,7 @@ class CloudinaryImageViewHelper extends \TYPO3\CMS\Fluid\Core\ViewHelper\Abstrac
 
             try {
 
-                $publicId = $this->getCloudinaryPathService($image->getStorage())
-                    ->computeCloudinaryPublicId($image->getIdentifier());
-
-                $options = $this->cloudinaryUtility->generateOptionsFromSettings(
+                $options = $this->getCloudinaryImageService()->generateOptionsFromSettings(
                     [
                         'bytesStep' => $this->arguments['bytesStep'],
                         'minWidth' => $this->arguments['minWidth'],
@@ -120,34 +103,26 @@ class CloudinaryImageViewHelper extends \TYPO3\CMS\Fluid\Core\ViewHelper\Abstrac
                     ]
                 );
 
-                // True means process with default options
-                // False means we have a cloudinary $options override
-                if (empty($this->arguments['options'])) {
-                    $breakpoints = $this->cloudinaryUtility->getResponsiveBreakpointData($publicId, $options);
-                    $publicUrl = $image->getPublicUrl();
-                } else {
+                // False means process with default options
+                // True means we have a cloudinary $options override
+                if (!empty($this->arguments['options'])) {
                     // Apply custom transformation to breakpoint images
                     $options['responsive_breakpoints']['transformation'] = $this->arguments['options'];
-                    $breakpoints = $this->cloudinaryUtility->getResponsiveBreakpointData($publicId, $options);
-
-                    $resource = $this->cloudinaryUtility->getCloudinaryProcessedResource(
-                        $publicId,
-                        [
-                            'type' => 'upload',
-                            'eager' => [$this->arguments['options']],
-                        ]
-                    );
-                    $publicUrl = $resource['secure_url'];
                 }
 
-                $cloudinarySizes = $this->cloudinaryUtility->getSizesAttribute($breakpoints);
-                $cloudinarySrcset = $this->cloudinaryUtility->getSrcsetAttribute($breakpoints);
+                $breakpoints = $this->getCloudinaryImageService()->getResponsiveBreakpointData(
+                    $image->getOriginalFile(),
+                    $options
+                );
+
+                $cloudinarySizes = $this->getCloudinaryImageService()->getSizesAttribute($breakpoints);
+                $cloudinarySrcset = $this->getCloudinaryImageService()->getSrcsetAttribute($breakpoints);
 
                 $this->tag->addAttribute('sizes', $cloudinarySizes);
                 $this->tag->addAttribute('srcset', $cloudinarySrcset);
-                $this->tag->addAttribute('src', $publicUrl);
+                $this->tag->addAttribute('src', $image->getPublicUrl());
             } catch (\Exception $e) {
-                $this->tag->addAttribute('src', $publicUrl);
+                $this->tag->addAttribute('src', $image->getPublicUrl());
             }
 
             $alt = $image->getProperty('alternative');
@@ -172,15 +147,10 @@ class CloudinaryImageViewHelper extends \TYPO3\CMS\Fluid\Core\ViewHelper\Abstrac
     }
 
     /**
-     * @param ResourceStorage $storage
-     *
-     * @return object|CloudinaryPathService
+     * @return object|CloudinaryImageService
      */
-    protected function getCloudinaryPathService(ResourceStorage $storage)
+    public function getCloudinaryImageService()
     {
-        return GeneralUtility::makeInstance(
-            CloudinaryPathService::class,
-            $storage
-        );
+        return GeneralUtility::makeInstance(CloudinaryImageService::class);
     }
 }

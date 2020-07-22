@@ -11,6 +11,7 @@ namespace Visol\Cloudinary\ViewHelpers;
 
 use TYPO3\CMS\Core\Resource\ResourceStorage;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
+use Visol\Cloudinary\Services\CloudinaryImageService;
 use Visol\Cloudinary\Services\CloudinaryPathService;
 use TYPO3\CMS\Core\Resource\Exception\ResourceDoesNotExistException;
 use TYPO3\CMS\Core\Resource\FileInterface;
@@ -28,25 +29,11 @@ class CloudinaryImageDataViewHelper extends \TYPO3\CMS\Fluid\Core\ViewHelper\Abs
     protected $imageService;
 
     /**
-     * @var \Visol\Cloudinary\Utility\CloudinaryUtility
-     * @inject
-     */
-    protected $cloudinaryUtility;
-
-    /**
      * @param \TYPO3\CMS\Extbase\Service\ImageService $imageService
      */
     public function injectImageService(\TYPO3\CMS\Extbase\Service\ImageService $imageService)
     {
         $this->imageService = $imageService;
-    }
-
-    /**
-     * @param \Visol\Cloudinary\Utility\CloudinaryUtility $cloudinaryUtility
-     */
-    public function injectCloudinaryUtility(\TYPO3\CMS\Extbase\Service\ImageService $cloudinaryUtility)
-    {
-        $this->cloudinaryUtility = $cloudinaryUtility;
     }
 
     /**
@@ -96,7 +83,6 @@ class CloudinaryImageDataViewHelper extends \TYPO3\CMS\Fluid\Core\ViewHelper\Abs
 
         try {
 
-            /** @var FileInterface $image */
             $image = $this->imageService->getImage(
                 $src,
                 $image,
@@ -117,7 +103,7 @@ class CloudinaryImageDataViewHelper extends \TYPO3\CMS\Fluid\Core\ViewHelper\Abs
                 $publicId = $this->getCloudinaryPathService($image->getStorage())
                     ->computeCloudinaryPublicId($image->getIdentifier());
 
-                $options = $this->cloudinaryUtility->generateOptionsFromSettings(
+                $options = $this->getCloudinaryImageService()->generateOptionsFromSettings(
                     [
                         'bytesStep' => $this->arguments['bytesStep'],
                         'minWidth' => $this->arguments['minWidth'],
@@ -129,21 +115,23 @@ class CloudinaryImageDataViewHelper extends \TYPO3\CMS\Fluid\Core\ViewHelper\Abs
                     ]
                 );
 
-                // True means process with default options
-                // False means we have a cloudinary $options override
-                if (empty($this->arguments['options'])) {
-                    $breakpoints = $this->cloudinaryUtility->getResponsiveBreakpointData($publicId, $options);
-                } else {
+                // False means process with default options
+                // True means we have a cloudinary $options override
+                if (!empty($this->arguments['options'])) {
                     // Apply custom transformation to breakpoint images
                     $options['responsive_breakpoints']['transformation'] = $this->arguments['options'];
-                    $breakpoints = $this->cloudinaryUtility->getResponsiveBreakpointData($publicId, $options);
                 }
 
+                $breakpoints = $this->getCloudinaryImageService()->getResponsiveBreakpointData(
+                    $image->getOriginalFile(),
+                    $options
+                );
+
                 $responsiveImageData = [
-                    'images' => $this->cloudinaryUtility->getImageObjects($breakpoints),
-                    'minImage' => $this->cloudinaryUtility->getImage($breakpoints, 'min'),
-                    'medianImage' => $this->cloudinaryUtility->getImage($breakpoints, 'median'),
-                    'maxImage' => $this->cloudinaryUtility->getImage($breakpoints, 'max'),
+                    'images' => $this->getCloudinaryImageService()->getImageObjects($breakpoints),
+                    'minImage' => $this->getCloudinaryImageService()->getImage($breakpoints, 'min'),
+                    'medianImage' => $this->getCloudinaryImageService()->getImage($breakpoints, 'median'),
+                    'maxImage' => $this->getCloudinaryImageService()->getImage($breakpoints, 'max'),
                 ];
             } catch (\Exception $e) {
                 $responsiveImageData = [
@@ -191,5 +179,13 @@ class CloudinaryImageDataViewHelper extends \TYPO3\CMS\Fluid\Core\ViewHelper\Abs
             CloudinaryPathService::class,
             $storage
         );
+    }
+
+    /**
+     * @return object|CloudinaryImageService
+     */
+    public function getCloudinaryImageService()
+    {
+        return GeneralUtility::makeInstance(CloudinaryImageService::class);
     }
 }

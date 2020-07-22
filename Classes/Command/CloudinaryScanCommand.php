@@ -38,8 +38,6 @@ class CloudinaryScanCommand extends AbstractCloudinaryCommand
     {
         $this->io = new SymfonyStyle($input, $output);
 
-        $this->isSilent = $input->getOption('silent');
-
         $this->storage = ResourceFactory::getInstance()->getStorageObject(
             $input->getArgument('storage')
         );
@@ -69,13 +67,6 @@ class CloudinaryScanCommand extends AbstractCloudinaryCommand
                 'Before scanning empty all resources for a given storage',
                 false
             )
-            ->addOption(
-                'yes',
-                'y',
-                InputOption::VALUE_OPTIONAL,
-                'Accept everything by default',
-                false
-            )
             ->addArgument(
                 'storage',
                 InputArgument::REQUIRED,
@@ -100,12 +91,16 @@ class CloudinaryScanCommand extends AbstractCloudinaryCommand
         }
 
         if ($input->getOption('empty') === null || $input->getOption('empty')) {
-            $this->log('Emptying all resources for storage %s"', [$this->storage->getUid()]);
+            $this->log('Emptying all mirrored resources for storage "%s"', [$this->storage->getUid()]);
+            $this->log();
             $this->getCloudinaryScanService()->empty();
         }
 
-        $result = $this->getCloudinaryScanService()->scan();
+        $this->log('Hint! Look at the log to get more insight:');
+        $this->log('tail -f web/typo3temp/var/logs/cloudinary.log');
+        $this->log();
 
+        $result = $this->getCloudinaryScanService()->scan();
 
         $numberOfFiles = $result['created'] + $result['updated'] - $result['deleted'];
         if ($numberOfFiles !== $result['total']) {
@@ -118,19 +113,8 @@ class CloudinaryScanCommand extends AbstractCloudinaryCommand
             );
         }
 
-        $numberOfFolders = $result['folder_created'] + $result['folder_updated'] - $result['folder_deleted'];
-        if ($numberOfFolders !== $result['folder_total']) {
-            $this->error(
-                'Something went wrong. There is a problem with the number of folders counted. %s !== %s',
-                [
-                    $numberOfFolders,
-                    $result['folder_total']
-                ]
-            );
-        }
-
         $message = "Statistics for files: \n\n- created: %s\n- updated: %s\n- total: %s\n- deleted: %s";
-        $message .= "\n\nStatistics for folders: \n\n- created: %s\n- updated: %s\n- total: %s\n- deleted: %s";
+        $message .= "\n\nStatistics for folders: \n\n- deleted: %s";
         $this->success(
             $message,
             [
@@ -138,9 +122,6 @@ class CloudinaryScanCommand extends AbstractCloudinaryCommand
                 $result['updated'],
                 $result['total'],
                 $result['deleted'],
-                $result['folder_created'],
-                $result['folder_updated'],
-                $result['folder_total'],
                 $result['folder_deleted'],
             ]
         );
@@ -153,6 +134,10 @@ class CloudinaryScanCommand extends AbstractCloudinaryCommand
      */
     protected function getCloudinaryScanService(): CloudinaryScanService
     {
-        return GeneralUtility::makeInstance(CloudinaryScanService::class, $this->storage);
+        return GeneralUtility::makeInstance(
+            CloudinaryScanService::class,
+            $this->storage,
+            $this->io
+        );
     }
 }
