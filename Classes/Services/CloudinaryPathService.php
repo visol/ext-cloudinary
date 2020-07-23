@@ -55,6 +55,16 @@ class CloudinaryPathService
     }
 
     /**
+     * @param string $cloudinaryFolder
+     *
+     * @return string
+     */
+    public function computeFolderIdentifier(string $cloudinaryFolder): string
+    {
+        return str_replace($this->getBasePath(), '', DIRECTORY_SEPARATOR . $cloudinaryFolder);
+    }
+
+    /**
      * @return string
      */
     protected function getBasePath(): string
