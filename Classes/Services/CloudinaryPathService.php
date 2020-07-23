@@ -137,6 +137,26 @@ class CloudinaryPathService
     }
 
     /**
+     * @param array $cloudinaryResource
+     *
+     * @return string
+     */
+    public function guessMimeType(array $cloudinaryResource): string
+    {
+        $mimeType = '';
+        if ($cloudinaryResource['format'] === 'pdf') {
+            $mimeType = 'application/pdf';
+        } elseif ($cloudinaryResource['format'] === 'jpg') {
+            $mimeType = 'image/jpeg';
+        } elseif ($cloudinaryResource['format'] === 'png') {
+            $mimeType = 'image/png';
+        } elseif ($cloudinaryResource['format'] === 'mp4') {
+            $mimeType = 'video/mp4';
+        }
+        return $mimeType;
+    }
+
+    /**
      * @param string $fileIdentifier
      *
      * @return bool
