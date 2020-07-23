@@ -1036,7 +1036,7 @@ class CloudinaryFastDriver extends AbstractHierarchicalFilesystemDriver
         // Generate list of folders for the file module.
         $folders = [];
         foreach ($cloudinaryFolders as $cloudinaryFolder) {
-            $folders[] = $cloudinaryFolder['folder'];
+            $folders[] = $this->getCloudinaryPathService()->computeFolderIdentifier($cloudinaryFolder['folder']);
         }
 
         return $folders;
