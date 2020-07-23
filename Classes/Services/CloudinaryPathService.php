@@ -9,6 +9,8 @@ namespace Visol\Cloudinary\Services;
  * LICENSE.md file that was distributed with this source code.
  */
 
+use Fab\Media\Utility\Path;
+use TYPO3\CMS\Core\Utility\GeneralUtility;
 use TYPO3\CMS\Core\Utility\PathUtility;
 use TYPO3\CMS\Core\Resource\ResourceStorage;
 
@@ -17,7 +19,6 @@ use TYPO3\CMS\Core\Resource\ResourceStorage;
  */
 class CloudinaryPathService
 {
-
 
     /**
      * @var ResourceStorage
@@ -43,9 +44,11 @@ class CloudinaryPathService
      */
     public function computeFileIdentifier(array $cloudinaryResource): string
     {
-        $extension = $cloudinaryResource['resource_type'] === 'image'
-            ? '.' . $cloudinaryResource['format'] // the format (or extension) is only returned for images.
-            : '';
+        $fileParts = PathUtility::pathinfo($cloudinaryResource['public_id']);
+
+        $extension = isset($fileParts['extension'])
+            ? '' // We don't need the extension since it is already included in the public_id (resource_type => "raw")
+            : '.' . $cloudinaryResource['format'];
 
         $rawFileIdentifier = DIRECTORY_SEPARATOR . $cloudinaryResource['public_id'] . $extension;
         return str_replace($this->getBasePath(), '', $rawFileIdentifier);
@@ -71,7 +74,7 @@ class CloudinaryPathService
      */
     public function computeCloudinaryPublicId(string $fileIdentifier): string
     {
-        $normalizedFileIdentifier = $this->guessIsImage($fileIdentifier)
+        $normalizedFileIdentifier = $this->guessIsImage($fileIdentifier) || $this->guessIsVideo($fileIdentifier)
             ? $this->stripExtension($fileIdentifier)
             : $fileIdentifier;
 
@@ -123,9 +126,32 @@ class CloudinaryPathService
      */
     public function getResourceType(string $fileIdentifier): string
     {
-        return $this->guessIsImage($fileIdentifier)
-            ? 'image'
-            : 'raw';
+        $resourceType = 'raw';
+        if ($this->guessIsImage($fileIdentifier)) {
+            $resourceType = 'image';
+        } elseif ($this->guessIsVideo($fileIdentifier)) {
+            $resourceType = 'video';
+        }
+
+        return $resourceType;
+    }
+
+    /**
+     * @param string $fileIdentifier
+     *
+     * @return bool
+     */
+    protected function guessIsVideo(string $fileIdentifier)
+    {
+        $extension = strtolower(PathUtility::pathinfo($fileIdentifier, PATHINFO_EXTENSION));
+        $rawExtensions = [
+            'mp4',
+            'mov',
+
+            'mp3', // As documented @see https://cloudinary.com/documentation/image_upload_api_reference
+        ];
+
+        return in_array($extension, $rawExtensions, true);
     }
 
     /**
@@ -140,22 +166,24 @@ class CloudinaryPathService
     protected function guessIsImage(string $fileIdentifier)
     {
         $extension = strtolower(PathUtility::pathinfo($fileIdentifier, PATHINFO_EXTENSION));
-        $commonMimeTypes = [
-            'png' => 'image/png',
-            'jpe' => 'image/jpeg',
-            'jpeg' => 'image/jpeg',
-            'jpg' => 'image/jpeg',
-            'gif' => 'image/gif',
-            'bmp' => 'image/bmp',
-            'ico' => 'image/vnd.microsoft.icon',
-            'tiff' => 'image/tiff',
-            'tif' => 'image/tiff',
-            'svg' => 'image/svg+xml',
-            'svgz' => 'image/svg+xml',
-            'webp' => 'image/image/webp',
+        $imageExtensions = [
+            'png',
+            'jpe',
+            'jpeg',
+            'jpg',
+            'gif',
+            'bmp',
+            'ico',
+            'tiff',
+            'tif',
+            'svg',
+            'svgz',
+            'webp',
+
+            'pdf', // Cloudinary handles pdf as image
         ];
 
-        return isset($commonMimeTypes[$extension]);
+        return in_array($extension, $imageExtensions, true);
     }
 
     /**
