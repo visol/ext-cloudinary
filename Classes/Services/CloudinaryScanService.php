@@ -11,9 +11,10 @@ namespace Visol\Cloudinary\Services;
 
 use Cloudinary\Search;
 use Symfony\Component\Console\Style\SymfonyStyle;
+use TYPO3\CMS\Core\Database\ConnectionPool;
+use TYPO3\CMS\Core\Database\Query\QueryBuilder;
 use TYPO3\CMS\Core\Log\LogLevel;
 use TYPO3\CMS\Core\Log\LogManager;
-use TYPO3\CMS\Core\Resource\ResourceFactory;
 use TYPO3\CMS\Core\Resource\ResourceStorage;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
 use Visol\Cloudinary\Driver\CloudinaryDriver;
@@ -28,10 +29,7 @@ class CloudinaryScanService
     private const UPDATED = 'updated';
     private const DELETED = 'deleted';
     private const TOTAL = 'total';
-    private const FOLDER_CREATED = 'folder_created';
-    private const FOLDER_UPDATED = 'folder_updated';
     private const FOLDER_DELETED = 'folder_deleted';
-    private const FOLDER_TOTAL = 'folder_total';
 
     /**
      * @var ResourceStorage
@@ -57,10 +55,7 @@ class CloudinaryScanService
         self::DELETED => 0,
         self::TOTAL => 0,
 
-//        self::FOLDER_CREATED => 0,
-//        self::FOLDER_UPDATED => 0,
         self::FOLDER_DELETED => 0,
-//        self::FOLDER_TOTAL => 0,
     ];
 
     /**
@@ -148,32 +143,24 @@ class CloudinaryScanService
             if (is_array($response['resources'])) {
                 foreach ($response['resources'] as $resource) {
 
+                    $fileIdentifier = $this->getCloudinaryPathService()->computeFileIdentifier($resource);
                     if ($this->io) {
-                        $this->io->writeln($resource['public_id']);
+                        $this->io->writeln($fileIdentifier);
                     }
 
                     // Save mirrored file
                     $result = $this->getCloudinaryResourceService()->save($resource);
 
                     // Find if the file exists in sys_file already
-                    $fileIdentifier = $this->getCloudinaryPathService()->computeFileIdentifier($resource);
-                    $file = ResourceFactory::getInstance()->getFileObjectByStorageAndIdentifier(
-                        $this->storage->getUid(),
-                        $fileIdentifier
-                    );
-
-                    if (!$file) {
-
-//                        var_dump($fileIdentifier);
-//                        var_dump($this->storage->hasFile($fileIdentifier));
-//                        print_r($resource);
-//                        exit();
-//                        $this->storage->getFile($fileIdentifier);
+                    if (!$this->isFileIndexed($fileIdentifier)) {
 
                         if ($this->io) {
-                            $this->io->writeln('Indexing new file: ' . $fileIdentifier);
+                            $this->io->writeln('Indexing new file (sys_file): ' . $fileIdentifier);
                             $this->io->writeln('');
                         }
+
+                        // This will trigger a file indexation
+                        $this->storage->getFile($fileIdentifier);
                     }
 
                     // For the stats, we collect the number of files touched
@@ -209,6 +196,40 @@ class CloudinaryScanService
         $identifier = ['missing' => 1];
         $this->statistics[self::DELETED] = $this->getCloudinaryResourceService()->deleteAll($identifier);
         $this->statistics[self::FOLDER_DELETED] = $this->getCloudinaryFolderService()->deleteAll($identifier);
+    }
+
+    /**
+     * @param string $fileIdentifier
+     *
+     * @return bool
+     */
+    protected function isFileIndexed(string $fileIdentifier): bool
+    {
+        $query = $this->getQueryBuilder();
+        $query->count('*')
+            ->from('sys_file')
+            ->where(
+                $this->getQueryBuilder()->expr()->eq(
+                    'identifier',
+                    $query->expr()->literal($fileIdentifier)
+                ),
+                $this->getQueryBuilder()->expr()->eq(
+                    'storage',
+                    $this->storage->getUid()
+                )
+            );
+
+        return (bool)$query->execute()->fetchColumn(0);
+    }
+
+    /**
+     * @return object|QueryBuilder
+     */
+    protected function getQueryBuilder(): QueryBuilder
+    {
+        /** @var ConnectionPool $connectionPool */
+        $connectionPool = GeneralUtility::makeInstance(ConnectionPool::class);
+        return $connectionPool->getQueryBuilderForTable('sys_file');
     }
 
     /**
