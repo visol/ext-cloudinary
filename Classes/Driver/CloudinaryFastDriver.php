@@ -230,7 +230,6 @@ class CloudinaryFastDriver extends AbstractHierarchicalFilesystemDriver
      */
     public function getFileInfoByIdentifier($fileIdentifier, array $propertiesToExtract = [])
     {
-        $this->log('Just a notice! Time consuming action ahead. I am going to download a file "%s"', [$fileIdentifier], ['getFileInfoByIdentifier']);
 
         $publicId = $this->getCloudinaryPathService()->computeCloudinaryPublicId($fileIdentifier);
         $cloudinaryResource = $this->getCloudinaryResourceService()->getResource($publicId);
@@ -243,23 +242,30 @@ class CloudinaryFastDriver extends AbstractHierarchicalFilesystemDriver
             );
         }
 
-        // We are force to download the file in order to correctly find the mime type.
-        $localFile = $this->getFileForLocalProcessing($fileIdentifier);
+        $mimeType = $this->getCloudinaryPathService()->guessMimeType($cloudinaryResource);
+        if (!$mimeType) {
+            $this->log('Just a notice! Time consuming action ahead. I am going to download a file "%s"', [$fileIdentifier], ['getFileInfoByIdentifier']);
 
-        /** @var FileInfo $fileInfo */
-        $fileInfo = GeneralUtility::makeInstance(FileInfo::class, $localFile);
+            // We are force to download the file in order to correctly find the mime type.
+            $localFile = $this->getFileForLocalProcessing($fileIdentifier);
 
-        $canonicalFolderIdentifier = $this->canonicalizeAndCheckFolderIdentifier(
-            PathUtility::dirname($fileIdentifier)
-        );
+            /** @var FileInfo $fileInfo */
+            $fileInfo = GeneralUtility::makeInstance(FileInfo::class, $localFile);
 
-        $values = [
+            $mimeType = $fileInfo->getMimeType();
+        }
+
+        return [
             'identifier_hash' => $this->hashIdentifier($fileIdentifier),
-            'folder_hash' => sha1($canonicalFolderIdentifier),
+            'folder_hash' => sha1(
+                $this->canonicalizeAndCheckFolderIdentifier(
+                    PathUtility::dirname($fileIdentifier)
+                )
+            ),
             'creation_date' => strtotime($cloudinaryResource['created_at']),
             'modification_date' => strtotime($cloudinaryResource['created_at']),
-            'mime_type' => $fileInfo->getMimeType(),
-            'extension' => PathUtility::pathinfo($localFile, PATHINFO_EXTENSION),
+            'mime_type' => $mimeType,
+            'extension' => $this->getResourceInfo($cloudinaryResource, 'format'),
             'size' => $this->getResourceInfo($cloudinaryResource, 'bytes'),
             'width' => $this->getResourceInfo($cloudinaryResource, 'width'),
             'height' => $this->getResourceInfo($cloudinaryResource, 'height'),
@@ -267,8 +273,6 @@ class CloudinaryFastDriver extends AbstractHierarchicalFilesystemDriver
             'identifier' => $fileIdentifier,
             'name' => PathUtility::basename($fileIdentifier),
         ];
-
-        return $values;
     }
 
     /**

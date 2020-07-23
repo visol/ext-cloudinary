@@ -155,7 +155,7 @@ class CloudinaryScanService
                     if (!$this->isFileIndexed($fileIdentifier)) {
 
                         if ($this->io) {
-                            $this->io->writeln('Indexing new file (sys_file): ' . $fileIdentifier);
+                            $this->io->writeln('Indexing new file: ' . $fileIdentifier);
                             $this->io->writeln('');
                         }
 
