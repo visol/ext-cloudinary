@@ -20,7 +20,6 @@ use TYPO3\CMS\Core\Utility\PathUtility;
 use TYPO3\CMS\Core\Resource\Driver\AbstractHierarchicalFilesystemDriver;
 use TYPO3\CMS\Core\Resource\Exception;
 use TYPO3\CMS\Core\Resource\ResourceStorage;
-use TYPO3\CMS\Extbase\SignalSlot\Dispatcher;
 use Visol\Cloudinary\Services\CloudinaryFolderService;
 use Visol\Cloudinary\Services\CloudinaryResourceService;
 use Visol\Cloudinary\Services\CloudinaryPathService;
@@ -45,30 +44,12 @@ class CloudinaryFastDriver extends AbstractHierarchicalFilesystemDriver
     protected $baseUrl = '';
 
     /**
-     * @var array[]
-     */
-    protected $cachedCloudinaryResources = [];
-
-    /**
-     * @var array
-     */
-    protected $cachedFolders = [];
-
-    /**
      * Object permissions are cached here in subarrays like:
      * $identifier => ['r' => bool, 'w' => bool]
      *
      * @var array
      */
     protected $cachedPermissions = [];
-
-    /**
-     * Cache to avoid creating multiple local files since it is time consuming.
-     * We must download the file.
-     *
-     * @var array
-     */
-    protected $localProcessingFiles = [];
 
     /**
      * @var \TYPO3\CMS\Core\Resource\ResourceStorage
@@ -79,16 +60,6 @@ class CloudinaryFastDriver extends AbstractHierarchicalFilesystemDriver
      * @var \TYPO3\CMS\Core\Charset\CharsetConverter
      */
     protected $charsetConversion = null;
-
-    /**
-     * @var Dispatcher
-     */
-    protected $signalSlotDispatcher;
-
-    /**
-     * @var Api $api
-     */
-    protected $api;
 
     /**
      * @var CloudinaryPathService
