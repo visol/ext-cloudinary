@@ -9,8 +9,11 @@ namespace Visol\Cloudinary\Driver;
  * LICENSE.md file that was distributed with this source code.
  */
 
+use Cloudinary;
 use Cloudinary\Api;
 use Cloudinary\Uploader;
+use RuntimeException;
+use TYPO3\CMS\Core\Log\Logger;
 use TYPO3\CMS\Core\Resource\ResourceFactory;
 use TYPO3\CMS\Core\Type\File\FileInfo;
 use TYPO3\CMS\Core\Log\LogLevel;
@@ -143,7 +146,7 @@ class CloudinaryFastDriver extends AbstractHierarchicalFilesystemDriver
      */
     protected function log(string $message, array $arguments = [], array $data = [])
     {
-        /** @var \TYPO3\CMS\Core\Log\Logger $logger */
+        /** @var Logger $logger */
         $logger = GeneralUtility::makeInstance(LogManager::class)->getLogger(__CLASS__);
         $logger->log(
             LogLevel::INFO,
@@ -574,7 +577,7 @@ class CloudinaryFastDriver extends AbstractHierarchicalFilesystemDriver
      */
     public function createFile($fileName, $parentFolderIdentifier)
     {
-        throw new \RuntimeException('createFile: not implemented action! Cloudinary Driver is limited to images.', 1570728107);
+        throw new RuntimeException('createFile: not implemented action! Cloudinary Driver is limited to images.', 1570728107);
     }
 
     /**
@@ -630,7 +633,7 @@ class CloudinaryFastDriver extends AbstractHierarchicalFilesystemDriver
      */
     public function setFileContents($fileIdentifier, $contents)
     {
-        throw new \RuntimeException('setFileContents: not implemented action!', 1570728106);
+        throw new RuntimeException('setFileContents: not implemented action!', 1570728106);
     }
 
     /**
@@ -690,7 +693,7 @@ class CloudinaryFastDriver extends AbstractHierarchicalFilesystemDriver
     protected function checkCloudinaryUploadStatus(array $cloudinaryResource, $fileIdentifier): void
     {
         if (!$cloudinaryResource && $cloudinaryResource['type'] !== 'upload') {
-            throw new \RuntimeException('Cloudinary upload failed for ' . $fileIdentifier, 1591954950);
+            throw new RuntimeException('Cloudinary upload failed for ' . $fileIdentifier, 1591954950);
         }
     }
 
@@ -1116,10 +1119,10 @@ class CloudinaryFastDriver extends AbstractHierarchicalFilesystemDriver
     {
         $temporaryFileNameAndPath = PATH_site . 'typo3temp/var/transient/' . $this->storageUid . $fileIdentifier;
 
-        $temporaryFolder = \TYPO3\CMS\Core\Utility\GeneralUtility::dirname($temporaryFileNameAndPath);
+        $temporaryFolder = GeneralUtility::dirname($temporaryFileNameAndPath);
 
         if (!is_dir($temporaryFolder)) {
-            \TYPO3\CMS\Core\Utility\GeneralUtility::mkdir_deep($temporaryFolder);
+            GeneralUtility::mkdir_deep($temporaryFolder);
         }
         return $temporaryFileNameAndPath;
     }
@@ -1220,7 +1223,7 @@ class CloudinaryFastDriver extends AbstractHierarchicalFilesystemDriver
      */
     protected function initializeApi()
     {
-        \Cloudinary::config(
+        Cloudinary::config(
             [
                 'cloud_name' => $this->getConfiguration('cloudName'),
                 'api_key' => $this->getConfiguration('apiKey'),
@@ -1242,6 +1245,6 @@ class CloudinaryFastDriver extends AbstractHierarchicalFilesystemDriver
         // The problem: if we have multiple driver instances / configuration, we don't get the expected result
         // meaning we are wrongly fetching resources from other cloudinary "buckets" because of the singleton behaviour
         // Therefore it is better to create a new instance upon each API call to avoid driver confusion
-        return new \Cloudinary\Api();
+        return new Api();
     }
 }
