@@ -1,6 +1,6 @@
-
 ######################################
 # Ajax request configuration
+# https://domain.tld/?type=1573555440
 ######################################
 page_1573555440 = PAGE
 page_1573555440 {
@@ -20,8 +20,8 @@ page_1573555440 {
             extensionName = Cloudinary
             pluginName = Cache
             switchableControllerActions {
-                CloudinaryTypo3CacheManager {
-                    1 = flush
+                CloudinaryScan {
+                    1 = scan
                 }
             }
         }

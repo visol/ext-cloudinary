@@ -14,11 +14,11 @@ call_user_func(
             'Visol.Cloudinary',
             'Cache',
             [
-                'CloudinaryTypo3CacheManager' => 'flush',
+                'CloudinaryScan' => 'scan',
             ],
             // non-cacheable actions
             [
-                'CloudinaryTypo3CacheManager' => 'flush',
+                'CloudinaryScan' => 'scan',
             ]
         );
 
