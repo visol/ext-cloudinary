@@ -887,7 +887,7 @@ class CloudinaryFastDriver extends AbstractHierarchicalFilesystemDriver
      * @param int $start
      * @param int $numberOfItems
      * @param bool $recursive
-     * @param array $filenameFilterCallbacks callbacks for filtering the items
+     * @param array $filterCallbacks callbacks for filtering the items
      * @param string $sort Property name used to sort the items.
      *                      Among them may be: '' (empty, no sorting), name,
      *                      fileext, size, tstamp and rw.
@@ -898,7 +898,7 @@ class CloudinaryFastDriver extends AbstractHierarchicalFilesystemDriver
      * @return array of FileIdentifiers
      */
     public function getFilesInFolder(
-        $folderIdentifier, $start = 0, $numberOfItems = 40, $recursive = false, array $filenameFilterCallbacks = [], $sort = '', $sortRev = false
+        $folderIdentifier, $start = 0, $numberOfItems = 40, $recursive = false, array $filterCallbacks = [], $sort = '', $sortRev = false
     ) {
         $cloudinaryFolder = $this->getCloudinaryPathService()->computeCloudinaryFolderPath(
             $this->canonicalizeAndCheckFolderIdentifier($folderIdentifier)
@@ -932,10 +932,22 @@ class CloudinaryFastDriver extends AbstractHierarchicalFilesystemDriver
         // Generate list of folders for the file module.
         $files = [];
         foreach ($cloudinaryResources as $cloudinaryResource) {
+
             // Compute file identifier
-            $files[] = $this->canonicalizeAndCheckFileIdentifier(
+            $fileIdentifier = $this->canonicalizeAndCheckFileIdentifier(
                 $this->getCloudinaryPathService()->computeFileIdentifier($cloudinaryResource)
             );
+
+            $result = $this->applyFilterMethodsToDirectoryItem(
+                $filterCallbacks,
+                basename($fileIdentifier),
+                $fileIdentifier,
+                dirname($fileIdentifier)
+            );
+
+            if ($result) {
+                $files[] = $fileIdentifier;
+            }
         }
 
         return $files;
@@ -946,18 +958,25 @@ class CloudinaryFastDriver extends AbstractHierarchicalFilesystemDriver
      *
      * @param string $folderIdentifier
      * @param bool $recursive
-     * @param array $filenameFilterCallbacks callbacks for filtering the items
+     * @param array $filterCallbacks callbacks for filtering the items
      *
      * @return int
      */
-    public function countFilesInFolder($folderIdentifier, $recursive = false, array $filenameFilterCallbacks = [])
+    public function countFilesInFolder($folderIdentifier, $recursive = false, array $filterCallbacks = [])
     {
         $folderIdentifier = $this->canonicalizeAndCheckFolderIdentifier($folderIdentifier);
 
-        return $this->getCloudinaryResourceService()->count(
-            $this->getCloudinaryPathService()->computeCloudinaryFolderPath($folderIdentifier),
-            $recursive
-        );
+        // true means we have non-core filters that has been added and we must filter on the PHP side.
+        if (count($filterCallbacks) > 1) {
+            $files = $this->getFilesInFolder($folderIdentifier, 0, 0, $recursive, $filterCallbacks);
+            $result = count($files);
+        } else {
+            $result = $this->getCloudinaryResourceService()->count(
+                $this->getCloudinaryPathService()->computeCloudinaryFolderPath($folderIdentifier),
+                $recursive
+            );
+        }
+        return $result;
     }
 
     /**
@@ -967,7 +986,7 @@ class CloudinaryFastDriver extends AbstractHierarchicalFilesystemDriver
      * @param int $start
      * @param int $numberOfItems
      * @param bool $recursive
-     * @param array $folderNameFilterCallbacks callbacks for filtering the items
+     * @param array $filterCallbacks
      * @param string $sort Property name used to sort the items.
      *                      Among them may be: '' (empty, no sorting), name,
      *                      fileext, size, tstamp and rw.
@@ -982,7 +1001,7 @@ class CloudinaryFastDriver extends AbstractHierarchicalFilesystemDriver
         $start = 0,
         $numberOfItems = 40,
         $recursive = false,
-        array $folderNameFilterCallbacks = [],
+        array $filterCallbacks = [],
         $sort = '',
         $sortRev = false
     ) {
@@ -1006,7 +1025,18 @@ class CloudinaryFastDriver extends AbstractHierarchicalFilesystemDriver
         // Generate list of folders for the file module.
         $folders = [];
         foreach ($cloudinaryFolders as $cloudinaryFolder) {
-            $folders[] = $this->getCloudinaryPathService()->computeFolderIdentifier($cloudinaryFolder['folder']);
+            $folderIdentifier = $this->getCloudinaryPathService()->computeFolderIdentifier($cloudinaryFolder['folder']);
+
+            $result = $this->applyFilterMethodsToDirectoryItem(
+                $filterCallbacks,
+                basename($folderIdentifier),
+                $folderIdentifier,
+                dirname($folderIdentifier)
+            );
+
+            if ($result) {
+                $folders[] = $folderIdentifier;
+            }
         }
 
         return $folders;
@@ -1017,17 +1047,25 @@ class CloudinaryFastDriver extends AbstractHierarchicalFilesystemDriver
      *
      * @param string $folderIdentifier
      * @param bool $recursive
-     * @param array $folderNameFilterCallbacks callbacks for filtering the items
+     * @param array $filterCallbacks
      *
      * @return int
      */
-    public function countFoldersInFolder($folderIdentifier, $recursive = false, array $folderNameFilterCallbacks = [])
+    public function countFoldersInFolder($folderIdentifier, $recursive = false, array $filterCallbacks = [])
     {
-        $cloudinaryFolder = $this->getCloudinaryPathService()->computeCloudinaryFolderPath(
-            $this->canonicalizeAndCheckFolderIdentifier($folderIdentifier)
-        );
+        // true means we have non-core filters that has been added and we must filter on the PHP side.
+        if (count($filterCallbacks) > 1) {
+            $folders = $this->getFoldersInFolder($folderIdentifier, 0, 0, $recursive, $filterCallbacks);
+            $result = count($folders);
+        } else {
+            $cloudinaryFolder = $this->getCloudinaryPathService()->computeCloudinaryFolderPath(
+                $this->canonicalizeAndCheckFolderIdentifier($folderIdentifier)
+            );
 
-        return $this->getCloudinaryFolderService()->countSubFolders($cloudinaryFolder, $recursive);
+            $result = $this->getCloudinaryFolderService()->countSubFolders($cloudinaryFolder, $recursive);
+        }
+
+        return $result;
     }
 
     /**
@@ -1106,6 +1144,39 @@ class CloudinaryFastDriver extends AbstractHierarchicalFilesystemDriver
 
         // Handle the special jpg case which does not correspond to the file extension.
         return preg_replace('/jpeg$/', 'jpg', $cleanFileName);
+    }
+
+    /**
+     * Applies a set of filter methods to a file name to find out if it should be used or not. This is e.g. used by
+     * directory listings.
+     *
+     * @param array $filterMethods The filter methods to use
+     * @param string $itemName
+     * @param string $itemIdentifier
+     * @param string $parentIdentifier
+     *
+     * @return bool
+     * @throws \RuntimeException
+     */
+    protected function applyFilterMethodsToDirectoryItem(array $filterMethods, $itemName, $itemIdentifier, $parentIdentifier)
+    {
+        foreach ($filterMethods as $filter) {
+            if (is_callable($filter)) {
+                $result = call_user_func($filter, $itemName, $itemIdentifier, $parentIdentifier, [], $this);
+                // We have to use -1 as the „don't include“ return value, as call_user_func() will return FALSE
+                // If calling the method succeeded and thus we can't use that as a return value.
+                if ($result === -1) {
+                    return false;
+                }
+                if ($result === false) {
+                    throw new \RuntimeException(
+                        'Could not apply file/folder name filter ' . $filter[0] . '::' . $filter[1],
+                        1596795500
+                    );
+                }
+            }
+        }
+        return true;
     }
 
     /**

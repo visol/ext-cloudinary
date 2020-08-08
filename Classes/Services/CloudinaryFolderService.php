@@ -121,11 +121,7 @@ class CloudinaryFolderService
             ->count('*')
             ->from($this->tableName)
             ->where(
-                $query->expr()->eq('storage', $this->storage->getUid()),
-                $query->expr()->eq(
-                    'parent_folder',
-                    $query->expr()->literal($parentFolder)
-                )
+                $query->expr()->eq('storage', $this->storage->getUid())
             );
 
         // We should handle recursion
