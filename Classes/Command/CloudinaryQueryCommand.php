@@ -14,20 +14,37 @@ use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Style\SymfonyStyle;
+use TYPO3\CMS\Core\Resource\File;
 use TYPO3\CMS\Core\Resource\Folder;
 use TYPO3\CMS\Core\Resource\ResourceFactory;
 use TYPO3\CMS\Core\Resource\ResourceStorage;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
-use Visol\Cloudinary\Services\CloudinaryScanService;
+use Visol\Cloudinary\Filters\RegularExpressionFilter;
 
 /**
+ * Examples:
+ *
+ * ./vendor/bin/typo3 cloudinary:query 2
+ *
+ * # List of files withing a folder
+ * ./vendor/bin/typo3 cloudinary:query 2 --path=/foo/
+ *
+ * # List of files withing a folder with recursive flag
+ * ./vendor/bin/typo3 cloudinary:query 2 --path=/foo/ --recursive
+ *
+ * # List of files withing a folder with filter flag
+ * ./vendor/bin/typo3 cloudinary:query 2 --path=/foo/ --filter='[0-9,a-z]\.jpg'
+ *
+ *  # Count files / folder
+ * ./vendor/bin/typo3 cloudinary:query 2 --count
+ *
+ *  # List of folders instead of files
+ * ./vendor/bin/typo3 cloudinary:query 2 --folder
+ *
  * Class CloudinaryQueryCommand
  */
 class CloudinaryQueryCommand extends AbstractCloudinaryCommand
 {
-
-    protected const ACTION_LIST = 'list';
-    protected const ACTION_COUNT = 'count';
 
     /**
      * @var ResourceStorage
@@ -67,9 +84,8 @@ class CloudinaryQueryCommand extends AbstractCloudinaryCommand
             ->addOption(
                 'folder',
                 '',
-                InputOption::VALUE_OPTIONAL,
+                InputOption::VALUE_NONE,
                 'Before scanning empty all resources for a given storage',
-                false
             )
             ->addOption(
                 'yes',
@@ -78,18 +94,37 @@ class CloudinaryQueryCommand extends AbstractCloudinaryCommand
                 'Accept everything by default',
                 false
             )
+            ->addOption(
+                'count',
+                'c',
+                InputOption::VALUE_NONE,
+                'Count files'
+            )
+            ->addOption(
+                'filter',
+                'f',
+                InputOption::VALUE_OPTIONAL,
+                'Possible filter with regular expression'
+            )
+            ->addOption(
+                'recursive',
+                'r',
+                InputOption::VALUE_NONE,
+                'Recursive lookup'
+            )
+            ->addOption(
+                'delete',
+                'd',
+                InputOption::VALUE_NONE,
+                'Delete found files / folders.'
+            )
             ->addArgument(
                 'storage',
                 InputArgument::REQUIRED,
                 'Storage identifier'
             )
-            ->addArgument(
-                'action',
-                InputArgument::REQUIRED,
-                'Possible action: list, count'
-            )
             ->setHelp(
-                'Usage: ./vendor/bin/typo3 cloudinary:scan [0-9]'
+                'Usage: ./vendor/bin/typo3 cloudinary:query [0-9]'
             );
     }
 
@@ -104,12 +139,67 @@ class CloudinaryQueryCommand extends AbstractCloudinaryCommand
             return 1;
         }
 
-        if ($input->getArgument('action') === self::ACTION_LIST) {
-            $this->listAction($input);
-        } elseif ($input->getArgument('action') === self::ACTION_COUNT) {
-            $this->countAction($input);
+        // Get the chance to define a filter
+        if ($input->getOption('filter')) {
+
+            RegularExpressionFilter::setRegularExpression($input->getOption('filter'));
+            $filters = $this->storage->getFileAndFolderNameFilters();
+            $filters[] = [
+                RegularExpressionFilter::class,
+                'filter'
+            ];
+            $this->storage->setFileAndFolderNameFilters($filters);
         }
 
+        if ($input->getOption('count')) {
+            if ($input->getOption('folder')) {
+                $this->countFoldersAction($input);
+            } else {
+                $this->countFilesAction($input);
+            }
+        } else {
+            if ($input->getOption('folder')) {
+                $folders = $this->listFoldersAction($input);
+
+                $numberOfFolders = count($folders);
+                if ($input->getOption('delete') && $numberOfFolders) {
+                    $this->log();
+                    $message = sprintf(
+                        'You are about to recursively delete %s folder(s). Are you sure?',
+                        count($folders)
+                    );
+                    if ($this->io->confirm($message, false)) {
+                        /** @var Folder $folder */
+                        foreach ($folders as $folder) {
+                            $this->log('Recursively deleting %s', [$folder->getIdentifier()]);
+                            $folder->delete(true);
+                        }
+                    }
+                }
+            } else {
+                $files = $this->listFilesAction($input);
+
+                $numberOfFiles = count($files);
+                if ($input->getOption('delete') && $numberOfFiles) {
+
+                    $this->log();
+                    $message = sprintf(
+                        'You are about to delete %s files(s) from storage "%s". Are you sure?',
+                        $numberOfFiles,
+                        $this->storage->getName()
+                    );
+                    if ($this->io->confirm($message, false)) {
+                        /** @var File $file */
+                        foreach ($files as $file) {
+                            $this->log('Deleting %s', [$file->getIdentifier()]);
+                            $file->exists()
+                                ? $file->delete()
+                                : $this->error('Missing file %s', [$file->getIdentifier()]);
+                        }
+                    }
+                }
+            }
+        }
 
         return 0;
     }
@@ -117,34 +207,50 @@ class CloudinaryQueryCommand extends AbstractCloudinaryCommand
     /**
      * @param InputInterface $input
      *
-     * @return void
+     * @return array
      */
-    protected function listAction(InputInterface $input): void
+    protected function listFoldersAction(InputInterface $input): array
     {
-        $folder = $input->getOption('folder');
-        if ($folder === null || $folder) {
+        $folders = $this->storage->getFoldersInFolder(
+            $this->getFolder(
+                $input->getOption('path')
+            ),
+            0,
+            0,
+            true,
+            $input->getOption('recursive')
+        );
 
-            $folders = $this->storage->getFoldersInFolder(
-                $this->getFolder(
-                    $input->getOption('path')
-                )
-            );
-
-            foreach ($folders as $folder) {
-                $this->log($folder->getIdentifier());
-            }
-        } else {
-
-            $files = $this->storage->getFilesInFolder(
-                $this->getFolder(
-                    $input->getOption('path')
-                )
-            );
-
-            foreach ($files as $file) {
-                $this->log($file->getIdentifier());
-            }
+        foreach ($folders as $folder) {
+            $this->log($folder->getIdentifier());
         }
+
+        return $folders;
+    }
+
+    /**
+     * @param InputInterface $input
+     *
+     * @return array
+     */
+    protected function listFilesAction(InputInterface $input): array
+    {
+
+        $files = $this->storage->getFilesInFolder(
+            $this->getFolder(
+                $input->getOption('path')
+            ),
+            0,
+            0,
+            true,
+            $input->getOption('recursive')
+
+        );
+
+        foreach ($files as $file) {
+            $this->log($file->getIdentifier());
+        }
+        return $files;
     }
 
     /**
@@ -152,28 +258,36 @@ class CloudinaryQueryCommand extends AbstractCloudinaryCommand
      *
      * @return void
      */
-    protected function countAction(InputInterface $input): void
+    protected function countFoldersAction(InputInterface $input): void
     {
-        $folder = $input->getOption('folder');
-        if ($folder === null || $folder) {
+        $numberOfFolders = $this->storage->countFoldersInFolder(
+            $this->getFolder(
+                $input->getOption('path')
+            ),
+            true,
+            $input->getOption('recursive')
+        );
 
-            $numberOfFolders = $this->storage->countFoldersInFolder(
-                $this->getFolder(
-                    $input->getOption('path')
-                )
-            );
+        $this->log('I found %s folder(s)', [$numberOfFolders,]);
+    }
 
-            $this->log('I found %s folder(s)', [$numberOfFolders,]);
-        } else {
+    /**
+     * @param InputInterface $input
+     *
+     * @return void
+     */
+    protected function countFilesAction(InputInterface $input): void
+    {
 
-            $numberOfFiles = $this->storage->countFilesInFolder(
-                $this->getFolder(
-                    $input->getOption('path')
-                )
-            );
+        $numberOfFiles = $this->storage->countFilesInFolder(
+            $this->getFolder(
+                $input->getOption('path')
+            ),
+            true,
+            $input->getOption('recursive')
+        );
 
-            $this->log('I found %s files(s)', [$numberOfFiles,]);
-        }
+        $this->log('I found %s files(s)', [$numberOfFiles,]);
     }
 
     /**
