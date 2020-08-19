@@ -12,6 +12,7 @@ namespace Visol\Cloudinary\Services;
 use TYPO3\CMS\Core\Log\LogLevel;
 use TYPO3\CMS\Core\Log\LogManager;
 use TYPO3\CMS\Core\Resource\File;
+use TYPO3\CMS\Core\Resource\FileInterface;
 use TYPO3\CMS\Core\Resource\ResourceStorage;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
 use Visol\Cloudinary\CloudinaryFactory;
@@ -45,20 +46,20 @@ class CloudinaryUploadService
     /**
      * @param string $fileIdentifier
      *
-     * @return File
+     * @return File|FileInterface
      */
-    public function uploadLocalFile(string $fileIdentifier): File
+    public function uploadLocalFile(string $fileIdentifier)
     {
         // Cleanup file identifier in case
         $fileIdentifier = $this->cleanUp($fileIdentifier);
 
         if (!$this->fileExists($fileIdentifier)) {
             $fileIdentifier = $this->emergencyFileIdentifier;
-            $this->error('I am replacing file with I could not find file ' . $fileIdentifier);
+            $this->error('I am using a default emergency placeholder file since I could not find file ' . $fileIdentifier);
         }
 
         // Fetch the file if existing or create one
-        return $file = $this->storage->hasFile($fileIdentifier)
+        return $this->storage->hasFile($fileIdentifier)
             ? $this->storage->getFile($fileIdentifier)
             : $this->storage->addFile(
                 PATH_site . ltrim($fileIdentifier, DIRECTORY_SEPARATOR),
