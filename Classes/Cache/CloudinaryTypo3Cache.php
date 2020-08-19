@@ -47,12 +47,10 @@ class CloudinaryTypo3Cache
     {
         $this->storageUid = $storageUid;
 
-        // TODO: change me after typo3 v9 migration
-        //       GeneralUtility::makeInstance(ExtensionConfiguration::class)->get('cloudinary')
-        $extensionConfiguration = (array)unserialize($GLOBALS['TYPO3_CONF_VARS']['EXT']['extConf']['cloudinary']);
-        if (isset($extensionConfiguration['is_cache_enabled'])) {
-            $this->isCacheEnabled = (bool)$extensionConfiguration['is_cache_enabled'];
-        }
+        #$extensionConfiguration = (array)unserialize($GLOBALS['TYPO3_CONF_VARS']['EXT']['extConf']['cloudinary']);
+        #if (isset($extensionConfiguration['is_cache_enabled'])) {
+        #    $this->isCacheEnabled = (bool)$extensionConfiguration['is_cache_enabled'];
+        #}
     }
 
     /**

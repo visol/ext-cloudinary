@@ -1,5 +1,2 @@
-# cat=cloudinary; type=boolean; label=Define whether TYPO3 should help to speed up the file admin module by caching Cloudinary resources.
-is_cache_enabled = 1
-
 # cat=cloudinary; type=int; label=Default cloudinary storage where to upload "local" file (files usually stored on storage = 0)
 default_cloudinary_storage = 0
