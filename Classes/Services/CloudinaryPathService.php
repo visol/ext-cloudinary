@@ -228,9 +228,14 @@ class CloudinaryPathService
      *
      * @return string
      */
-    protected function stripExtension($filename): string
+    protected function stripExtension(string $filename): string
     {
         $pathParts = PathUtility::pathinfo($filename);
+
+        if ($pathParts['dirname'] === '.') {
+            return $pathParts['filename'];
+        }
+
         return $pathParts['dirname'] . DIRECTORY_SEPARATOR . $pathParts['filename'];
     }
 
