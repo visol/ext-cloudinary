@@ -10,6 +10,7 @@ namespace Visol\Cloudinary\Command;
  */
 
 use Exception;
+use Symfony\Component\Console\Style\SymfonyStyle;
 use TYPO3\CMS\Core\Resource\ResourceStorage;
 use TYPO3\CMS\Core\Utility\PathUtility;
 use Visol\Cloudinary\Services\FileMoveService;
@@ -123,6 +124,24 @@ class CloudinaryMoveCommand extends AbstractCloudinaryCommand
             ->setHelp(
                 'Usage: ./vendor/bin/typo3 cloudinary:move 1 2'
             );
+    }
+
+    /**
+     * @param InputInterface $input
+     * @param OutputInterface $output
+     */
+    protected function initialize(InputInterface $input, OutputInterface $output)
+    {
+        $this->io = new SymfonyStyle($input, $output);
+
+        $this->isSilent = $input->getOption('silent');
+
+        $this->sourceStorage = ResourceFactory::getInstance()->getStorageObject(
+            $input->getArgument('source')
+        );
+        $this->targetStorage = ResourceFactory::getInstance()->getStorageObject(
+            $input->getArgument('target')
+        );
     }
 
     /**
