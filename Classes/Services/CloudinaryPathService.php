@@ -50,8 +50,10 @@ class CloudinaryPathService
             ? '' // We don't need the extension since it is already included in the public_id (resource_type => "raw")
             : '.' . $cloudinaryResource['format'];
 
-        $rawFileIdentifier = DIRECTORY_SEPARATOR . $cloudinaryResource['public_id'] . $extension;
-        return str_replace($this->getBasePath(), '', $rawFileIdentifier);
+        return self::stripBasePathFromIdentifier(
+            DIRECTORY_SEPARATOR . $cloudinaryResource['public_id'] . $extension,
+            $this->getBasePath()
+        );
     }
 
     /**
@@ -61,10 +63,15 @@ class CloudinaryPathService
      */
     public function computeFolderIdentifier(string $cloudinaryFolder): string
     {
-        return str_replace($this->getBasePath(), '', DIRECTORY_SEPARATOR . $cloudinaryFolder);
+        return self::stripBasePathFromIdentifier(
+            DIRECTORY_SEPARATOR . $cloudinaryFolder,
+            $this->getBasePath()
+        );
     }
 
     /**
+     * Return the basePath.
+     * The basePath never has a trailing slash
      * @return string
      */
     protected function getBasePath(): string
@@ -225,5 +232,18 @@ class CloudinaryPathService
     {
         $pathParts = PathUtility::pathinfo($filename);
         return $pathParts['dirname'] . DIRECTORY_SEPARATOR . $pathParts['filename'];
+    }
+
+    public static function stripBasePathFromIdentifier(string $identifierWithBasePath, string $basePath): string
+    {
+        return preg_replace(
+            sprintf(
+                '/^%s($|%s)/',
+                preg_quote($basePath, '/'),
+                preg_quote(DIRECTORY_SEPARATOR, '/')
+            ),
+            '',
+            $identifierWithBasePath
+        );
     }
 }
