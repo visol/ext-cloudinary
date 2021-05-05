@@ -39,8 +39,7 @@ class CloudinaryUploadService
     public function __construct(ResourceStorage $storage = null)
     {
         $this->storage = $storage
-            ? $storage
-            : CloudinaryFactory::getDefaultStorage();
+            ?: CloudinaryFactory::getDefaultStorage();
     }
 
     /**
@@ -79,8 +78,10 @@ class CloudinaryUploadService
 
     /**
      * @param string $fileIdentifier
+     *
+     * @return bool
      */
-    protected function fileExists(string $fileIdentifier)
+    protected function fileExists(string $fileIdentifier): bool
     {
         $fileNameAndPath = PATH_site . ltrim($fileIdentifier, DIRECTORY_SEPARATOR);
         return is_file($fileNameAndPath);
