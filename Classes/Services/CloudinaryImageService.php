@@ -196,6 +196,49 @@ class CloudinaryImageService
      */
     public function generateOptionsFromSettings(array $settings): array
     {
+        $transformations = [];
+
+        // Add pre transformation to apply cropping
+        if (
+            isset($settings['width'])
+            && isset($settings['height'])
+            && isset($settings['x'])
+            && isset($settings['y'])
+        ) {
+            $transformations[] = [
+                'crop' => 'crop',
+                'width' => $settings['width'],
+                'height' => $settings['height'],
+                'x' => $settings['x'],
+                'y' => $settings['y'],
+            ];
+        }
+
+        $transformation = [
+            'format' => 'auto',
+            'flags' => 'lossy',
+            'quality' => 'auto',
+        ];
+
+        if (isset($settings['aspectRatio']) && $settings['aspectRatio']) {
+            $transformation['aspect_ratio'] = $settings['aspectRatio'];
+            $transformation['crop'] = 'crop';
+        }
+
+        if (isset($settings['gravity']) && $settings['gravity']) {
+            $transformation['gravity'] = $settings['gravity'];
+        }
+
+        if (isset($settings['crop']) && $settings['crop']) {
+            $transformation['crop'] = $settings['crop'] !== true ? $settings['crop'] : 'crop';
+        }
+
+        if (isset($settings['background']) && $settings['background']) {
+            $transformation['background'] = $settings['background'];
+        }
+
+        $transformations[] = $transformation;
+
         return [
             'type' => 'upload',
             'responsive_breakpoints' => [
@@ -204,11 +247,7 @@ class CloudinaryImageService
                 'min_width' => $settings['minWidth'],
                 'max_width' => $settings['maxWidth'],
                 'max_images' => $settings['maxImages'],
-                'transformation' => 'f_auto,fl_lossy,q_auto,c_crop'
-                    . ($settings['aspectRatio'] ? ',ar_' . $settings['aspectRatio'] : '')
-                    . ($settings['gravity'] ? ',g_' . $settings['gravity'] : '')
-                    . ($settings['crop'] ? ',c_' . $settings['crop'] : '')
-                    . ($settings['background'] ? ',b_' . $settings['background'] : ''),
+                'transformation' => $transformations,
             ]
         ];
     }
