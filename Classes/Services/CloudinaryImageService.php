@@ -36,11 +36,6 @@ class CloudinaryImageService
     protected $storageRepository;
 
     /**
-     * @var ResourceStorage
-     */
-    protected $storage;
-
-    /**
      *
      */
     public function __construct()
@@ -56,27 +51,12 @@ class CloudinaryImageService
      */
     public function getResponsiveBreakpointData(File $file, array $options): array
     {
-        // We store the storage
-        $this->storage = $file->getStorage();
-
-        // It should never happen but in case... we prefer to have an empty file instead of an exception
-        if (!$file->exists()) {
-            // We should log this incident...
-            $this->error('I could not find file ' . $file->getIdentifier());
-
-            // We want to avoid an exception
-            $file = $this->getEmergencyPlaceholderFile();
-        }
-
-        // Compute the cloudinary public id
-        $publicId = $this
-            ->getCloudinaryPathService()
-            ->computeCloudinaryPublicId($file->getIdentifier());
+        $publicId = $this->getPublicIdForFile($file);
 
         $responsiveBreakpoints = $this->responsiveBreakpointsRepository->findByPublicIdAndOptions($publicId, $options);
 
         if (!$responsiveBreakpoints) {
-            $this->initializeApi();
+            $this->initializeApi($file->getStorage());
             $response = \Cloudinary\Uploader::explicit($publicId, $options);
             $breakpointData = json_encode($response['responsive_breakpoints'][0]['breakpoints']);
             $this->responsiveBreakpointsRepository->save($publicId, $options, $breakpointData);
@@ -93,20 +73,20 @@ class CloudinaryImageService
     /**
      * @throws \Exception
      */
-    protected function initializeApi()
+    protected function initializeApi(ResourceStorage $storage)
     {
         // Check the file is stored on the right storage
         // If not we should trigger an exception
-        if ($this->storage->getDriverType() !== CloudinaryDriver::DRIVER_TYPE) {
+        if ($storage->getDriverType() !== CloudinaryDriver::DRIVER_TYPE) {
             $message = sprintf(
                 'Wrong storage! Can not initialize with storage type "%s".',
-                $this->storage->getDriverType()
+                $storage->getDriverType()
             );
             throw new \Exception($message, 1590401459);
         }
 
         // Get the configuration
-        $configuration = $this->storage->getConfiguration();
+        $configuration = $storage->getConfiguration();
         \Cloudinary::config(
             [
                 'cloud_name' => $configuration['cloudName'],
@@ -281,11 +261,35 @@ class CloudinaryImageService
     /**
      * @return object|CloudinaryPathService
      */
-    protected function getCloudinaryPathService()
+    protected function getCloudinaryPathService(ResourceStorage $storage)
     {
         return GeneralUtility::makeInstance(
             CloudinaryPathService::class,
-            $this->storage
+            $storage
         );
     }
+
+    /**
+     * @param File $file
+     *
+     * @return string
+     */
+    public function getPublicIdForFile(File $file): string
+    {
+
+        // It should never happen but in case... we prefer to have an empty file instead of an exception
+        if (!$file->exists()) {
+            // We should log this incident...
+            $this->error('I could not find file ' . $file->getIdentifier());
+
+            // We want to avoid an exception
+            $file = $this->getEmergencyPlaceholderFile();
+        }
+
+        // Compute the cloudinary public id
+        $publicId = $this
+            ->getCloudinaryPathService($file->getStorage())
+            ->computeCloudinaryPublicId($file->getIdentifier());
+        return $publicId;
+}
 }
