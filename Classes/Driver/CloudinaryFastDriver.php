@@ -1142,6 +1142,10 @@ class CloudinaryFastDriver extends AbstractHierarchicalFilesystemDriver
             );
         }
 
+        $pathParts = PathUtility::pathinfo($cleanFileName);
+
+        $cleanFileName = str_replace('.', '_', $pathParts['filename']) . ($pathParts['extension'] ? '.' . $pathParts['extension'] : '');
+
         // Handle the special jpg case which does not correspond to the file extension.
         return preg_replace('/jpeg$/', 'jpg', $cleanFileName);
     }
