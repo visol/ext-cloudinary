@@ -94,15 +94,22 @@ class CloudinaryTestConnectionService
      */
     protected function initializeApi()
     {
+        /** @var ConfigurationService $configurationService */
+        $configurationService = GeneralUtility::makeInstance(
+            ConfigurationService::class,
+            $this->configuration
+        );
+
         \Cloudinary::config(
             [
-                'cloud_name' => $this->configuration['cloudName'],
-                'api_key' => $this->configuration['apiKey'],
-                'api_secret' => $this->configuration['apiSecret'],
-                'timeout' => $this->configuration['timeout'],
+                'cloud_name' => $configurationService->get('cloudName'),
+                'api_key' => $configurationService->get('apiKey'),
+                'api_secret' => $configurationService->get('apiSecret'),
+                'timeout' => $configurationService->get('timeout'),
                 'secure' => true
             ]
         );
     }
+
 
 }
