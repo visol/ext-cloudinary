@@ -27,6 +27,7 @@ use Visol\Cloudinary\Services\CloudinaryFolderService;
 use Visol\Cloudinary\Services\CloudinaryResourceService;
 use Visol\Cloudinary\Services\CloudinaryPathService;
 use Visol\Cloudinary\Services\CloudinaryTestConnectionService;
+use Visol\Cloudinary\Services\ConfigurationService;
 
 /**
  * Class CloudinaryFastDriver
@@ -92,18 +93,6 @@ class CloudinaryFastDriver extends AbstractHierarchicalFilesystemDriver
             ResourceStorage::CAPABILITY_BROWSABLE
             | ResourceStorage::CAPABILITY_PUBLIC
             | ResourceStorage::CAPABILITY_WRITABLE;
-    }
-
-    /**
-     * @param string $key
-     *
-     * @return string
-     */
-    protected function getConfiguration(string $key): string
-    {
-        return isset($this->configuration[$key])
-            ? (string)$this->configuration[$key]
-            : '';
     }
 
     /**
@@ -1298,12 +1287,19 @@ class CloudinaryFastDriver extends AbstractHierarchicalFilesystemDriver
      */
     protected function initializeApi()
     {
+
+        /** @var ConfigurationService $configurationService */
+        $configurationService = GeneralUtility::makeInstance(
+            ConfigurationService::class,
+            $this->configuration
+        );
+
         Cloudinary::config(
             [
-                'cloud_name' => $this->getConfiguration('cloudName'),
-                'api_key' => $this->getConfiguration('apiKey'),
-                'api_secret' => $this->getConfiguration('apiSecret'),
-                'timeout' => $this->getConfiguration('timeout'),
+                'cloud_name' => $configurationService->get('cloudName'),
+                'api_key' => $configurationService->get('apiKey'),
+                'api_secret' => $configurationService->get('apiSecret'),
+                'timeout' => $configurationService->get('timeout'),
                 'secure' => true
             ]
         );

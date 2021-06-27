@@ -28,6 +28,7 @@ use TYPO3\CMS\Extbase\Object\ObjectManager;
 use TYPO3\CMS\Extbase\SignalSlot\Dispatcher;
 use TYPO3\CMS\Extbase\Utility\LocalizationUtility;
 use Visol\Cloudinary\Services\CloudinaryPathService;
+use Visol\Cloudinary\Services\ConfigurationService;
 
 /**
  * Class CloudinaryDriver
@@ -123,18 +124,6 @@ class CloudinaryDriver extends AbstractHierarchicalFilesystemDriver
             ResourceStorage::CAPABILITY_BROWSABLE
             | ResourceStorage::CAPABILITY_PUBLIC
             | ResourceStorage::CAPABILITY_WRITABLE;
-    }
-
-    /**
-     * @param string $key
-     *
-     * @return string
-     */
-    protected function getConfiguration(string $key): string
-    {
-        return isset($this->configuration[$key])
-            ? (string)$this->configuration[$key]
-            : '';
     }
 
     /**
@@ -1439,12 +1428,18 @@ class CloudinaryDriver extends AbstractHierarchicalFilesystemDriver
      */
     protected function initializeApi()
     {
+        /** @var ConfigurationService $configurationService */
+        $configurationService = GeneralUtility::makeInstance(
+            ConfigurationService::class,
+            $this->configuration
+        );
+
         \Cloudinary::config(
             [
-                'cloud_name' => $this->getConfiguration('cloudName'),
-                'api_key' => $this->getConfiguration('apiKey'),
-                'api_secret' => $this->getConfiguration('apiSecret'),
-                'timeout' => $this->getConfiguration('timeout'),
+                'cloud_name' => $configurationService->get('cloudName'),
+                'api_key' => $configurationService->get('apiKey'),
+                'api_secret' => $configurationService->get('apiSecret'),
+                'timeout' => $configurationService->get('timeout'),
                 'secure' => true
             ]
         );
