@@ -154,6 +154,20 @@ class CloudinaryImageService
         return $imageObjects[$width];
     }
 
+    public function min($items) {
+        return min($items);
+    }
+
+    public function median($items) {
+        sort($items);
+        $medianIndex = ceil((count($items)/2))-1;
+        return $items[$medianIndex];
+    }
+
+    public function max($items) {
+        return max($items);
+    }
+
     /**
      * @param array $breakpoints
      *
