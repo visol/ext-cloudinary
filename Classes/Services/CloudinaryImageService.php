@@ -70,6 +70,34 @@ class CloudinaryImageService
             : [];
     }
 
+
+    /**
+     * @param File $file
+     * @param array $options
+     *
+     * @return array
+     */
+    public function getExplicitData(File $file, array $options): array
+    {
+        $publicId = $this->getPublicIdForFile($file);
+
+        $responsiveBreakpoints = $this->responsiveBreakpointsRepository->findByPublicIdAndOptions($publicId, $options);
+
+        if (!$responsiveBreakpoints) {
+            $this->initializeApi($file->getStorage());
+            $response = \Cloudinary\Uploader::explicit($publicId, $options);
+            $breakpointData = json_encode($response);
+            $this->responsiveBreakpointsRepository->save($publicId, $options, $breakpointData);
+        } else {
+            $breakpointData = $responsiveBreakpoints['breakpoints'];
+        }
+
+        $breakpoints = json_decode($breakpointData, true);
+        return is_array($breakpoints)
+            ? $breakpoints
+            : [];
+    }
+
     /**
      * @throws \Exception
      */
@@ -185,10 +213,11 @@ class CloudinaryImageService
 
     /**
      * @param array $settings
+     * @param bool $responsiveBreakpoints
      *
      * @return array
      */
-    public function generateOptionsFromSettings(array $settings): array
+    public function generateOptionsFromSettings(array $settings, bool $responsiveBreakpoints = true): array
     {
         $transformations = [];
 
@@ -232,6 +261,13 @@ class CloudinaryImageService
         }
 
         $transformations[] = $transformation;
+
+        if (!$responsiveBreakpoints) {
+            return [
+                'type' => 'upload',
+                'transformation' => $transformations,
+            ];
+        }
 
         return [
             'type' => 'upload',
