@@ -213,11 +213,11 @@ class CloudinaryImageService
 
     /**
      * @param array $settings
-     * @param bool $responsiveBreakpoints
+     * @param bool $enableResponsiveBreakpoints
      *
      * @return array
      */
-    public function generateOptionsFromSettings(array $settings, bool $responsiveBreakpoints = true): array
+    public function generateOptionsFromSettings(array $settings, bool $enableResponsiveBreakpoints = true): array
     {
         $transformations = [];
 
@@ -262,7 +262,7 @@ class CloudinaryImageService
 
         $transformations[] = $transformation;
 
-        if (!$responsiveBreakpoints) {
+        if (!$enableResponsiveBreakpoints) {
             return [
                 'type' => 'upload',
                 'transformation' => $transformations,
