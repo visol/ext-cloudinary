@@ -1,11 +1,15 @@
 #
-# Table structure for table 'tx_cloudinary_responsivebreakpoints'
+# Table structure for table 'tx_cloudinary_explicit_data_cache'
 #
-CREATE TABLE tx_cloudinary_responsivebreakpoints (
+CREATE TABLE tx_cloudinary_explicit_data_cache (
   public_id text,
   public_id_hash char(40) DEFAULT '' NOT NULL,
+  options text NOT NULL,
   options_hash char(40) DEFAULT '' NOT NULL,
-  breakpoints text NOT NULL,
+  explicit_data text NOT NULL,
+
+  tstamp int(11) unsigned DEFAULT '0' NOT NULL,
+  crdate int(11) unsigned DEFAULT '0' NOT NULL,
 
   PRIMARY KEY (public_id_hash, options_hash)
 );

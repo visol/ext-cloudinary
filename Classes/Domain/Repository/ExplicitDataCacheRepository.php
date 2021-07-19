@@ -6,21 +6,22 @@ use TYPO3\CMS\Core\Database\Connection;
 use TYPO3\CMS\Core\Database\ConnectionPool;
 use TYPO3\CMS\Core\Database\Query\QueryBuilder;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
+use Visol\Cloudinary\Utility\SortingUtility;
 
-class ResponsiveBreakpointsRepository
+class ExplicitDataCacheRepository
 {
 
     /**
      * @var $tableName
      */
-    protected $tableName = 'tx_cloudinary_responsivebreakpoints';
+    protected $tableName = 'tx_cloudinary_explicit_data_cache';
 
     /**
      * @param string $publicId
      * @param array $options
      * @return array
      */
-    public function findByPublicIdAndOptions(string $publicId, array $options): array
+    public function findByPublicIdAndOptions(string $publicId, array $options): ?array
     {
         $query = $this->getQueryBuilder();
         $query->select('*')
@@ -40,27 +41,40 @@ class ResponsiveBreakpointsRepository
                 )
             );
         $item = $query->execute()->fetch();
-        return is_array($item)
-            ? $item
-            : [];
+
+        if (!$item) {
+            return null;
+        }
+
+        $item['options'] = json_decode($item['options'], true);
+        $item['explicit_data'] = json_decode($item['explicit_data'], true);
+
+        return $item;
     }
 
     /**
      * @param string $publicId
      * @param array $options
-     * @param string $breakpoints
+     * @param string $explicitData
+     *
      * @return int
      */
-    public function save(string $publicId, array $options, string $breakpoints): int
+    public function save(string $publicId, array $options, array $explicitData): int
     {
+        SortingUtility::ksort_recursive($options);
+
         $connection = $this->getConnection();
         $connection->insert(
             $this->tableName,
             [
                 'public_id' => $publicId,
                 'public_id_hash' => sha1($publicId),
+                'options' => json_encode($options),
                 'options_hash' => $this->calculateHashFromOptions($options),
-                'breakpoints' => $breakpoints,
+                'explicit_data' => json_encode($explicitData),
+                'tstamp' => (int)$GLOBALS['EXEC_TIME'],
+                'crdate' => (int)$GLOBALS['EXEC_TIME'],
+
             ]
         );
         return (int)$connection->lastInsertId();
@@ -70,9 +84,9 @@ class ResponsiveBreakpointsRepository
      * @param array $options
      * @return string
      */
-    protected function calculateHashFromOptions($options): string
+    protected function calculateHashFromOptions(array $options): string
     {
-        return sha1(json_encode($options));
+        return sha1(json_encode(SortingUtility::ksort_recursive($options)));
     }
 
     /**

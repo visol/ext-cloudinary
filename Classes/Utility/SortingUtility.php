@@ -75,4 +75,21 @@ class SortingUtility
         }
         return ($valueA > $valueB) ? -1 : 1;
     }
+
+    /**
+     * Sort a multidimensional array by key in ascending order
+     * Credits: https://stackoverflow.com/a/4501406
+     *
+     * @param $array The input array
+     * @return bool Returns true on success or false on failure.
+     */
+    public static function ksort_recursive(array &$array): bool
+    {
+        foreach ($array as &$value) {
+            if (is_array($value)) {
+                self::ksort_recursive($value);
+            }
+        }
+        return ksort($array);
+    }
 }
