@@ -14,7 +14,7 @@ use TYPO3\CMS\Core\Log\LogManager;
 use TYPO3\CMS\Core\Resource\File;
 use TYPO3\CMS\Core\Resource\ResourceStorage;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
-use Visol\Cloudinary\Domain\Repository\ResponsiveBreakpointsRepository;
+use Visol\Cloudinary\Domain\Repository\ExplicitDataCacheRepository;
 use Visol\Cloudinary\Driver\CloudinaryDriver;
 
 /**
@@ -24,10 +24,10 @@ class CloudinaryImageService
 {
 
     /**
-     * @var ResponsiveBreakpointsRepository
+     * @var ExplicitDataCacheRepository
      * @inject
      */
-    protected $responsiveBreakpointsRepository;
+    protected $explicitDataCacheRepository;
 
     /**
      * @var \TYPO3\CMS\Core\Resource\StorageRepository
@@ -40,7 +40,29 @@ class CloudinaryImageService
      */
     public function __construct()
     {
-        $this->responsiveBreakpointsRepository = GeneralUtility::makeInstance(ResponsiveBreakpointsRepository::class);
+        $this->explicitDataCacheRepository = GeneralUtility::makeInstance(ExplicitDataCacheRepository::class);
+    }
+
+
+    /**
+     * @param File $file
+     * @param array $options
+     *
+     * @return array
+     */
+    public function getExplicitData(File $file, array $options): array
+    {
+        $publicId = $this->getPublicIdForFile($file);
+
+        $explicitData = $this->explicitDataCacheRepository->findByPublicIdAndOptions($publicId, $options)['explicit_data'];
+
+        if (!$explicitData) {
+            $this->initializeApi($file->getStorage());
+            $explicitData = \Cloudinary\Uploader::explicit($publicId, $options);
+            $this->explicitDataCacheRepository->save($publicId, $options, $explicitData);
+        }
+
+        return $explicitData;
     }
 
     /**
@@ -51,23 +73,9 @@ class CloudinaryImageService
      */
     public function getResponsiveBreakpointData(File $file, array $options): array
     {
-        $publicId = $this->getPublicIdForFile($file);
+        $explicitData = $this->getExplicitData($file, $options);
 
-        $responsiveBreakpoints = $this->responsiveBreakpointsRepository->findByPublicIdAndOptions($publicId, $options);
-
-        if (!$responsiveBreakpoints) {
-            $this->initializeApi($file->getStorage());
-            $response = \Cloudinary\Uploader::explicit($publicId, $options);
-            $breakpointData = json_encode($response['responsive_breakpoints'][0]['breakpoints']);
-            $this->responsiveBreakpointsRepository->save($publicId, $options, $breakpointData);
-        } else {
-            $breakpointData = $responsiveBreakpoints['breakpoints'];
-        }
-
-        $breakpoints = json_decode($breakpointData);
-        return is_array($breakpoints)
-            ? $breakpoints
-            : [];
+        return $explicitData['responsive_breakpoints'][0]['breakpoints'];
     }
 
     /**
@@ -118,7 +126,7 @@ class CloudinaryImageService
         $imageObjects = $this->getImageObjects($breakpoints);
         $srcset = [];
         foreach ($imageObjects as $imageObject) {
-            $srcset[] = $imageObject->secure_url . ' ' . $imageObject->width . 'w';
+            $srcset[] = $imageObject['secure_url'] . ' ' . $imageObject['width'] . 'w';
         }
 
         return $srcset;
@@ -132,7 +140,7 @@ class CloudinaryImageService
     public function getSizesAttribute(array $breakpoints): string
     {
         $maxImageObject = $this->getImage($breakpoints, 'max');
-        return '(max-width: ' . $maxImageObject->width . 'px) 100vw, ' . $maxImageObject->width . 'px';
+        return '(max-width: ' . $maxImageObject['width'] . 'px) 100vw, ' . $maxImageObject['width'] . 'px';
     }
 
     /**
@@ -177,7 +185,7 @@ class CloudinaryImageService
     {
         $widthMap = [];
         foreach ($breakpoints as $breakpoint) {
-            $widthMap[$breakpoint->width] = $breakpoint;
+            $widthMap[$breakpoint['width']] = $breakpoint;
         }
 
         return $widthMap;
@@ -185,10 +193,11 @@ class CloudinaryImageService
 
     /**
      * @param array $settings
+     * @param bool $enableResponsiveBreakpoints
      *
      * @return array
      */
-    public function generateOptionsFromSettings(array $settings): array
+    public function generateOptionsFromSettings(array $settings, bool $enableResponsiveBreakpoints = true): array
     {
         $transformations = [];
 
@@ -232,6 +241,13 @@ class CloudinaryImageService
         }
 
         $transformations[] = $transformation;
+
+        if (!$enableResponsiveBreakpoints) {
+            return [
+                'type' => 'upload',
+                'transformation' => $transformations,
+            ];
+        }
 
         return [
             'type' => 'upload',
