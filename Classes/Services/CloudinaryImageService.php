@@ -59,7 +59,11 @@ class CloudinaryImageService
         if (!$explicitData) {
             $this->initializeApi($file->getStorage());
             $explicitData = \Cloudinary\Uploader::explicit($publicId, $options);
-            $this->explicitDataCacheRepository->save($publicId, $options, $explicitData);
+            try {
+                $this->explicitDataCacheRepository->save($publicId, $options, $explicitData);
+            } catch (\Doctrine\DBAL\Exception\UniqueConstraintViolationException $e) {
+                // ignore
+            }
         }
 
         return $explicitData;
