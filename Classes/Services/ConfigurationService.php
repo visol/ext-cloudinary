@@ -33,11 +33,9 @@ class ConfigurationService
      */
     public function get(string $key): string
     {
-        $value = '';
-        if (preg_match('/%(.*)%/', $key, $matches)) {
+        $value = (string)$this->configuration[$key];
+        if (preg_match('/%(.*)%/', $value, $matches)) {
             $value = (string)getenv($matches[1]);
-        } elseif(isset($this->configuration[$key])) {
-            $value = (string)$this->configuration[$key];
         }
         return $value;
     }
