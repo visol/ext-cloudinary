@@ -34,8 +34,14 @@ class ConfigurationService
     public function get(string $key): string
     {
         $value = (string)$this->configuration[$key];
-        if (preg_match('/%(.*)%/', $value, $matches)) {
-            $value = (string)getenv($matches[1]);
+        if (preg_match('/^%(.*)%$/', $value, $matches)) {
+            $value = getenv($matches[1]);
+
+            if ($value === false) {
+                throw new \RuntimeException(sprintf('No value found for environment variable "%s"', $matches[1]), 1626948978);
+            }
+
+            $value = (string)$value;
         }
         return $value;
     }
