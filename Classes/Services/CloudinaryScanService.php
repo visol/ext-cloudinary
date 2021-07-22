@@ -18,6 +18,7 @@ use TYPO3\CMS\Core\Log\LogManager;
 use TYPO3\CMS\Core\Resource\ResourceStorage;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
 use Visol\Cloudinary\Driver\CloudinaryDriver;
+use Visol\Cloudinary\Utility\CloudinaryApiUtility;
 
 /**
  * Class CloudinaryScanService
@@ -237,16 +238,7 @@ class CloudinaryScanService
      */
     protected function initializeApi()
     {
-        $configuration = $this->storage->getConfiguration();
-        \Cloudinary::config(
-            [
-                'cloud_name' => $configuration['cloudName'],
-                'api_key' => $configuration['apiKey'],
-                'api_secret' => $configuration['apiSecret'],
-                'timeout' => $configuration['timeout'],
-                'secure' => true
-            ]
-        );
+        CloudinaryApiUtility::initializeByConfiguration($this->storage->getConfiguration());
     }
 
     /**

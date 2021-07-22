@@ -11,11 +11,10 @@ namespace Visol\Cloudinary\Services;
 
 use TYPO3\CMS\Core\Messaging\FlashMessage;
 use TYPO3\CMS\Core\Messaging\FlashMessageService;
-use TYPO3\CMS\Core\Resource\ResourceStorage;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
 use TYPO3\CMS\Extbase\Object\ObjectManager;
 use TYPO3\CMS\Extbase\Utility\LocalizationUtility;
-use Visol\Cloudinary\Driver\CloudinaryDriver;
+use Visol\Cloudinary\Utility\CloudinaryApiUtility;
 
 /**
  * Class CloudinaryTestConnectionService
@@ -94,21 +93,7 @@ class CloudinaryTestConnectionService
      */
     protected function initializeApi()
     {
-        /** @var ConfigurationService $configurationService */
-        $configurationService = GeneralUtility::makeInstance(
-            ConfigurationService::class,
-            $this->configuration
-        );
-
-        \Cloudinary::config(
-            [
-                'cloud_name' => $configurationService->get('cloudName'),
-                'api_key' => $configurationService->get('apiKey'),
-                'api_secret' => $configurationService->get('apiSecret'),
-                'timeout' => $configurationService->get('timeout'),
-                'secure' => true
-            ]
-        );
+        CloudinaryApiUtility::initializeByConfiguration($this->configuration);
     }
 
 

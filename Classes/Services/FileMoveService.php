@@ -15,6 +15,7 @@ use TYPO3\CMS\Core\Database\Query\QueryBuilder;
 use TYPO3\CMS\Core\Resource\File;
 use TYPO3\CMS\Core\Resource\ResourceStorage;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
+use Visol\Cloudinary\Utility\CloudinaryApiUtility;
 
 /**
  * Class FileMoveService
@@ -191,17 +192,7 @@ class FileMoveService
      */
     protected function initializeApi(ResourceStorage $targetStorage)
     {
-        // Compute the absolute file name of the file to move
-        $configuration = $targetStorage->getConfiguration();
-        \Cloudinary::config(
-            [
-                'cloud_name' => $configuration['cloudName'],
-                'api_key' => $configuration['apiKey'],
-                'api_secret' => $configuration['apiSecret'],
-                'timeout' => $configuration['timeout'],
-                'secure' => true
-            ]
-        );
+        CloudinaryApiUtility::initializeByConfiguration($targetStorage->getConfiguration());
     }
 
     /**
