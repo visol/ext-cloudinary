@@ -16,6 +16,7 @@ use TYPO3\CMS\Core\Resource\ResourceStorage;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
 use Visol\Cloudinary\Domain\Repository\ExplicitDataCacheRepository;
 use Visol\Cloudinary\Driver\CloudinaryDriver;
+use Visol\Cloudinary\Utility\CloudinaryApiUtility;
 
 /**
  * Class CloudinaryImageService
@@ -97,17 +98,7 @@ class CloudinaryImageService
             throw new \Exception($message, 1590401459);
         }
 
-        // Get the configuration
-        $configuration = $storage->getConfiguration();
-        \Cloudinary::config(
-            [
-                'cloud_name' => $configuration['cloudName'],
-                'api_key' => $configuration['apiKey'],
-                'api_secret' => $configuration['apiSecret'],
-                'timeout' => $configuration['timeout'],
-                'secure' => true
-            ]
-        );
+        CloudinaryApiUtility::initializeByConfiguration($storage->getConfiguration());
     }
 
     /**

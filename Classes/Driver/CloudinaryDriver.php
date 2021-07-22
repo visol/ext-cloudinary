@@ -28,7 +28,7 @@ use TYPO3\CMS\Extbase\Object\ObjectManager;
 use TYPO3\CMS\Extbase\SignalSlot\Dispatcher;
 use TYPO3\CMS\Extbase\Utility\LocalizationUtility;
 use Visol\Cloudinary\Services\CloudinaryPathService;
-use Visol\Cloudinary\Services\ConfigurationService;
+use Visol\Cloudinary\Utility\CloudinaryApiUtility;
 
 /**
  * Class CloudinaryDriver
@@ -1428,21 +1428,7 @@ class CloudinaryDriver extends AbstractHierarchicalFilesystemDriver
      */
     protected function initializeApi()
     {
-        /** @var ConfigurationService $configurationService */
-        $configurationService = GeneralUtility::makeInstance(
-            ConfigurationService::class,
-            $this->configuration
-        );
-
-        \Cloudinary::config(
-            [
-                'cloud_name' => $configurationService->get('cloudName'),
-                'api_key' => $configurationService->get('apiKey'),
-                'api_secret' => $configurationService->get('apiSecret'),
-                'timeout' => $configurationService->get('timeout'),
-                'secure' => true
-            ]
-        );
+        CloudinaryApiUtility::initializeByConfiguration($this->configuration);
     }
 
     /**
