@@ -17,16 +17,23 @@ class ExplicitDataCacheRepository
     protected $tableName = 'tx_cloudinary_explicit_data_cache';
 
     /**
+     * @param int $storageId
      * @param string $publicId
      * @param array $options
      * @return array
      */
-    public function findByPublicIdAndOptions(string $publicId, array $options): ?array
+    public function findByStorageAndPublicIdAndOptions(int $storageId, string $publicId, array $options): ?array
     {
         $query = $this->getQueryBuilder();
         $query->select('*')
             ->from($this->tableName)
             ->where(
+                $this->getQueryBuilder()->expr()->eq(
+                    'storage',
+                    $query->expr()->literal(
+                        $storageId
+                    )
+                ),
                 $this->getQueryBuilder()->expr()->eq(
                     'public_id_hash',
                     $query->expr()->literal(
@@ -53,13 +60,14 @@ class ExplicitDataCacheRepository
     }
 
     /**
+     * @param int $storageId
      * @param string $publicId
      * @param array $options
-     * @param string $explicitData
+     * @param array $explicitData
      *
      * @return int
      */
-    public function save(string $publicId, array $options, array $explicitData): int
+    public function save(int $storageId, string $publicId, array $options, array $explicitData): int
     {
         SortingUtility::ksort_recursive($options);
 
@@ -67,6 +75,7 @@ class ExplicitDataCacheRepository
         $connection->insert(
             $this->tableName,
             [
+                'storage' => $storageId,
                 'public_id' => $publicId,
                 'public_id_hash' => sha1($publicId),
                 'options' => json_encode($options),

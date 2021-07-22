@@ -2,6 +2,7 @@
 # Table structure for table 'tx_cloudinary_explicit_data_cache'
 #
 CREATE TABLE tx_cloudinary_explicit_data_cache (
+  storage int(11) DEFAULT '0' NOT NULL,
   public_id text,
   public_id_hash char(40) DEFAULT '' NOT NULL,
   options text NOT NULL,
@@ -11,7 +12,7 @@ CREATE TABLE tx_cloudinary_explicit_data_cache (
   tstamp int(11) unsigned DEFAULT '0' NOT NULL,
   crdate int(11) unsigned DEFAULT '0' NOT NULL,
 
-  PRIMARY KEY (public_id_hash, options_hash)
+  PRIMARY KEY (storage, public_id_hash, options_hash)
 );
 
 #
