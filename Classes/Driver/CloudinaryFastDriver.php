@@ -56,6 +56,9 @@ class CloudinaryFastDriver extends AbstractHierarchicalFilesystemDriver
      */
     protected $cachedPermissions = [];
 
+    /** @var ConfigurationService */
+    protected $configurationService;
+
     /**
      * @var \TYPO3\CMS\Core\Resource\ResourceStorage
      */
@@ -94,6 +97,11 @@ class CloudinaryFastDriver extends AbstractHierarchicalFilesystemDriver
             ResourceStorage::CAPABILITY_BROWSABLE
             | ResourceStorage::CAPABILITY_PUBLIC
             | ResourceStorage::CAPABILITY_WRITABLE;
+
+        $this->configurationService = GeneralUtility::makeInstance(
+            ConfigurationService::class,
+            $this->configuration
+        );
     }
 
     /**
@@ -115,15 +123,23 @@ class CloudinaryFastDriver extends AbstractHierarchicalFilesystemDriver
     }
 
     /**
-     * @param string $fileIdentifier
+     * @param string $identifier
      *
      * @return string
      */
-    public function getPublicUrl($fileIdentifier)
+    public function getPublicUrl($identifier): string
     {
+        // for processed file
+        $pattern = sprintf('/^PROCESSEDFILE\/(%s\/.*)/', $this->configurationService->get('cloudName'));
+        $matches = [];
+        if (preg_match($pattern, $identifier, $matches)) {
+            return 'https://res.cloudinary.com/' . $matches[1];
+        }
+
         $cloudinaryResource = $this->getCloudinaryResourceService()->getResource(
-            $this->getCloudinaryPathService()->computeCloudinaryPublicId($fileIdentifier)
+            $this->getCloudinaryPathService()->computeCloudinaryPublicId($identifier)
         );
+
         return $cloudinaryResource
             ? $cloudinaryResource['secure_url']
             : '';
@@ -1318,19 +1334,12 @@ class CloudinaryFastDriver extends AbstractHierarchicalFilesystemDriver
      */
     protected function initializeApi()
     {
-
-        /** @var ConfigurationService $configurationService */
-        $configurationService = GeneralUtility::makeInstance(
-            ConfigurationService::class,
-            $this->configuration
-        );
-
         Cloudinary::config(
             [
-                'cloud_name' => $configurationService->get('cloudName'),
-                'api_key' => $configurationService->get('apiKey'),
-                'api_secret' => $configurationService->get('apiSecret'),
-                'timeout' => $configurationService->get('timeout'),
+                'cloud_name' => $this->configurationService->get('cloudName'),
+                'api_key' => $this->configurationService->get('apiKey'),
+                'api_secret' => $this->configurationService->get('apiSecret'),
+                'timeout' => $this->configurationService->get('timeout'),
                 'secure' => true
             ]
         );
