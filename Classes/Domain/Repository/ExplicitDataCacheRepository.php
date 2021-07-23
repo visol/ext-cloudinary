@@ -90,6 +90,21 @@ class ExplicitDataCacheRepository
     }
 
     /**
+     *
+     */
+    public function delete(int $storageId, string $publicId): void
+    {
+        $connection = $this->getConnection();
+        $connection->delete(
+            $this->tableName,
+            [
+                'storage' => $storageId,
+                'public_id_hash' => sha1($publicId),
+            ]
+        );
+    }
+
+    /**
      * @param array $options
      * @return string
      */

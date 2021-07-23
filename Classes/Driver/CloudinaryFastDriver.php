@@ -23,7 +23,9 @@ use TYPO3\CMS\Core\Utility\PathUtility;
 use TYPO3\CMS\Core\Resource\Driver\AbstractHierarchicalFilesystemDriver;
 use TYPO3\CMS\Core\Resource\Exception;
 use TYPO3\CMS\Core\Resource\ResourceStorage;
+use Visol\Cloudinary\Domain\Repository\ExplicitDataCacheRepository;
 use Visol\Cloudinary\Services\CloudinaryFolderService;
+use Visol\Cloudinary\Services\CloudinaryImageService;
 use Visol\Cloudinary\Services\CloudinaryResourceService;
 use Visol\Cloudinary\Services\CloudinaryPathService;
 use Visol\Cloudinary\Services\CloudinaryTestConnectionService;
@@ -348,6 +350,10 @@ class CloudinaryFastDriver extends AbstractHierarchicalFilesystemDriver
             $fileName
         );
 
+        // We remove a possible existing transient file to avoid bad surprise.
+        $this->cleanUpTemporaryFile($fileIdentifier);
+
+        // We compute the cloudinary public id
         $cloudinaryPublicId = $this->getCloudinaryPathService()->computeCloudinaryPublicId($fileIdentifier);
 
         $this->log('[API][UPLOAD] Cloudinary\Uploader::upload() - add resource "%s"', [$cloudinaryPublicId], ['addFile()']);
@@ -435,6 +441,9 @@ class CloudinaryFastDriver extends AbstractHierarchicalFilesystemDriver
      */
     public function replaceFile($fileIdentifier, $localFilePath)
     {
+        // We remove a possible existing transient file to avoid bad surprise.
+        $this->cleanUpTemporaryFile($fileIdentifier);
+
         $cloudinaryPublicId = PathUtility::basename(
             $this->getCloudinaryPathService()->computeCloudinaryPublicId($fileIdentifier)
         );
@@ -543,7 +552,7 @@ class CloudinaryFastDriver extends AbstractHierarchicalFilesystemDriver
     {
         $temporaryPath = $this->getTemporaryPathForFile($fileIdentifier);
 
-        if ((!is_file($temporaryPath) || !filesize($temporaryPath))) {
+        if (!is_file($temporaryPath) || !filesize($temporaryPath)) {
             $this->log('[SLOW] Downloading for local processing "%s"', [$fileIdentifier], ['getFileForLocalProcessing']);
 
             file_put_contents(
@@ -1192,6 +1201,28 @@ class CloudinaryFastDriver extends AbstractHierarchicalFilesystemDriver
     }
 
     /**
+     * We want to remove the local temporary file
+     */
+    protected function cleanUpTemporaryFile(string $fileIdentifier): void
+    {
+        $temporaryLocalFile = $this->getTemporaryPathForFile($fileIdentifier);
+        if (is_file($temporaryLocalFile)) {
+            unlink($temporaryLocalFile);
+        }
+
+        // very coupled.... via signal slot?
+        $this->getExplicitDataCacheRepository()->delete($this->storageUid, $fileIdentifier);
+    }
+
+    /**
+     * @return object|ExplicitDataCacheRepository
+     */
+    public function getExplicitDataCacheRepository()
+    {
+        return GeneralUtility::makeInstance(ExplicitDataCacheRepository::class);
+    }
+
+    /**
      * @param string $newFileIdentifier
      *
      * @return bool
@@ -1227,7 +1258,7 @@ class CloudinaryFastDriver extends AbstractHierarchicalFilesystemDriver
     }
 
     /**
-     * @return CloudinaryPathService
+     * @return object|CloudinaryPathService
      */
     protected function getCloudinaryPathService()
     {
