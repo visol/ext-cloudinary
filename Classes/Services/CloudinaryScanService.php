@@ -254,7 +254,7 @@ class CloudinaryScanService
      */
     protected function getCloudinaryFolderService(): CloudinaryFolderService
     {
-        return GeneralUtility::makeInstance(CloudinaryFolderService::class, $this->storage);
+        return GeneralUtility::makeInstance(CloudinaryFolderService::class, $this->storage->getUid());
     }
 
     /**
@@ -265,7 +265,7 @@ class CloudinaryScanService
         if (!$this->cloudinaryPathService) {
             $this->cloudinaryPathService = GeneralUtility::makeInstance(
                 CloudinaryPathService::class,
-                $this->storage
+                $this->storage->getUid()
             );
         }
 

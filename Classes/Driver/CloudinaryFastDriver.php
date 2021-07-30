@@ -25,7 +25,6 @@ use TYPO3\CMS\Core\Resource\Exception;
 use TYPO3\CMS\Core\Resource\ResourceStorage;
 use Visol\Cloudinary\Domain\Repository\ExplicitDataCacheRepository;
 use Visol\Cloudinary\Services\CloudinaryFolderService;
-use Visol\Cloudinary\Services\CloudinaryImageService;
 use Visol\Cloudinary\Services\CloudinaryResourceService;
 use Visol\Cloudinary\Services\CloudinaryPathService;
 use Visol\Cloudinary\Services\CloudinaryTestConnectionService;
@@ -1262,10 +1261,11 @@ class CloudinaryFastDriver extends AbstractHierarchicalFilesystemDriver
      */
     protected function getCloudinaryPathService()
     {
+
         if (!$this->cloudinaryPathService) {
             $this->cloudinaryPathService = GeneralUtility::makeInstance(
                 CloudinaryPathService::class,
-                ResourceFactory::getInstance()->getStorageObject($this->storageUid)
+                $this->configuration
             );
         }
 
@@ -1306,7 +1306,7 @@ class CloudinaryFastDriver extends AbstractHierarchicalFilesystemDriver
         if (!$this->cloudinaryFolderService) {
             $this->cloudinaryFolderService = GeneralUtility::makeInstance(
                 CloudinaryFolderService::class,
-                ResourceFactory::getInstance()->getStorageObject($this->storageUid)
+                $this->storageUid
             );
         }
 

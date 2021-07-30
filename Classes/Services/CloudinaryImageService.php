@@ -290,7 +290,7 @@ class CloudinaryImageService
     {
         return GeneralUtility::makeInstance(
             CloudinaryPathService::class,
-            $storage
+            $storage->getConfiguration()
         );
     }
 

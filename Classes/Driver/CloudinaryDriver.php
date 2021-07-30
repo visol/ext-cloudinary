@@ -12,7 +12,6 @@ namespace Visol\Cloudinary\Driver;
 use Cloudinary\Api;
 use Cloudinary\Search;
 use Cloudinary\Uploader;
-use TYPO3\CMS\Core\Resource\ResourceFactory;
 use TYPO3\CMS\Core\Type\File\FileInfo;
 use Visol\Cloudinary\Cache\CloudinaryTypo3Cache;
 use TYPO3\CMS\Core\Log\LogLevel;
@@ -1313,7 +1312,7 @@ class CloudinaryDriver extends AbstractHierarchicalFilesystemDriver
         if (!$this->cloudinaryPathService) {
             $this->cloudinaryPathService = GeneralUtility::makeInstance(
                 CloudinaryPathService::class,
-                ResourceFactory::getInstance()->getStorageObject($this->storageUid)
+                $this->configuration
             );
         }
 

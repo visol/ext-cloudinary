@@ -9,10 +9,7 @@ namespace Visol\Cloudinary\Services;
  * LICENSE.md file that was distributed with this source code.
  */
 
-use Fab\Media\Utility\Path;
-use TYPO3\CMS\Core\Utility\GeneralUtility;
 use TYPO3\CMS\Core\Utility\PathUtility;
-use TYPO3\CMS\Core\Resource\ResourceStorage;
 
 /**
  * Class CloudinaryPathService
@@ -21,18 +18,18 @@ class CloudinaryPathService
 {
 
     /**
-     * @var ResourceStorage
+     * @var array
      */
-    protected $storage;
+    protected $storageConfiguration;
 
     /**
-     * CloudinaryScanService constructor.
+     * CloudinaryPathService constructor.
      *
-     * @param ResourceStorage $storage
+     * @param array $storageConfiguration
      */
-    public function __construct(ResourceStorage $storage)
+    public function __construct(array $storageConfiguration)
     {
-        $this->storage = $storage;
+        $this->storageConfiguration = $storageConfiguration;
     }
 
     /**
@@ -76,7 +73,7 @@ class CloudinaryPathService
      */
     protected function getBasePath(): string
     {
-        $basePath = (string)$this->storage->getConfiguration()['basePath'];
+        $basePath = (string)$this->storageConfiguration['basePath'];
         return $basePath
             ? DIRECTORY_SEPARATOR . trim($basePath, DIRECTORY_SEPARATOR)
             : '';

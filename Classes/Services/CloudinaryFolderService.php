@@ -12,7 +12,6 @@ namespace Visol\Cloudinary\Services;
 use Doctrine\DBAL\Driver\Connection;
 use TYPO3\CMS\Core\Database\ConnectionPool;
 use TYPO3\CMS\Core\Database\Query\QueryBuilder;
-use TYPO3\CMS\Core\Resource\ResourceStorage;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
 
 /**
@@ -27,18 +26,18 @@ class CloudinaryFolderService
     protected $tableName = 'tx_cloudinary_folder';
 
     /**
-     * @var ResourceStorage
+     * @var int
      */
-    protected $storage;
+    protected $storageUid;
 
     /**
      * CloudinaryResourceService constructor.
      *
-     * @param ResourceStorage $storage
+     * @param int $storageUid
      */
-    public function __construct(ResourceStorage $storage)
+    public function __construct(int $storageUid)
     {
-        $this->storage = $storage;
+        $this->storageUid = $storageUid;
     }
 
     /**
@@ -53,7 +52,7 @@ class CloudinaryFolderService
             ->select('*')
             ->from($this->tableName)
             ->where(
-                $query->expr()->eq('storage', $this->storage->getUid()),
+                $query->expr()->eq('storage', $this->storageUid),
                 $query->expr()->eq(
                     'folder',
                     $query->expr()->literal($folder)
@@ -72,7 +71,7 @@ class CloudinaryFolderService
     public function markAsMissing(): int
     {
         $values = ['missing' => 1,];
-        $identifier['storage'] = $this->storage->getUid();
+        $identifier['storage'] = $this->storageUid;
         return $this->getConnection()->update($this->tableName, $values, $identifier);
     }
 
@@ -89,7 +88,7 @@ class CloudinaryFolderService
             ->select('*')
             ->from($this->tableName)
             ->where(
-                $query->expr()->eq('storage', $this->storage->getUid())
+                $query->expr()->eq('storage', $this->storageUid)
             )
             ->orderBy($orderings['fieldName'], $orderings['direction']);
 
@@ -121,7 +120,7 @@ class CloudinaryFolderService
             ->count('*')
             ->from($this->tableName)
             ->where(
-                $query->expr()->eq('storage', $this->storage->getUid())
+                $query->expr()->eq('storage', $this->storageUid)
             );
 
         // We should handle recursion
@@ -147,7 +146,7 @@ class CloudinaryFolderService
     public function delete(string $folder): int
     {
         $identifier['folder'] = $folder;
-        $identifier['storage'] = $this->storage->getUid();
+        $identifier['storage'] = $this->storageUid;
         return $this->getConnection()->delete($this->tableName, $identifier);
     }
 
@@ -158,7 +157,7 @@ class CloudinaryFolderService
      */
     public function deleteAll(array $identifier = []): int
     {
-        $identifier['storage'] = $this->storage->getUid();
+        $identifier['storage'] = $this->storageUid;
         return $this->getConnection()->delete($this->tableName, $identifier);
     }
 
@@ -202,7 +201,7 @@ class CloudinaryFolderService
             $this->getValues($folder),
             [
                 'folder_hash' => $folderHash,
-                'storage' => $this->storage->getUid(),
+                'storage' => $this->storageUid,
             ]
         );
     }
@@ -231,7 +230,7 @@ class CloudinaryFolderService
             ->count('*')
             ->from($this->tableName)
             ->where(
-                $query->expr()->eq('storage', $this->storage->getUid()),
+                $query->expr()->eq('storage', $this->storageUid),
                 $query->expr()->eq(
                     'folder_hash',
                     $query->expr()->literal($folderHash)
@@ -255,7 +254,7 @@ class CloudinaryFolderService
 
             // typo3 info
             'missing' => 0,
-            'storage' => $this->storage->getUid(),
+            'storage' => $this->storageUid,
         ];
     }
 

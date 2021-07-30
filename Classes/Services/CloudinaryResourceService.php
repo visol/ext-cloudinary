@@ -367,7 +367,7 @@ class CloudinaryResourceService
      */
     protected function getCloudinaryFolderService(): CloudinaryFolderService
     {
-        return GeneralUtility::makeInstance(CloudinaryFolderService::class, $this->storage);
+        return GeneralUtility::makeInstance(CloudinaryFolderService::class, $this->storage->getUid());
     }
 
     /**
