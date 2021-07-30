@@ -248,7 +248,7 @@ class FileMoveService
     {
         $this->cloudinaryPathService = GeneralUtility::makeInstance(
                 CloudinaryPathService::class,
-            $storage
+            $storage->getUid()
             );
     }
 }
