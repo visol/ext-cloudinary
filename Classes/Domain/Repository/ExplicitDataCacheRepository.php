@@ -110,7 +110,8 @@ class ExplicitDataCacheRepository
      */
     protected function calculateHashFromOptions(array $options): string
     {
-        return sha1(json_encode(SortingUtility::ksort_recursive($options)));
+        SortingUtility::ksort_recursive($options);
+        return sha1(json_encode($options));
     }
 
     /**
