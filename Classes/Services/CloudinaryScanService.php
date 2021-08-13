@@ -265,7 +265,7 @@ class CloudinaryScanService
         if (!$this->cloudinaryPathService) {
             $this->cloudinaryPathService = GeneralUtility::makeInstance(
                 CloudinaryPathService::class,
-                $this->storage->getUid()
+                $this->storage->getStorageRecord()
             );
         }
 
