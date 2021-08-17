@@ -21,7 +21,7 @@ use Visol\Cloudinary\Utility\CloudinaryApiUtility;
 /**
  * Class CloudinaryImageService
  */
-class CloudinaryImageService
+class CloudinaryImageService extends AbstractCloudinaryMediaService
 {
 
     /**
@@ -81,24 +81,6 @@ class CloudinaryImageService
         $explicitData = $this->getExplicitData($file, $options);
 
         return $explicitData['responsive_breakpoints'][0]['breakpoints'];
-    }
-
-    /**
-     * @throws \Exception
-     */
-    protected function initializeApi(ResourceStorage $storage)
-    {
-        // Check the file is stored on the right storage
-        // If not we should trigger an exception
-        if ($storage->getDriverType() !== CloudinaryDriver::DRIVER_TYPE) {
-            $message = sprintf(
-                'Wrong storage! Can not initialize with storage type "%s".',
-                $storage->getDriverType()
-            );
-            throw new \Exception($message, 1590401459);
-        }
-
-        CloudinaryApiUtility::initializeByConfiguration($storage->getConfiguration());
     }
 
     /**
@@ -256,65 +238,4 @@ class CloudinaryImageService
             ]
         ];
     }
-
-    /**
-     * @param string $message
-     * @param array $arguments
-     * @param array $data
-     */
-    protected function error(string $message, array $arguments = [], array $data = [])
-    {
-        /** @var \TYPO3\CMS\Core\Log\Logger $logger */
-        $logger = GeneralUtility::makeInstance(LogManager::class)->getLogger(__CLASS__);
-        $logger->log(
-            LogLevel::ERROR,
-            vsprintf($message, $arguments),
-            $data
-        );
-    }
-
-    /**
-     * @return File
-     */
-    public function getEmergencyPlaceholderFile(): File
-    {
-        /** @var CloudinaryUploadService $cloudinaryUploadService */
-        $cloudinaryUploadService = GeneralUtility::makeInstance(CloudinaryUploadService::class);
-        return $cloudinaryUploadService->uploadLocalFile('');
-    }
-
-    /**
-     * @return object|CloudinaryPathService
-     */
-    protected function getCloudinaryPathService(ResourceStorage $storage)
-    {
-        return GeneralUtility::makeInstance(
-            CloudinaryPathService::class,
-            $storage->getConfiguration()
-        );
-    }
-
-    /**
-     * @param File $file
-     *
-     * @return string
-     */
-    public function getPublicIdForFile(File $file): string
-    {
-
-        // It should never happen but in case... we prefer to have an empty file instead of an exception
-        if (!$file->exists()) {
-            // We should log this incident...
-            $this->error('I could not find file ' . $file->getIdentifier());
-
-            // We want to avoid an exception
-            $file = $this->getEmergencyPlaceholderFile();
-        }
-
-        // Compute the cloudinary public id
-        $publicId = $this
-            ->getCloudinaryPathService($file->getStorage())
-            ->computeCloudinaryPublicId($file->getIdentifier());
-        return $publicId;
-}
 }
