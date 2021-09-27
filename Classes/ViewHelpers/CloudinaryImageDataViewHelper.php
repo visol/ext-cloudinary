@@ -177,7 +177,7 @@ class CloudinaryImageDataViewHelper extends \TYPO3\CMS\Fluid\Core\ViewHelper\Abs
     {
         return GeneralUtility::makeInstance(
             CloudinaryPathService::class,
-            $storage->getStorageRecord()
+            $storage->getConfiguration()
         );
     }
 
