@@ -1,20 +1,13 @@
 <?php
 namespace  Visol\Cloudinary\Hook;
 
-/*
- * This file is part of the Fab/Media project under GPLv2 or later.
- *
- * For the full copyright and license information, please read the
- * LICENSE.md file that was distributed with this source code.
- */
-
 use TYPO3\CMS\Core\Resource\DuplicationBehavior;
 use TYPO3\CMS\Core\Resource\File;
 use TYPO3\CMS\Core\Utility\File\ExtendedFileUtility;
 use TYPO3\CMS\Core\Utility\File\ExtendedFileUtilityProcessDataHookInterface;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
 use Visol\Cloudinary\Domain\Repository\ExplicitDataCacheRepository;
-use Visol\Cloudinary\Services\CloudinaryPathService;
+use Visol\Cloudinary\Services\CloudinaryImageService;
 
 /**
  * Extracts metadata after uploading a file.
@@ -31,10 +24,17 @@ class FileUploadHook implements ExtendedFileUtilityProcessDataHookInterface
     public function processData_postProcessAction($action, array $cmdArr, array $result, ExtendedFileUtility $pObj): void
     {
         if ($action === 'replace' || ($action === 'upload' && $pObj->getExistingFilesConflictMode() === DuplicationBehavior::REPLACE)) {
-            /** @var File $file */
-            $file = $result[0][0];
-            $explicitDataCacheRepository = GeneralUtility::makeInstance(ExplicitDataCacheRepository::class);
-            $explicitDataCacheRepository->delete($file->getStorage()->getUid(), 'fileadmin' . str_replace('.' . $file->getExtension(), '', $file->getIdentifier()));
+
+            if ($result[0] && $result[0][0]) {
+                /** @var File $file */
+                $file = $result[0][0];
+                if ($file->getStorage()->getDriverType() === 'VisolCloudinary') {
+                    $cloudinaryImageService = GeneralUtility::makeInstance(CloudinaryImageService::class);
+                    $publicId = $cloudinaryImageService->getPublicIdForFile($file);
+                    $explicitDataCacheRepository = GeneralUtility::makeInstance(ExplicitDataCacheRepository::class);
+                    $explicitDataCacheRepository->delete($file->getStorage()->getUid(), $publicId);
+                }
+            }
         }
     }
 }
