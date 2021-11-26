@@ -7,6 +7,7 @@ use TYPO3\CMS\Core\Utility\File\ExtendedFileUtility;
 use TYPO3\CMS\Core\Utility\File\ExtendedFileUtilityProcessDataHookInterface;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
 use Visol\Cloudinary\Domain\Repository\ExplicitDataCacheRepository;
+use Visol\Cloudinary\Driver\CloudinaryFastDriver;
 use Visol\Cloudinary\Services\CloudinaryImageService;
 
 /**
@@ -24,17 +25,18 @@ class FileUploadHook implements ExtendedFileUtilityProcessDataHookInterface
     public function processData_postProcessAction($action, array $cmdArr, array $result, ExtendedFileUtility $pObj): void
     {
         if ($action === 'replace' || ($action === 'upload' && $pObj->getExistingFilesConflictMode() === DuplicationBehavior::REPLACE)) {
-
-            if ($result[0] && $result[0][0]) {
-                /** @var File $file */
-                $file = $result[0][0];
-                if ($file->getStorage()->getDriverType() === 'VisolCloudinary') {
-                    $cloudinaryImageService = GeneralUtility::makeInstance(CloudinaryImageService::class);
-                    $publicId = $cloudinaryImageService->getPublicIdForFile($file);
-                    $explicitDataCacheRepository = GeneralUtility::makeInstance(ExplicitDataCacheRepository::class);
-                    $explicitDataCacheRepository->delete($file->getStorage()->getUid(), $publicId);
-                }
+            if (!isset($result[0]) && !isset($result[0][0])) {
+                return;
             }
+            /** @var File $file */
+            $file = $result[0][0];
+            if ($file->getStorage()->getDriverType() !== CloudinaryFastDriver::DRIVER_TYPE) {
+                return;
+            }
+            $cloudinaryImageService = GeneralUtility::makeInstance(CloudinaryImageService::class);
+            $publicId = $cloudinaryImageService->getPublicIdForFile($file);
+            $explicitDataCacheRepository = GeneralUtility::makeInstance(ExplicitDataCacheRepository::class);
+            $explicitDataCacheRepository->delete($file->getStorage()->getUid(), $publicId);
         }
     }
 }
