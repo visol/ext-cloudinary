@@ -1,5 +1,5 @@
 {
-  "name": "sinso/cloudinary",
+  "name": "visol/cloudinary",
   "description": "Cloudinary integration in TYPO3. Use automatic breakpoint generation for images.",
   "type": "typo3-cms-extension",
   "homepage": "",
