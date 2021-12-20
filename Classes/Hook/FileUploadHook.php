@@ -10,9 +10,6 @@ use Visol\Cloudinary\Domain\Repository\ExplicitDataCacheRepository;
 use Visol\Cloudinary\Driver\CloudinaryFastDriver;
 use Visol\Cloudinary\Services\CloudinaryImageService;
 
-/**
- * Extracts metadata after uploading a file.
- */
 class FileUploadHook implements ExtendedFileUtilityProcessDataHookInterface
 {
     /**
