@@ -65,10 +65,11 @@ class CloudinaryResourceService
             ->where(
                 $query->expr()->eq('storage', $this->storage->getUid()),
                 $query->expr()->eq(
-                    'public_id',
-                    $query->expr()->literal($publicId)
+                    'public_id_hash',
+                    $query->expr()->literal(sha1($publicId))
                 )
-            );
+            )
+            ->setMaxResults(1);
 
         $resource = $query->execute()->fetch();
         return $resource
