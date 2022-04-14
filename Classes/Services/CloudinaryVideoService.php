@@ -3,10 +3,6 @@
 namespace Visol\Cloudinary\Services;
 
 use TYPO3\CMS\Core\Resource\File;
-use TYPO3\CMS\Core\Resource\ResourceStorage;
-use Visol\Cloudinary\Domain\Repository\ExplicitDataCacheRepository;
-use Visol\Cloudinary\Driver\CloudinaryDriver;
-use Visol\Cloudinary\Utility\CloudinaryApiUtility;
 
 class CloudinaryVideoService extends AbstractCloudinaryMediaService
 {
@@ -17,12 +13,6 @@ class CloudinaryVideoService extends AbstractCloudinaryMediaService
         'quality' => 'auto',
     ];
 
-    /**
-     * @var \TYPO3\CMS\Core\Resource\StorageRepository
-     * @inject
-     */
-    protected $storageRepository;
-
     public function getVideoUrl(File $file, array $options = []): string
     {
         $options = array_merge($this->defaultOptions, $options);
@@ -30,6 +20,6 @@ class CloudinaryVideoService extends AbstractCloudinaryMediaService
         $publicId = $this->getPublicIdForFile($file);
 
         $this->initializeApi($file->getStorage());
-        return \Cloudinary::cloudinary_url($publicId,$options);
+        return \Cloudinary::cloudinary_url($publicId, $options);
     }
 }
