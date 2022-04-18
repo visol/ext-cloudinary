@@ -52,7 +52,7 @@ call_user_func(function () {
     $GLOBALS['TYPO3_CONF_VARS']['SC_OPTIONS']['t3lib/class.t3lib_extfilefunc.php']['processData'][] = \Visol\Cloudinary\Hook\FileUploadHook::class;
 
     $GLOBALS['TYPO3_CONF_VARS']['SYS']['formEngine']['nodeRegistry'][1649771630] = [
-        'nodeName' => 'lollisCustomMapElement',
+        'nodeName' => 'cloudinaryMediaLibraryField',
         'priority' => 40,
         'class' => \Visol\Cloudinary\Form\Element\CloudinaryMediaLibraryPicker::class,
     ];
