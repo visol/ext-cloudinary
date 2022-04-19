@@ -7,9 +7,9 @@ defined('TYPO3') or die('Access denied.');
 (static function (): void {
     // Add some fields to fe_users table to show TCA fields definitions
     \TYPO3\CMS\Core\Utility\ExtensionManagementUtility::addTCAcolumns('tt_content', [
-        'tx_examples_special' => [
+        'tx_cloudinary_resources' => [
             'exclude' => 0,
-            'label' => 'asdf', // LLL:EXT:examples/Resources/Private/Language/locallang_db.xlf:tt_content.tx_examples_special
+            'label' => 'LLL:EXT:cloudinary/Resources/Private/Language/backend.xlf:tt_content.tx_cloudinary_resources',
             'config' => [
                 'type' => 'user',
                 'renderType' => 'cloudinaryMediaLibraryField',
@@ -19,7 +19,8 @@ defined('TYPO3') or die('Access denied.');
             ],
         ],
     ]);
-    \TYPO3\CMS\Core\Utility\ExtensionManagementUtility::addToAllTCAtypes('tt_content', 'tx_examples_special');
+
+    \TYPO3\CMS\Core\Utility\ExtensionManagementUtility::addToAllTCAtypes('tt_content', 'tx_cloudinary_resources');
 
     //        \TYPO3\CMS\Core\Utility\ExtensionManagementUtility::addToAllTCAtypes('tt_address', 'quote', '', 'after:description');
 
