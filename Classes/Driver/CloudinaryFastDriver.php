@@ -99,6 +99,8 @@ class CloudinaryFastDriver extends AbstractHierarchicalFilesystemDriver
             ResourceStorage::CAPABILITY_WRITABLE;
 
         $this->configurationService = GeneralUtility::makeInstance(ConfigurationService::class, $this->configuration);
+
+        $this->charsetConversion = GeneralUtility::makeInstance(CharsetConverter::class);
     }
 
     /**
@@ -1119,7 +1121,7 @@ class CloudinaryFastDriver extends AbstractHierarchicalFilesystemDriver
      */
     public function sanitizeFileName($fileName, $charset = '')
     {
-        $fileName = $this->getCharsetConversion()->specCharsToASCII('utf-8', $fileName);
+        $fileName =  $this->charsetConversion->specCharsToASCII('utf-8', $fileName);
 
         // Replace unwanted characters by underscores
         $cleanFileName = preg_replace(
