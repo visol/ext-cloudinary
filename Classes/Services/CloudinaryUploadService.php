@@ -9,6 +9,7 @@
 
 namespace Visol\Cloudinary\Services;
 
+use TYPO3\CMS\Core\Core\Environment;
 use TYPO3\CMS\Core\Log\LogLevel;
 use TYPO3\CMS\Core\Log\LogManager;
 use TYPO3\CMS\Core\Resource\File;
@@ -22,7 +23,6 @@ use Visol\Cloudinary\CloudinaryFactory;
  */
 class CloudinaryUploadService
 {
-
     /**
      * @var string
      */
@@ -38,8 +38,7 @@ class CloudinaryUploadService
      */
     public function __construct(ResourceStorage $storage = null)
     {
-        $this->storage = $storage
-            ?: CloudinaryFactory::getDefaultStorage();
+        $this->storage = $storage ?: CloudinaryFactory::getDefaultStorage();
     }
 
     /**
@@ -54,17 +53,17 @@ class CloudinaryUploadService
 
         if (!$this->fileExists($fileIdentifier)) {
             $fileIdentifier = $this->emergencyFileIdentifier;
-            $this->error('I am using a default emergency placeholder file since I could not find file ' . $fileIdentifier);
+            $this->error(
+                'I am using a default emergency placeholder file since I could not find file ' . $fileIdentifier,
+            );
         }
 
         // Fetch the file if existing or create one
         return $this->storage->hasFile($fileIdentifier)
             ? $this->storage->getFile($fileIdentifier)
             : $this->storage->addFile(
-                PATH_site . ltrim($fileIdentifier, DIRECTORY_SEPARATOR),
-                CloudinaryFactory::getFolder(
-                    GeneralUtility::dirname($fileIdentifier)
-                )
+                Environment::getPublicPath() . DIRECTORY_SEPARATOR . ltrim($fileIdentifier, DIRECTORY_SEPARATOR),
+                CloudinaryFactory::getFolder(GeneralUtility::dirname($fileIdentifier)),
             );
     }
 
@@ -83,7 +82,8 @@ class CloudinaryUploadService
      */
     protected function fileExists(string $fileIdentifier): bool
     {
-        $fileNameAndPath = PATH_site . ltrim($fileIdentifier, DIRECTORY_SEPARATOR);
+        $fileNameAndPath =
+            Environment::getPublicPath() . DIRECTORY_SEPARATOR . ltrim($fileIdentifier, DIRECTORY_SEPARATOR);
         return is_file($fileNameAndPath);
     }
 
@@ -96,10 +96,6 @@ class CloudinaryUploadService
     {
         /** @var \TYPO3\CMS\Core\Log\Logger $logger */
         $logger = GeneralUtility::makeInstance(LogManager::class)->getLogger(__CLASS__);
-        $logger->log(
-            LogLevel::ERROR,
-            vsprintf($message, $arguments),
-            $data
-        );
+        $logger->log(LogLevel::ERROR, vsprintf($message, $arguments), $data);
     }
 }
