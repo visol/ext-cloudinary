@@ -25,7 +25,6 @@ use TYPO3\CMS\Core\Utility\GeneralUtility;
  */
 class CloudinaryCopyCommand extends AbstractCloudinaryCommand
 {
-
     /**
      * @var array
      */
@@ -51,12 +50,10 @@ class CloudinaryCopyCommand extends AbstractCloudinaryCommand
 
         $this->isSilent = $input->getOption('silent');
 
-        $this->sourceStorage = ResourceFactory::getInstance()->getStorageObject(
-            $input->getArgument('source')
-        );
-        $this->targetStorage = ResourceFactory::getInstance()->getStorageObject(
-            $input->getArgument('target')
-        );
+        /** @var ResourceFactory $resourceFactory */
+        $resourceFactory = GeneralUtility::makeInstance(ResourceFactory::class);
+        $this->sourceStorage = $resourceFactory->getStorageObject($input->getArgument('source'));
+        $this->targetStorage = $resourceFactory->getStorageObject($input->getArgument('target'));
     }
 
     /**
@@ -64,72 +61,17 @@ class CloudinaryCopyCommand extends AbstractCloudinaryCommand
      */
     protected function configure()
     {
-        $this
-            ->setDescription(
-                'Copy bunch of images from a local storage to a cloudinary storage'
-            )
-            ->addOption(
-                'silent',
-                's',
-                InputOption::VALUE_OPTIONAL,
-                'Mute output as much as possible',
-                false
-            )
-            ->addOption(
-                'yes',
-                'y',
-                InputOption::VALUE_OPTIONAL,
-                'Accept everything by default',
-                false
-            )
-            ->addOption(
-                'base-url',
-                '',
-                InputArgument::OPTIONAL,
-                'A base URL where to download missing files',
-                ''
-            )
-            ->addOption(
-                'filter',
-                '',
-                InputArgument::OPTIONAL,
-                'Filter pattern with possible wild cards, --filter="/foo/bar/%"',
-                ''
-            )
-            ->addOption(
-                'filter-file-type',
-                '',
-                InputArgument::OPTIONAL,
-                'Add a possible filter for file type as defined by FAL (e.g 1,2,3,4,5)',
-                ''
-            )
-            ->addOption(
-                'limit',
-                '',
-                InputArgument::OPTIONAL,
-                'Add a possible offset, limit to restrain the number of files. (eg. 0,100)',
-                ''
-            )
-            ->addOption(
-                'exclude',
-                '',
-                InputArgument::OPTIONAL,
-                'Exclude pattern, can contain comma separated values e.g. --exclude="/apps/%,/_temp/%"',
-                ''
-            )
-            ->addArgument(
-                'source',
-                InputArgument::REQUIRED,
-                'Source storage identifier'
-            )
-            ->addArgument(
-                'target',
-                InputArgument::REQUIRED,
-                'Target storage identifier'
-            )
-            ->setHelp(
-                'Usage: ./vendor/bin/typo3 cloudinary:copy 1 2'
-            );
+        $this->setDescription('Copy bunch of images from a local storage to a cloudinary storage')
+            ->addOption('silent', 's', InputOption::VALUE_OPTIONAL, 'Mute output as much as possible', false)
+            ->addOption('yes', 'y', InputOption::VALUE_OPTIONAL, 'Accept everything by default', false)
+            ->addOption('base-url', '', InputArgument::OPTIONAL, 'A base URL where to download missing files', '')
+            ->addOption('filter', '', InputArgument::OPTIONAL, 'Filter pattern with possible wild cards, --filter="/foo/bar/%"', '')
+            ->addOption('filter-file-type', '', InputArgument::OPTIONAL, 'Add a possible filter for file type as defined by FAL (e.g 1,2,3,4,5)', '')
+            ->addOption('limit', '', InputArgument::OPTIONAL, 'Add a possible offset, limit to restrain the number of files. (eg. 0,100)', '')
+            ->addOption('exclude', '', InputArgument::OPTIONAL, 'Exclude pattern, can contain comma separated values e.g. --exclude="/apps/%,/_temp/%"', '')
+            ->addArgument('source', InputArgument::REQUIRED, 'Source storage identifier')
+            ->addArgument('target', InputArgument::REQUIRED, 'Target storage identifier')
+            ->setHelp('Usage: ./vendor/bin/typo3 cloudinary:copy 1 2');
     }
 
     /**
@@ -140,7 +82,6 @@ class CloudinaryCopyCommand extends AbstractCloudinaryCommand
      */
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
-
         if (!$this->checkDriverType($this->targetStorage)) {
             $this->log('Look out! target storage is not of type "cloudinary"');
             return 1;
@@ -153,16 +94,13 @@ class CloudinaryCopyCommand extends AbstractCloudinaryCommand
             return 0;
         }
 
-        $this->log(
-            'Copying %s files from storage "%s" (%s) to "%s" (%s)',
-            [
-                count($files),
-                $this->sourceStorage->getName(),
-                $this->sourceStorage->getUid(),
-                $this->targetStorage->getName(),
-                $this->targetStorage->getUid(),
-            ]
-        );
+        $this->log('Copying %s files from storage "%s" (%s) to "%s" (%s)', [
+            count($files),
+            $this->sourceStorage->getName(),
+            $this->sourceStorage->getUid(),
+            $this->targetStorage->getName(),
+            $this->targetStorage->getUid(),
+        ]);
 
         // A chance to the user to confirm the action
         if ($input->getOption('yes') === false) {
@@ -174,20 +112,17 @@ class CloudinaryCopyCommand extends AbstractCloudinaryCommand
             }
         }
 
+        /** @var ResourceFactory $resourceFactory */
+        $resourceFactory = GeneralUtility::makeInstance(ResourceFactory::class);
+
         $counter = 0;
         foreach ($files as $file) {
-            $fileObject = ResourceFactory::getInstance()->getFileObjectByStorageAndIdentifier(
-                $this->sourceStorage->getUid(),
-                $file['identifier']
-            );
+            $fileObject = $resourceFactory->getFileObjectByStorageAndIdentifier($this->sourceStorage->getUid(), $file['identifier']);
 
             // Get the chance to download it
             if (!$fileObject->exists() && $input->getOption('base-url')) {
                 $url = rtrim($input->getOption('base-url'), DIRECTORY_SEPARATOR) . $fileObject->getIdentifier();
-                $this->log(
-                    'Missing file, try downloading it from %s%s',
-                    [$url]
-                );
+                $this->log('Missing file, try downloading it from %s%s', [$url]);
                 $this->download($fileObject, $url);
             }
             if ($fileObject->exists()) {
@@ -196,7 +131,7 @@ class CloudinaryCopyCommand extends AbstractCloudinaryCommand
                     $fileObject->getForLocalProcessing(),
                     $fileObject->getParentFolder(),
                     $fileObject->getName(),
-                    DuplicationBehavior::REPLACE
+                    DuplicationBehavior::REPLACE,
                 );
                 $counter++;
             } else {
@@ -229,9 +164,7 @@ class CloudinaryCopyCommand extends AbstractCloudinaryCommand
         $this->ensureDirectoryExistence($fileObject);
 
         $contents = file_get_contents($url);
-        return $contents
-            ? (bool)file_put_contents($this->getAbsolutePath($fileObject), $contents)
-            : false;
+        return $contents ? (bool) file_put_contents($this->getAbsolutePath($fileObject), $contents) : false;
     }
 
     /**

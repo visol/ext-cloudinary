@@ -24,7 +24,6 @@ use Visol\Cloudinary\Services\CloudinaryScanService;
  */
 class CloudinaryScanCommand extends AbstractCloudinaryCommand
 {
-
     /**
      * @var ResourceStorage
      */
@@ -38,9 +37,9 @@ class CloudinaryScanCommand extends AbstractCloudinaryCommand
     {
         $this->io = new SymfonyStyle($input, $output);
 
-        $this->storage = ResourceFactory::getInstance()->getStorageObject(
-            $input->getArgument('storage')
-        );
+        /** @var ResourceFactory $resourceFactory */
+        $resourceFactory = GeneralUtility::makeInstance(ResourceFactory::class);
+        $this->storage = $resourceFactory->getStorageObject($input->getArgument('storage'));
     }
 
     /**
@@ -49,32 +48,11 @@ class CloudinaryScanCommand extends AbstractCloudinaryCommand
     protected function configure()
     {
         $message = 'Scan and warm up a cloudinary storage.';
-        $this
-            ->setDescription(
-                $message
-            )
-            ->addOption(
-                'silent',
-                's',
-                InputOption::VALUE_OPTIONAL,
-                'Mute output as much as possible',
-                false
-            )
-            ->addOption(
-                'empty',
-                'e',
-                InputOption::VALUE_OPTIONAL,
-                'Before scanning empty all resources for a given storage',
-                false
-            )
-            ->addArgument(
-                'storage',
-                InputArgument::REQUIRED,
-                'Storage identifier'
-            )
-            ->setHelp(
-                'Usage: ./vendor/bin/typo3 cloudinary:scan [0-9]'
-            );
+        $this->setDescription($message)
+            ->addOption('silent', 's', InputOption::VALUE_OPTIONAL, 'Mute output as much as possible', false)
+            ->addOption('empty', 'e', InputOption::VALUE_OPTIONAL, 'Before scanning empty all resources for a given storage', false)
+            ->addArgument('storage', InputArgument::REQUIRED, 'Storage identifier')
+            ->setHelp('Usage: ./vendor/bin/typo3 cloudinary:scan [0-9]');
     }
 
     /**
@@ -104,27 +82,12 @@ class CloudinaryScanCommand extends AbstractCloudinaryCommand
 
         $numberOfFiles = $result['created'] + $result['updated'] - $result['deleted'];
         if ($numberOfFiles !== $result['total']) {
-            $this->error(
-                'Something went wrong. There is a problem with the number of files counted. %s !== %s',
-                [
-                    $numberOfFiles,
-                    $result['total']
-                ]
-            );
+            $this->error('Something went wrong. There is a problem with the number of files counted. %s !== %s', [$numberOfFiles, $result['total']]);
         }
 
         $message = "Statistics for files: \n\n- created: %s\n- updated: %s\n- total: %s\n- deleted: %s";
         $message .= "\n\nStatistics for folders: \n\n- deleted: %s";
-        $this->success(
-            $message,
-            [
-                $result['created'],
-                $result['updated'],
-                $result['total'],
-                $result['deleted'],
-                $result['folder_deleted'],
-            ]
-        );
+        $this->success($message, [$result['created'], $result['updated'], $result['total'], $result['deleted'], $result['folder_deleted']]);
 
         return 0;
     }
@@ -134,10 +97,6 @@ class CloudinaryScanCommand extends AbstractCloudinaryCommand
      */
     protected function getCloudinaryScanService(): CloudinaryScanService
     {
-        return GeneralUtility::makeInstance(
-            CloudinaryScanService::class,
-            $this->storage,
-            $this->io
-        );
+        return GeneralUtility::makeInstance(CloudinaryScanService::class, $this->storage, $this->io);
     }
 }

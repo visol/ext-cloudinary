@@ -58,72 +58,17 @@ class CloudinaryMoveCommand extends AbstractCloudinaryCommand
     protected function configure()
     {
         $message = 'Move bunch of images to a cloudinary storage. Consult the README.md for more info.';
-        $this
-            ->setDescription(
-                $message
-            )
-            ->addOption(
-                'silent',
-                's',
-                InputOption::VALUE_OPTIONAL,
-                'Mute output as much as possible',
-                false
-            )
-            ->addOption(
-                'yes',
-                'y',
-                InputOption::VALUE_OPTIONAL,
-                'Accept everything by default',
-                false
-            )
-            ->addOption(
-                'base-url',
-                '',
-                InputArgument::OPTIONAL,
-                'A base URL where to download missing files',
-                ''
-            )
-            ->addOption(
-                'filter',
-                '',
-                InputArgument::OPTIONAL,
-                'Filter pattern with possible wild cards, --filter="/foo/bar/%"',
-                ''
-            )
-            ->addOption(
-                'filter-file-type',
-                '',
-                InputArgument::OPTIONAL,
-                'Add a possible filter for file type as defined by FAL (e.g 1,2,3,4,5)',
-                ''
-            )
-            ->addOption(
-                'limit',
-                '',
-                InputArgument::OPTIONAL,
-                'Add a possible offset, limit to restrain the number of files. (eg. 0,100)',
-                ''
-            )
-            ->addOption(
-                'exclude',
-                '',
-                InputArgument::OPTIONAL,
-                'Exclude pattern, can contain comma separated values e.g. --exclude="/apps/%,/_temp/%"',
-                ''
-            )
-            ->addArgument(
-                'source',
-                InputArgument::REQUIRED,
-                'Source storage identifier'
-            )
-            ->addArgument(
-                'target',
-                InputArgument::REQUIRED,
-                'Target storage identifier'
-            )
-            ->setHelp(
-                'Usage: ./vendor/bin/typo3 cloudinary:move 1 2'
-            );
+        $this->setDescription($message)
+            ->addOption('silent', 's', InputOption::VALUE_OPTIONAL, 'Mute output as much as possible', false)
+            ->addOption('yes', 'y', InputOption::VALUE_OPTIONAL, 'Accept everything by default', false)
+            ->addOption('base-url', '', InputArgument::OPTIONAL, 'A base URL where to download missing files', '')
+            ->addOption('filter', '', InputArgument::OPTIONAL, 'Filter pattern with possible wild cards, --filter="/foo/bar/%"', '')
+            ->addOption('filter-file-type', '', InputArgument::OPTIONAL, 'Add a possible filter for file type as defined by FAL (e.g 1,2,3,4,5)', '')
+            ->addOption('limit', '', InputArgument::OPTIONAL, 'Add a possible offset, limit to restrain the number of files. (eg. 0,100)', '')
+            ->addOption('exclude', '', InputArgument::OPTIONAL, 'Exclude pattern, can contain comma separated values e.g. --exclude="/apps/%,/_temp/%"', '')
+            ->addArgument('source', InputArgument::REQUIRED, 'Source storage identifier')
+            ->addArgument('target', InputArgument::REQUIRED, 'Target storage identifier')
+            ->setHelp('Usage: ./vendor/bin/typo3 cloudinary:move 1 2');
     }
 
     /**
@@ -136,12 +81,11 @@ class CloudinaryMoveCommand extends AbstractCloudinaryCommand
 
         $this->isSilent = $input->getOption('silent');
 
-        $this->sourceStorage = ResourceFactory::getInstance()->getStorageObject(
-            $input->getArgument('source')
-        );
-        $this->targetStorage = ResourceFactory::getInstance()->getStorageObject(
-            $input->getArgument('target')
-        );
+        /** @var ResourceFactory $resourceFactory */
+        $resourceFactory = GeneralUtility::makeInstance(ResourceFactory::class);
+
+        $this->sourceStorage = $resourceFactory->getStorageObject($input->getArgument('source'));
+        $this->targetStorage = $resourceFactory->getStorageObject($input->getArgument('target'));
     }
 
     /**
@@ -166,16 +110,13 @@ class CloudinaryMoveCommand extends AbstractCloudinaryCommand
             return 0;
         }
 
-        $this->log(
-            'I will process %s files to be moved from storage "%s" (%s) to "%s" (%s)',
-            [
-                count($files),
-                $this->sourceStorage->getUid(),
-                $this->sourceStorage->getName(),
-                $this->targetStorage->getUid(),
-                $this->targetStorage->getName(),
-            ]
-        );
+        $this->log('I will process %s files to be moved from storage "%s" (%s) to "%s" (%s)', [
+            count($files),
+            $this->sourceStorage->getUid(),
+            $this->sourceStorage->getName(),
+            $this->targetStorage->getUid(),
+            $this->targetStorage->getName(),
+        ]);
 
         // A chance to the user to confirm the action
         if ($input->getOption('yes') === false) {
@@ -187,16 +128,16 @@ class CloudinaryMoveCommand extends AbstractCloudinaryCommand
             }
         }
 
+        /** @var ResourceFactory $resourceFactory */
+        $resourceFactory = GeneralUtility::makeInstance(ResourceFactory::class);
+
         $counter = 0;
         foreach ($files as $file) {
             $this->log();
             $this->log('Starting migration with %s', [$file['identifier']]);
 
             /** @var  $fileObject */
-            $fileObject = ResourceFactory::getInstance()->getFileObjectByStorageAndIdentifier(
-                $this->sourceStorage->getUid(),
-                $file['identifier']
-            );
+            $fileObject = $resourceFactory->getFileObjectByStorageAndIdentifier($this->sourceStorage->getUid(), $file['identifier']);
 
             if ($this->isFileSkipped($fileObject)) {
                 $this->log('Skipping file ' . $fileObject->getIdentifier());
@@ -216,25 +157,19 @@ class CloudinaryMoveCommand extends AbstractCloudinaryCommand
                 }
 
                 // Upload the file
-                $this->log(
-                    'Uploading file from %s%s',
-                    [
-                        $input->getOption('base-url'),
-                        $fileObject->getIdentifier()
-                    ]
-                );
+                $this->log('Uploading file from %s%s', [$input->getOption('base-url'), $fileObject->getIdentifier()]);
 
                 try {
                     $start = microtime(true);
-                    $this->getFileMoveService()->cloudinaryUploadFile(
-                        $fileObject,
-                        $this->targetStorage,
-                        $input->getOption('base-url')
-                    );
+                    $this->getFileMoveService()->cloudinaryUploadFile($fileObject, $this->targetStorage, $input->getOption('base-url'));
                     $timeElapsedSeconds = microtime(true) - $start;
                     $this->log('File uploaded, Elapsed time %.3f', [$timeElapsedSeconds]);
                 } catch (Exception $e) {
-                    $this->log('Mmm..., I could not upload file %s. Exception %s: %s', [$fileObject->getIdentifier(), $e->getCode(), $e->getMessage()], self::WARNING);
+                    $this->log(
+                        'Mmm..., I could not upload file %s. Exception %s: %s',
+                        [$fileObject->getIdentifier(), $e->getCode(), $e->getMessage()],
+                        self::WARNING,
+                    );
                     $this->faultyUploadedFiles[] = $fileObject->getIdentifier();
                     continue;
                 }
@@ -279,9 +214,9 @@ class CloudinaryMoveCommand extends AbstractCloudinaryCommand
 
         $extension = PathUtility::pathinfo($fileObject->getIdentifier(), PATHINFO_EXTENSION);
 
-        return in_array($extension, $this->getDisallowedExtensions(), true)
-            || in_array($fileObject->getIdentifier(), $this->getDisallowedFileIdentifiers(), true)
-            || $isDisallowedPath;
+        return in_array($extension, $this->getDisallowedExtensions(), true) ||
+            in_array($fileObject->getIdentifier(), $this->getDisallowedFileIdentifiers(), true) ||
+            $isDisallowedPath;
     }
 
     /**
@@ -307,11 +242,7 @@ class CloudinaryMoveCommand extends AbstractCloudinaryCommand
      */
     protected function getDisallowedPaths(): array
     {
-        return [
-            'user_upload/_temp_/',
-            '_temp_/',
-            '_processed_/',
-        ];
+        return ['user_upload/_temp_/', '_temp_/', '_processed_/'];
     }
 
     /**
