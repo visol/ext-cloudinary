@@ -13,6 +13,7 @@ use Cloudinary;
 use Cloudinary\Api;
 use Cloudinary\Uploader;
 use RuntimeException;
+use TYPO3\CMS\Core\Charset\CharsetConverter;
 use TYPO3\CMS\Core\Core\Environment;
 use TYPO3\CMS\Core\Log\Logger;
 use TYPO3\CMS\Core\Resource\ResourceFactory;
@@ -1121,7 +1122,7 @@ class CloudinaryFastDriver extends AbstractHierarchicalFilesystemDriver
      */
     public function sanitizeFileName($fileName, $charset = '')
     {
-        $fileName =  $this->charsetConversion->specCharsToASCII('utf-8', $fileName);
+        $fileName = $this->charsetConversion->specCharsToASCII('utf-8', $fileName);
 
         // Replace unwanted characters by underscores
         $cleanFileName = preg_replace(
