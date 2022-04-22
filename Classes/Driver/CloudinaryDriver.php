@@ -8,7 +8,12 @@ namespace Visol\Cloudinary\Driver;
  * For the full copyright and license information, please read the
  * LICENSE.md file that was distributed with this source code.
  */
-
+use TYPO3\CMS\Core\Http\ApplicationType;
+use TYPO3\CMS\Core\Charset\CharsetConverter;
+use TYPO3\CMS\Core\Log\Logger;
+use TYPO3\CMS\Core\Resource\Exception\InvalidFileNameException;
+use Cloudinary\Api\NotFound;
+use TYPO3\CMS\Core\Messaging\FlashMessageQueue;
 use Cloudinary\Api;
 use Cloudinary\Search;
 use Cloudinary\Uploader;
@@ -76,12 +81,12 @@ class CloudinaryDriver extends AbstractHierarchicalFilesystemDriver
     protected $localProcessingFiles = [];
 
     /**
-     * @var \TYPO3\CMS\Core\Resource\ResourceStorage
+     * @var ResourceStorage
      */
     protected $storage = null;
 
     /**
-     * @var \TYPO3\CMS\Core\Charset\CharsetConverter
+     * @var CharsetConverter
      */
     protected $charsetConversion = null;
 
@@ -138,7 +143,7 @@ class CloudinaryDriver extends AbstractHierarchicalFilesystemDriver
     public function initialize()
     {
         // Test connection if we are in the edit view of this storage
-        if (TYPO3_MODE === 'BE' && !empty($_GET['edit']['sys_file_storage'])) {
+        if (ApplicationType::fromRequest($GLOBALS['TYPO3_REQUEST'])->isBackend() && !empty($_GET['edit']['sys_file_storage'])) {
             $this->testConnection();
         }
     }
@@ -162,7 +167,7 @@ class CloudinaryDriver extends AbstractHierarchicalFilesystemDriver
      */
     protected function log(string $message, array $arguments = [], array $data = [])
     {
-        /** @var \TYPO3\CMS\Core\Log\Logger $logger */
+        /** @var Logger $logger */
         $logger = GeneralUtility::makeInstance(LogManager::class)->getLogger(__CLASS__);
         $logger->log(LogLevel::INFO, vsprintf($message, $arguments), $data);
     }
@@ -858,7 +863,7 @@ class CloudinaryDriver extends AbstractHierarchicalFilesystemDriver
             $folderIdentifier .= DIRECTORY_SEPARATOR;
         }
 
-        return GeneralUtility::isFirstPartOfStr($fileIdentifier, $folderIdentifier);
+        return \str_starts_with($fileIdentifier, $folderIdentifier);
     }
 
     /**
@@ -1133,7 +1138,7 @@ class CloudinaryDriver extends AbstractHierarchicalFilesystemDriver
         // Strip trailing dots and return
         $cleanFileName = rtrim($cleanFileName, '.');
         if ($cleanFileName === '') {
-            throw new Exception\InvalidFileNameException('File name "' . $fileName . '" is invalid.', 1320288991);
+            throw new InvalidFileNameException('File name "' . $fileName . '" is invalid.', 1320288991);
         }
 
         // Handle the special jpg case which does not correspond to the file extension.
@@ -1156,10 +1161,10 @@ class CloudinaryDriver extends AbstractHierarchicalFilesystemDriver
             $fileIdentifier,
         );
 
-        $temporaryFolder = \TYPO3\CMS\Core\Utility\GeneralUtility::dirname($temporaryFileNameAndPath);
+        $temporaryFolder = GeneralUtility::dirname($temporaryFileNameAndPath);
 
         if (!is_dir($temporaryFolder)) {
-            \TYPO3\CMS\Core\Utility\GeneralUtility::mkdir_deep($temporaryFolder);
+            GeneralUtility::mkdir_deep($temporaryFolder);
         }
         return $temporaryFileNameAndPath;
     }
@@ -1246,7 +1251,7 @@ class CloudinaryDriver extends AbstractHierarchicalFilesystemDriver
             );
 
             /** @var Search $search */
-            $search = new \Cloudinary\Search();
+            $search = new Search();
             $response = $search
                 ->expression('folder=' . $cloudinaryFolder)
                 ->sort_by('public_id', 'asc')
@@ -1295,7 +1300,7 @@ class CloudinaryDriver extends AbstractHierarchicalFilesystemDriver
             $cloudinaryResource = (array) $this->getApi()->resource($cloudinaryPublicId, [
                 'resource_type' => $resourceType,
             ]);
-        } catch (\Cloudinary\Api\NotFound $e) {
+        } catch (NotFound $e) {
             return null;
         }
         return $cloudinaryResource;
@@ -1345,10 +1350,10 @@ class CloudinaryDriver extends AbstractHierarchicalFilesystemDriver
         try {
             $this->initializeApi();
 
-            $search = new \Cloudinary\Search();
+            $search = new Search();
             $search->expression('folder=' . self::ROOT_FOLDER_IDENTIFIER)->execute();
 
-            /** @var \TYPO3\CMS\Core\Messaging\FlashMessage $message */
+            /** @var FlashMessage $message */
             $message = GeneralUtility::makeInstance(
                 FlashMessage::class,
                 LocalizationUtility::translate($localizationPrefix . 'connectionTestSuccessful.message'),
@@ -1357,7 +1362,7 @@ class CloudinaryDriver extends AbstractHierarchicalFilesystemDriver
             );
             $messageQueue->addMessage($message);
         } catch (\Exception $exception) {
-            /** @var \TYPO3\CMS\Core\Messaging\FlashMessage $message */
+            /** @var FlashMessage $message */
             $message = GeneralUtility::makeInstance(
                 FlashMessage::class,
                 $exception->getMessage(),
@@ -1369,13 +1374,12 @@ class CloudinaryDriver extends AbstractHierarchicalFilesystemDriver
     }
 
     /**
-     * @return \TYPO3\CMS\Core\Messaging\FlashMessageQueue
+     * @return FlashMessageQueue
      */
     protected function getMessageQueue()
     {
-        $objectManager = GeneralUtility::makeInstance(ObjectManager::class);
         /** @var FlashMessageService $flashMessageService */
-        $flashMessageService = $objectManager->get(FlashMessageService::class);
+        $flashMessageService = GeneralUtility::makeInstance(FlashMessageService::class);
         return $flashMessageService->getMessageQueueByIdentifier();
     }
 
@@ -1454,7 +1458,7 @@ class CloudinaryDriver extends AbstractHierarchicalFilesystemDriver
         // The problem: if we have multiple driver instances / configuration, we don't get the expected result
         // meaning we are wrongly fetching resources from other cloudinary "buckets" because of the singleton behaviour
         // Therefore it is better to create a new instance upon each API call to avoid driver confusion
-        return new \Cloudinary\Api();
+        return new Api();
     }
 
     /**

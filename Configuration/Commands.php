@@ -1,21 +1,28 @@
 <?php
+
+use Visol\Cloudinary\Command\CloudinaryCopyCommand;
+use Visol\Cloudinary\Command\CloudinaryMoveCommand;
+use Visol\Cloudinary\Command\CloudinaryAcceptanceTestCommand;
+use Visol\Cloudinary\Command\CloudinaryFixJpegCommand;
+use Visol\Cloudinary\Command\CloudinaryScanCommand;
+use Visol\Cloudinary\Command\CloudinaryQueryCommand;
 return [
     'cloudinary:copy' => [
-        'class' => \Visol\Cloudinary\Command\CloudinaryCopyCommand::class,
+        'class' => CloudinaryCopyCommand::class,
     ],
     'cloudinary:move' => [
-        'class' => \Visol\Cloudinary\Command\CloudinaryMoveCommand::class,
+        'class' => CloudinaryMoveCommand::class,
     ],
     'cloudinary:tests' => [
-        'class' => \Visol\Cloudinary\Command\CloudinaryAcceptanceTestCommand::class,
+        'class' => CloudinaryAcceptanceTestCommand::class,
     ],
     'cloudinary:fix' => [
-        'class' => \Visol\Cloudinary\Command\CloudinaryFixJpegCommand::class,
+        'class' => CloudinaryFixJpegCommand::class,
     ],
     'cloudinary:scan' => [
-        'class' => \Visol\Cloudinary\Command\CloudinaryScanCommand::class,
+        'class' => CloudinaryScanCommand::class,
     ],
     'cloudinary:query' => [
-        'class' => \Visol\Cloudinary\Command\CloudinaryQueryCommand::class,
+        'class' => CloudinaryQueryCommand::class,
     ],
 ];

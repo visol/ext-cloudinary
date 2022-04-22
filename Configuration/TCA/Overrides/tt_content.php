@@ -1,12 +1,13 @@
 <?php
 
+use TYPO3\CMS\Core\Utility\ExtensionManagementUtility;
 use Swisscom\Referenceable\Utility\TcaUtility;
 
 defined('TYPO3') or die('Access denied.');
 
 (static function (): void {
     // Add some fields to fe_users table to show TCA fields definitions
-    \TYPO3\CMS\Core\Utility\ExtensionManagementUtility::addTCAcolumns('tt_content', [
+    ExtensionManagementUtility::addTCAcolumns('tt_content', [
         'tx_cloudinary_resources' => [
             'exclude' => 0,
             'label' => 'LLL:EXT:cloudinary/Resources/Private/Language/backend.xlf:tt_content.tx_cloudinary_resources',
@@ -20,7 +21,7 @@ defined('TYPO3') or die('Access denied.');
         ],
     ]);
 
-    \TYPO3\CMS\Core\Utility\ExtensionManagementUtility::addToAllTCAtypes('tt_content', 'tx_cloudinary_resources');
+    ExtensionManagementUtility::addToAllTCAtypes('tt_content', 'tx_cloudinary_resources');
 
     //        \TYPO3\CMS\Core\Utility\ExtensionManagementUtility::addToAllTCAtypes('tt_address', 'quote', '', 'after:description');
 

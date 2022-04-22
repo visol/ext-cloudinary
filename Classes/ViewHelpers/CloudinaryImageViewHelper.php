@@ -8,18 +8,17 @@ namespace Visol\Cloudinary\ViewHelpers;
  * For the full copyright and license information, please read the
  * LICENSE.md file that was distributed with this source code.
  */
-
-use TYPO3\CMS\Core\Resource\ResourceStorage;
+use TYPO3\CMS\Extbase\Service\ImageService;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
+use TYPO3Fluid\Fluid\Core\ViewHelper\AbstractTagBasedViewHelper;
 use Visol\Cloudinary\Services\CloudinaryImageService;
-use Visol\Cloudinary\Services\CloudinaryPathService;
 use TYPO3\CMS\Core\Resource\Exception\ResourceDoesNotExistException;
 use TYPO3\CMS\Core\Resource\FileInterface;
 
 /**
  * Resizes a given image (if required) and renders the respective img tag
  */
-class CloudinaryImageViewHelper extends \TYPO3\CMS\Fluid\Core\ViewHelper\AbstractTagBasedViewHelper
+class CloudinaryImageViewHelper extends AbstractTagBasedViewHelper
 {
     /**
      * @var string
@@ -27,14 +26,14 @@ class CloudinaryImageViewHelper extends \TYPO3\CMS\Fluid\Core\ViewHelper\Abstrac
     protected $tagName = 'img';
 
     /**
-     * @var \TYPO3\CMS\Extbase\Service\ImageService
+     * @var ImageService
      */
     protected $imageService;
 
     /**
-     * @param \TYPO3\CMS\Extbase\Service\ImageService $imageService
+     * @param ImageService $imageService
      */
-    public function injectImageService(\TYPO3\CMS\Extbase\Service\ImageService $imageService)
+    public function injectImageService(ImageService $imageService)
     {
         $this->imageService = $imageService;
     }
@@ -69,7 +68,7 @@ class CloudinaryImageViewHelper extends \TYPO3\CMS\Fluid\Core\ViewHelper\Abstrac
      *
      * @see https://docs.typo3.org/typo3cms/TyposcriptReference/ContentObjects/Image/
      *
-     * @throws \TYPO3\CMS\Fluid\Core\ViewHelper\Exception
+     * @throws \TYPO3Fluid\Fluid\Core\ViewHelper\Exception
      * @return string Rendered tag
      */
     public function render(): string
@@ -78,7 +77,7 @@ class CloudinaryImageViewHelper extends \TYPO3\CMS\Fluid\Core\ViewHelper\Abstrac
         $image = $this->arguments['image'];
 
         if (is_null($src) && is_null($image) || !is_null($src) && !is_null($image)) {
-            throw new \TYPO3\CMS\Fluid\Core\ViewHelper\Exception('You must either specify a string src or a File object.', 1382284106);
+            throw new \TYPO3Fluid\Fluid\Core\ViewHelper\Exception('You must either specify a string src or a File object.', 1382284106);
         }
 
         try {

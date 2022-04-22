@@ -9,6 +9,7 @@
 
 namespace Visol\Cloudinary\Services;
 
+use TYPO3\CMS\Core\Log\Logger;
 use TYPO3\CMS\Core\Core\Environment;
 use TYPO3\CMS\Core\Log\LogLevel;
 use TYPO3\CMS\Core\Log\LogManager;
@@ -94,7 +95,7 @@ class CloudinaryUploadService
      */
     protected function error(string $message, array $arguments = [], array $data = [])
     {
-        /** @var \TYPO3\CMS\Core\Log\Logger $logger */
+        /** @var Logger $logger */
         $logger = GeneralUtility::makeInstance(LogManager::class)->getLogger(__CLASS__);
         $logger->log(LogLevel::ERROR, vsprintf($message, $arguments), $data);
     }

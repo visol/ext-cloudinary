@@ -8,7 +8,7 @@ namespace Visol\Cloudinary\Utility;
  * For the full copyright and license information, please read the
  * LICENSE.md file that was distributed with this source code.
  */
-
+use Cloudinary\Api;
 use Doctrine\DBAL\Driver\Connection;
 use TYPO3\CMS\Core\Database\ConnectionPool;
 use TYPO3\CMS\Core\Database\Query\QueryBuilder;
@@ -48,7 +48,7 @@ class CloudinaryApiUtility
         // The problem: if we have multiple driver instances / configuration, we don't get the expected result
         // meaning we are wrongly fetching resources from other cloudinary "buckets" because of the singleton behaviour
         // Therefore it is better to create a new instance upon each API call to avoid driver confusion
-        return new \Cloudinary\Api();
+        return new Api();
     }
 
 }

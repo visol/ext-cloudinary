@@ -8,8 +8,7 @@ namespace Visol\Cloudinary\Slots;
  * For the full copyright and license information, please read the
  * LICENSE.md file that was distributed with this source code.
  */
-
-
+use TYPO3\CMS\Core\Resource\Service\FileProcessingService;
 use TYPO3\CMS\Core\Resource\Driver\DriverInterface;
 use TYPO3\CMS\Core\Resource\File;
 use TYPO3\CMS\Core\Resource\FileInterface;
@@ -26,7 +25,7 @@ class FileProcessingSlot
 {
 
     // We want to remove all processed files
-    public function preFileProcess(\TYPO3\CMS\Core\Resource\Service\FileProcessingService $fileProcessingService, DriverInterface $driver, ProcessedFile $processedFile, File $file, $taskType, array $configuration)
+    public function preFileProcess(FileProcessingService $fileProcessingService, DriverInterface $driver, ProcessedFile $processedFile, File $file, $taskType, array $configuration)
     {
         if (!$driver instanceof CloudinaryFastDriver) {
             return;

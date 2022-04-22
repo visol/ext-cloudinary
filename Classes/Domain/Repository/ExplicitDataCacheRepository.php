@@ -2,6 +2,7 @@
 
 namespace Visol\Cloudinary\Domain\Repository;
 
+use TYPO3\CMS\Core\Context\Context;
 use TYPO3\CMS\Core\Database\Connection;
 use TYPO3\CMS\Core\Database\ConnectionPool;
 use TYPO3\CMS\Core\Database\Query\QueryBuilder;
@@ -81,8 +82,8 @@ class ExplicitDataCacheRepository
                 'options' => json_encode($options),
                 'options_hash' => $this->calculateHashFromOptions($options),
                 'explicit_data' => json_encode($explicitData),
-                'tstamp' => (int)$GLOBALS['EXEC_TIME'],
-                'crdate' => (int)$GLOBALS['EXEC_TIME'],
+                'tstamp' => (int)GeneralUtility::makeInstance(Context::class)->getPropertyFromAspect('date', 'timestamp'),
+                'crdate' => (int)GeneralUtility::makeInstance(Context::class)->getPropertyFromAspect('date', 'timestamp'),
 
             ]
         );

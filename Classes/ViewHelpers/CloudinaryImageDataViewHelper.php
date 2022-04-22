@@ -8,9 +8,10 @@ namespace Visol\Cloudinary\ViewHelpers;
  * For the full copyright and license information, please read the
  * LICENSE.md file that was distributed with this source code.
  */
-
+use TYPO3\CMS\Extbase\Service\ImageService;
 use TYPO3\CMS\Core\Resource\ResourceStorage;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
+use TYPO3Fluid\Fluid\Core\ViewHelper\AbstractViewHelper;
 use Visol\Cloudinary\Services\CloudinaryImageService;
 use Visol\Cloudinary\Services\CloudinaryPathService;
 use TYPO3\CMS\Core\Resource\Exception\ResourceDoesNotExistException;
@@ -20,18 +21,18 @@ use TYPO3\CMS\Core\Resource\FileReference;
 /**
  * Class CloudinaryImageDataViewHelper
  */
-class CloudinaryImageDataViewHelper extends \TYPO3\CMS\Fluid\Core\ViewHelper\AbstractViewHelper
+class CloudinaryImageDataViewHelper extends AbstractViewHelper
 {
 
     /**
-     * @var \TYPO3\CMS\Extbase\Service\ImageService
+     * @var ImageService
      */
     protected $imageService;
 
     /**
-     * @param \TYPO3\CMS\Extbase\Service\ImageService $imageService
+     * @param ImageService $imageService
      */
-    public function injectImageService(\TYPO3\CMS\Extbase\Service\ImageService $imageService)
+    public function injectImageService(ImageService $imageService)
     {
         $this->imageService = $imageService;
     }
@@ -71,7 +72,7 @@ class CloudinaryImageDataViewHelper extends \TYPO3\CMS\Fluid\Core\ViewHelper\Abs
         $image = $this->arguments['image'];
 
         if (is_null($src) && is_null($image) || !is_null($src) && !is_null($image)) {
-            throw new \TYPO3\CMS\Fluid\Core\ViewHelper\Exception('You must either specify a string src or a File object.', 1382284106);
+            throw new \TYPO3Fluid\Fluid\Core\ViewHelper\Exception('You must either specify a string src or a File object.', 1382284106);
         }
 
         if (!is_int($src)) {

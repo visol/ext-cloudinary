@@ -8,7 +8,8 @@ namespace Visol\Cloudinary\Driver;
  * For the full copyright and license information, please read the
  * LICENSE.md file that was distributed with this source code.
  */
-
+use TYPO3\CMS\Core\Http\ApplicationType;
+use TYPO3\CMS\Core\Resource\Exception\InvalidFileNameException;
 use Cloudinary;
 use Cloudinary\Api;
 use Cloudinary\Uploader;
@@ -61,12 +62,12 @@ class CloudinaryFastDriver extends AbstractHierarchicalFilesystemDriver
     protected $configurationService;
 
     /**
-     * @var \TYPO3\CMS\Core\Resource\ResourceStorage
+     * @var ResourceStorage
      */
     protected $storage = null;
 
     /**
-     * @var \TYPO3\CMS\Core\Charset\CharsetConverter
+     * @var CharsetConverter
      */
     protected $charsetConversion = null;
 
@@ -117,7 +118,7 @@ class CloudinaryFastDriver extends AbstractHierarchicalFilesystemDriver
     public function initialize()
     {
         // Test connection if we are in the edit view of this storage
-        if (TYPO3_MODE === 'BE' && !empty($_GET['edit']['sys_file_storage'])) {
+        if (ApplicationType::fromRequest($GLOBALS['TYPO3_REQUEST'])->isBackend() && !empty($_GET['edit']['sys_file_storage'])) {
             $this->getCloudinaryTestConnectionService()->test();
         }
     }
@@ -836,7 +837,7 @@ class CloudinaryFastDriver extends AbstractHierarchicalFilesystemDriver
             $folderIdentifier .= DIRECTORY_SEPARATOR;
         }
 
-        return GeneralUtility::isFirstPartOfStr($fileIdentifier, $folderIdentifier);
+        return \str_starts_with($fileIdentifier, $folderIdentifier);
     }
 
     /**
@@ -1134,7 +1135,7 @@ class CloudinaryFastDriver extends AbstractHierarchicalFilesystemDriver
         // Strip trailing dots and return
         $cleanFileName = rtrim($cleanFileName, '.');
         if ($cleanFileName === '') {
-            throw new Exception\InvalidFileNameException('File name "' . $fileName . '" is invalid.', 1320288991);
+            throw new InvalidFileNameException('File name "' . $fileName . '" is invalid.', 1320288991);
         }
 
         $pathParts = PathUtility::pathinfo($cleanFileName);

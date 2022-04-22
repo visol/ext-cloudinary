@@ -8,7 +8,8 @@ namespace Visol\Cloudinary\Services;
  * For the full copyright and license information, please read the
  * LICENSE.md file that was distributed with this source code.
  */
-
+use Cloudinary\Search;
+use TYPO3\CMS\Core\Messaging\FlashMessageQueue;
 use TYPO3\CMS\Core\Messaging\FlashMessage;
 use TYPO3\CMS\Core\Messaging\FlashMessageService;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
@@ -52,12 +53,12 @@ class CloudinaryTestConnectionService
         try {
             $this->initializeApi();
 
-            $search = new \Cloudinary\Search();
+            $search = new Search();
             $search
                 ->expression('folder=/')
                 ->execute();
 
-            /** @var \TYPO3\CMS\Core\Messaging\FlashMessage $message */
+            /** @var FlashMessage $message */
             $message = GeneralUtility::makeInstance(
                 FlashMessage::class,
                 LocalizationUtility::translate($localizationPrefix . 'connectionTestSuccessful.message'),
@@ -66,7 +67,7 @@ class CloudinaryTestConnectionService
             );
             $messageQueue->addMessage($message);
         } catch (\Exception $exception) {
-            /** @var \TYPO3\CMS\Core\Messaging\FlashMessage $message */
+            /** @var FlashMessage $message */
             $message = GeneralUtility::makeInstance(
                 FlashMessage::class,
                 $exception->getMessage(),
@@ -78,13 +79,12 @@ class CloudinaryTestConnectionService
     }
 
     /**
-     * @return \TYPO3\CMS\Core\Messaging\FlashMessageQueue
+     * @return FlashMessageQueue
      */
     protected function getMessageQueue()
     {
-        $objectManager = GeneralUtility::makeInstance(ObjectManager::class);
         /** @var FlashMessageService $flashMessageService */
-        $flashMessageService = $objectManager->get(FlashMessageService::class);
+        $flashMessageService = GeneralUtility::makeInstance(FlashMessageService::class);
         return $flashMessageService->getMessageQueueByIdentifier();
     }
 

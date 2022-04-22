@@ -8,7 +8,7 @@ namespace Visol\Cloudinary\Services;
  * For the full copyright and license information, please read the
  * LICENSE.md file that was distributed with this source code.
  */
-
+use TYPO3\CMS\Core\Log\Logger;
 use Cloudinary\Search;
 use Symfony\Component\Console\Style\SymfonyStyle;
 use TYPO3\CMS\Core\Database\ConnectionPool;
@@ -132,7 +132,7 @@ class CloudinaryScanService
             );
 
             /** @var Search $search */
-            $search = new \Cloudinary\Search();
+            $search = new Search();
 
             $response = $search
                 ->expression(implode(' AND ', $expressions))
@@ -279,7 +279,7 @@ class CloudinaryScanService
      */
     protected function log(string $message, array $arguments = [], array $data = [])
     {
-        /** @var \TYPO3\CMS\Core\Log\Logger $logger */
+        /** @var Logger $logger */
         $logger = GeneralUtility::makeInstance(LogManager::class)->getLogger(__CLASS__);
         $logger->log(
             LogLevel::INFO,

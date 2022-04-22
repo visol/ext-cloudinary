@@ -9,7 +9,7 @@ page_1573555440 {
         xhtml_cleaning = 0
         admPanel = 0
         disableAllHeaderCode = 1
-        additionalHeaders = Content-type:text/html
+        additionalHeaders.10.header = Content-type:text/html
     }
     10 = COA_INT
     10 {

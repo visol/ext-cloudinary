@@ -1,7 +1,7 @@
 <?php
 
 $EM_CONF[$_EXTKEY] = [
-    'title' => 'Cloudinary',
+    'title' => \Cloudinary::class,
     'description' => 'Cloudinary integration in TYPO3. Use automatic breakpoint generation for images.',
     'category' => 'service',
     'version' => '1.0.0',

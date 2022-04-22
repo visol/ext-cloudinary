@@ -41,7 +41,7 @@ class CloudinaryImageServiceTest extends UnitTestCase
      */
     public function instantiateMe()
     {
-        $fixture = new \Visol\Cloudinary\Services\CloudinaryImageService();
+        $fixture = new CloudinaryImageService();
         $this->assertInstanceOf(CloudinaryImageService::class, $fixture);
     }
 

@@ -9,6 +9,9 @@
 
 namespace Visol\Cloudinary\Services;
 
+use TYPO3\CMS\Core\Resource\StorageRepository;
+use Cloudinary\Uploader;
+use Doctrine\DBAL\Exception\UniqueConstraintViolationException;
 use TYPO3\CMS\Core\Log\LogLevel;
 use TYPO3\CMS\Core\Log\LogManager;
 use TYPO3\CMS\Core\Resource\File;
@@ -26,13 +29,11 @@ class CloudinaryImageService extends AbstractCloudinaryMediaService
 
     /**
      * @var ExplicitDataCacheRepository
-     * @inject
      */
     protected $explicitDataCacheRepository;
 
     /**
-     * @var \TYPO3\CMS\Core\Resource\StorageRepository
-     * @inject
+     * @var StorageRepository
      */
     protected $storageRepository;
 
@@ -59,10 +60,10 @@ class CloudinaryImageService extends AbstractCloudinaryMediaService
 
         if (!$explicitData) {
             $this->initializeApi($file->getStorage());
-            $explicitData = \Cloudinary\Uploader::explicit($publicId, $options);
+            $explicitData = Uploader::explicit($publicId, $options);
             try {
                 $this->explicitDataCacheRepository->save($file->getStorage()->getUid(), $publicId, $options, $explicitData);
-            } catch (\Doctrine\DBAL\Exception\UniqueConstraintViolationException $e) {
+            } catch (UniqueConstraintViolationException $e) {
                 // ignore
             }
         }
@@ -237,5 +238,15 @@ class CloudinaryImageService extends AbstractCloudinaryMediaService
                 'transformation' => $transformations,
             ]
         ];
+    }
+
+    public function injectExplicitDataCacheRepository(ExplicitDataCacheRepository $explicitDataCacheRepository): void
+    {
+        $this->explicitDataCacheRepository = $explicitDataCacheRepository;
+    }
+
+    public function injectStorageRepository(StorageRepository $storageRepository): void
+    {
+        $this->storageRepository = $storageRepository;
     }
 }
