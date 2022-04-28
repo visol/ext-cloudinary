@@ -2,7 +2,7 @@
 # Table structure for table 'tt_content'
 #
 CREATE TABLE tt_content (
-  tx_cloudinary_resources text DEFAULT '' NOT NULL,
+  tx_cloudinary_resources text,
 );
 
 #
