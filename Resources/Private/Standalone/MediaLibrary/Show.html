@@ -1,8 +1,12 @@
-<div>
-    <div id="btn-cloudinary-media-library"></div>
-    <div id="list-cloudinary-resources"></div>
-    <input type="hidden" id="field-media-library" name="{name}" value="{value}" onchange="{onchange}"/>
+<div id="container-cloudinary-images">
+	<script>
+		const cloudinaryCredentials = JSON.parse('{cloudinaryCredentials -> f:format.raw()}')
+	</script>
+	<div id="btn-cloudinary-media-library"></div>
+	<div id="list-cloudinary-resources" class="mt-2"></div>
+	<input type="hidden" id="field-media-library" name="{name}" value="{value}" onchange="{onChange}"/>
+	<input type="hidden" id="field-cloudinary-credentials" value="{cloudinaryCredentials -> f.format.raw()}" />
 </div>
 
-<f:asset.script identifier="cloudinary-media-library" src="https://media-library.cloudinary.com/global/all.js" />
-<f:asset.script identifier="cloudinary-media-library-user" src="EXT:cloudinary/Resources/Public/JavaScript/CloudinaryMediaLibrary.js" />
+<f:asset.script identifier="cloudinary-media-library" src="https://media-library.cloudinary.com/global/all.js"/>
+<f:be.pageRenderer includeRequireJsModules="{0:'TYPO3/CMS/Cloudinary/CloudinaryMediaLibrary'}"/>

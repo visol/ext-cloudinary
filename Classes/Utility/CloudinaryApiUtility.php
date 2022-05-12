@@ -8,11 +8,6 @@ namespace Visol\Cloudinary\Utility;
  * For the full copyright and license information, please read the
  * LICENSE.md file that was distributed with this source code.
  */
-use Cloudinary\Api;
-use Doctrine\DBAL\Driver\Connection;
-use TYPO3\CMS\Core\Database\ConnectionPool;
-use TYPO3\CMS\Core\Database\Query\QueryBuilder;
-use TYPO3\CMS\Core\Resource\ResourceStorage;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
 use Visol\Cloudinary\Services\ConfigurationService;
 
@@ -39,16 +34,6 @@ class CloudinaryApiUtility
                 'secure' => true
             ]
         );
-    }
-
-    public static function getApiByConfiguration(array $configuration) {
-        self::initializeByConfiguration($configuration);
-
-        // The object \Cloudinary\Api behaves like a singleton object.
-        // The problem: if we have multiple driver instances / configuration, we don't get the expected result
-        // meaning we are wrongly fetching resources from other cloudinary "buckets" because of the singleton behaviour
-        // Therefore it is better to create a new instance upon each API call to avoid driver confusion
-        return new Api();
     }
 
 }
