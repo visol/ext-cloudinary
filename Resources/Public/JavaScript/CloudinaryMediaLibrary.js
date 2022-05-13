@@ -133,10 +133,11 @@ define(['jquery', 'lit'], function ($, lit) {
     // Render the "select image or video" button
     cloudinary.createMediaLibrary(
       {
-        cloud_name: credential.cloudName, // credential.cloudName, // 'fabidule', // 'jungfrau-ch-test',
-        api_key: credential.apiKey, // credential.apiKey, //'335525476748139', // '353283611841452',
-        //username: '', // webmaster@jungfrau.ch
-        //use_saml: true,
+        cloud_name: credential.cloudName,
+        api_key: credential.apiKey,
+        username: credential.username,
+        timestamp: credential.timestamp,
+        signature: credential.signature,
         button_class: 'btn btn-default btn-sm open-btn mx-2',
         button_caption: `Image or video from "${credential.name}"`,
         search: { expression: 'resource_type:video' },

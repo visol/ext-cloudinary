@@ -92,7 +92,18 @@ class CloudinaryMediaLibraryPicker extends AbstractFormElement
                 'name' => $storage->getName(),
                 'cloudName' => $configurationService->get('cloudName'),
                 'apiKey' => $configurationService->get('apiKey'),
-                // 'apiSecret' => $configurationService->get('apiSecret'),
+                'username' => 'fabien.udriot@visol.ch', // webmaster@jungfrau.ch
+                'timestamp' => $_SERVER['REQUEST_TIME'],
+                'signature' => hash(
+                    'sha256',
+                    sprintf(
+                        'cloud_name=%s&timestamp=%s&username=%s%s',
+                        $configurationService->get('cloudName'),
+                        $_SERVER['REQUEST_TIME'],
+                        'fabien.udriot@visol.ch', // webmaster@jungfrau.ch
+                        $configurationService->get('apiSecret'),
+                    ),
+                ),
             ];
         }
 
