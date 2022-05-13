@@ -1,11 +1,4 @@
 #
-# Table structure for table 'tt_content'
-#
-CREATE TABLE tt_content (
-  tx_cloudinary_resources text,
-);
-
-#
 # Table structure for table 'tx_cloudinary_explicit_data_cache'
 #
 CREATE TABLE tx_cloudinary_explicit_data_cache (

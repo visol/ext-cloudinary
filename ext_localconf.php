@@ -2,6 +2,7 @@
 
 use TYPO3\CMS\Core\Utility\ExtensionManagementUtility;
 use TYPO3\CMS\Extbase\Utility\ExtensionUtility;
+use Visol\Cloudinary\Backend\Form\Container\InlineCloudinaryControlContainer;
 use Visol\Cloudinary\Controller\CloudinaryScanController;
 use TYPO3\CMS\Core\Resource\Driver\DriverRegistry;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
@@ -18,6 +19,13 @@ call_user_func(function () {
         'setup',
         '<INCLUDE_TYPOSCRIPT: source="FILE:EXT:cloudinary/Configuration/TypoScript/setup.typoscript">',
     );
+
+    // Override default class to add cloudinary button
+    $GLOBALS['TYPO3_CONF_VARS']['SYS']['formEngine']['nodeRegistry'][1652423292] = [
+        'nodeName' => 'inline',
+        'priority' => 50,
+        'class' => InlineCloudinaryControlContainer::class,
+    ];
 
     ExtensionUtility::configurePlugin(
         \Cloudinary::class,
@@ -37,7 +45,7 @@ call_user_func(function () {
         CloudinaryFastDriver::class,
         CloudinaryFastDriver::DRIVER_TYPE,
         \Cloudinary::class,
-        'FILE:EXT:cloudinary/Configuration/FlexForm/CloudinaryFlexForm.xml'
+        'FILE:EXT:cloudinary/Configuration/FlexForm/CloudinaryFlexForm.xml',
     );
 
     $GLOBALS['TYPO3_CONF_VARS']['LOG']['Visol'][\Cloudinary::class]['Service']['writerConfiguration'] = $GLOBALS['TYPO3_CONF_VARS']['LOG']['Visol'][\Cloudinary::class][
@@ -63,9 +71,9 @@ call_user_func(function () {
     // Hook for traditional file upload, replace
     $GLOBALS['TYPO3_CONF_VARS']['SC_OPTIONS']['t3lib/class.t3lib_extfilefunc.php']['processData'][] = FileUploadHook::class;
 
-    $GLOBALS['TYPO3_CONF_VARS']['SYS']['formEngine']['nodeRegistry'][1649771630] = [
-        'nodeName' => 'cloudinaryMediaLibraryField',
-        'priority' => 40,
-        'class' => CloudinaryMediaLibraryPicker::class,
-    ];
+//    $GLOBALS['TYPO3_CONF_VARS']['SYS']['formEngine']['nodeRegistry'][1649771630] = [
+//        'nodeName' => 'cloudinaryMediaLibraryField',
+//        'priority' => 40,
+//        'class' => CloudinaryMediaLibraryPicker::class,
+//    ];
 });

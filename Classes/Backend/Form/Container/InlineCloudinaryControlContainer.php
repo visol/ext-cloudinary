@@ -1,9 +1,8 @@
 <?php
-declare(strict_types=1);
 
-namespace Visol\Cloudinary\Form\Element;
+namespace Visol\Cloudinary\Backend\Form\Container;
 
-use TYPO3\CMS\Backend\Form\Element\AbstractFormElement;
+use TYPO3\CMS\Backend\Form\Container\InlineControlContainer;
 use TYPO3\CMS\Core\Database\ConnectionPool;
 use TYPO3\CMS\Core\Database\Query\QueryBuilder;
 use TYPO3\CMS\Core\Resource\ResourceFactory;
@@ -13,33 +12,51 @@ use TYPO3\CMS\Fluid\View\StandaloneView;
 use Visol\Cloudinary\Driver\CloudinaryFastDriver;
 use Visol\Cloudinary\Services\ConfigurationService;
 
-// @deprecated
-class CloudinaryMediaLibraryPicker extends AbstractFormElement
+class InlineCloudinaryControlContainer extends InlineControlContainer
 {
-    public function render(): array
+    /**
+     * @param array $inlineConfiguration
+     * @return string
+     */
+    protected function renderPossibleRecordsSelectorTypeGroupDB(array $inlineConfiguration)
     {
-        #$pageRenderer = GeneralUtility::makeInstance(PageRenderer::class);
-        // language labels for JavaScript files
-        #$pageRenderer->addInlineLanguageLabelFile(
-        #    ExtensionManagementUtility::extPath('cloudinary') . 'Resources/Private/Language/backend.xlf',
-        #    'media_file_upload',
-        #);
+        $selector = parent::renderPossibleRecordsSelectorTypeGroupDB($inlineConfiguration);
+
+        $button = $this->renderCloudinaryButtons($inlineConfiguration);
+
+        // Inject button before help-block
+        if (strpos($selector, '</div><div class="help-block">') > 0) {
+            $selector = str_replace(
+                '</div><div class="help-block">',
+                $button . '</div><div class="help-block">',
+                $selector,
+            );
+            // Try to inject it into the form-control container
+        } elseif (preg_match('/<\/div><\/div>$/i', $selector)) {
+            $selector = preg_replace('/<\/div><\/div>$/i', $button . '</div></div>', $selector);
+        } else {
+            $selector .= $button;
+        }
+
+        return $selector;
+    }
+
+    protected function renderCloudinaryButtons(array $inlineConfiguration): string
+    {
+        $foreign_table = $inlineConfiguration['foreign_table'];
+        $currentStructureDomObjectIdPrefix = $this->inlineStackProcessor->getCurrentStructureDomObjectIdPrefix(
+            $this->data['inlineFirstPid'],
+        );
+        $objectGroup = $currentStructureDomObjectIdPrefix . '-' . $foreign_table;
 
         $storages = $this->getCloudinaryStorages();
-        $result = $this->initializeResultArray();
-        $view = $this->initializeStandaloneView(
-            'EXT:cloudinary/Resources/Private/Standalone/MediaLibrary/ShowLegacy.html',
-        );
+        $view = $this->initializeStandaloneView('EXT:cloudinary/Resources/Private/Standalone/MediaLibrary/Show.html');
         $view->assignMultiple([
-            'parameters' => $this->data['parameterArray']['fieldConf']['config']['parameters'],
-            'name' => $this->data['parameterArray']['itemFormElName'],
-            'value' => $this->data['parameterArray']['itemFormElValue'],
-            'onChange' => htmlspecialchars(implode('', $this->data['parameterArray']['fieldChangeFunc'])),
+            'objectGroup' => $objectGroup,
             'cloudinaryCredentials' => json_encode($this->computeCloudinaryCredentials($storages)),
         ]);
 
-        $result['html'] = $view->render();
-        return $result;
+        return $view->render();
     }
 
     protected function initializeStandaloneView(string $templateNameAndPath): StandaloneView
@@ -92,10 +109,11 @@ class CloudinaryMediaLibraryPicker extends AbstractFormElement
             );
 
             $cloudinaryCredentials[] = [
-                'name' => $storage->getName(),
-                'cloudName' => $configurationService->get('cloudName'), // 'fabidule',
-                'apiKey' => $configurationService->get('apiKey'), // '335525476748139',
-                'username' => 'webmaster@jungfrau.ch', //  'fabien.udriot@visol.ch' todo make me configurable
+                'storageName' => $storage->getName(),
+                'storageUid' => $storage->getUid(),
+                'cloudName' => $configurationService->get('cloudName'), // 'fabidule'
+                'apiKey' => $configurationService->get('apiKey'), // '335525476748139'
+                'username' => 'webmaster@jungfrau.ch', // fabien.udriot@visol.ch
                 'timestamp' => $_SERVER['REQUEST_TIME'],
                 'signature' => hash(
                     'sha256',
@@ -103,7 +121,7 @@ class CloudinaryMediaLibraryPicker extends AbstractFormElement
                         'cloud_name=%s&timestamp=%s&username=%s%s',
                         'fabidule', // $configurationService->get('cloudName'),
                         $_SERVER['REQUEST_TIME'],
-                        'webmaster@jungfrau.ch', //  'fabien.udriot@visol.ch' todo make me configurable
+                        'webmaster@jungfrau.ch', // fabien.udriot@visol.ch
                         $configurationService->get('apiSecret'), // 'DCTP8xwgieesLKxmyudsed1hNjkfab'
                     ),
                 ),

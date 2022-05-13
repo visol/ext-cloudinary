@@ -118,7 +118,10 @@ class CloudinaryFastDriver extends AbstractHierarchicalFilesystemDriver
     public function initialize()
     {
         // Test connection if we are in the edit view of this storage
-        if (ApplicationType::fromRequest($GLOBALS['TYPO3_REQUEST'])->isBackend() && !empty($_GET['edit']['sys_file_storage'])) {
+        if (
+            ApplicationType::fromRequest($GLOBALS['TYPO3_REQUEST'])->isBackend() &&
+            !empty($_GET['edit']['sys_file_storage'])
+        ) {
             $this->getCloudinaryTestConnectionService()->test();
         }
     }
@@ -203,7 +206,6 @@ class CloudinaryFastDriver extends AbstractHierarchicalFilesystemDriver
     {
         $publicId = $this->getCloudinaryPathService()->computeCloudinaryPublicId($fileIdentifier);
         $cloudinaryResource = $this->getCloudinaryResourceService()->getResource($publicId);
-
         // We have a problem Hudson!
         if (!$cloudinaryResource) {
             throw new \Exception(
