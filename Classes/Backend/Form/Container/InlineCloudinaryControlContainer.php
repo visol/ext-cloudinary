@@ -111,18 +111,18 @@ class InlineCloudinaryControlContainer extends InlineControlContainer
             $cloudinaryCredentials[] = [
                 'storageName' => $storage->getName(),
                 'storageUid' => $storage->getUid(),
-                'cloudName' => $configurationService->get('cloudName'), // 'fabidule'
-                'apiKey' => $configurationService->get('apiKey'), // '335525476748139'
-                'username' => 'webmaster@jungfrau.ch', // fabien.udriot@visol.ch
+                'cloudName' => $configurationService->get('cloudName'),
+                'apiKey' => $configurationService->get('apiKey'),
+                'username' => 'thomas.imboden@jungfrau.ch',
                 'timestamp' => $_SERVER['REQUEST_TIME'],
                 'signature' => hash(
                     'sha256',
                     sprintf(
                         'cloud_name=%s&timestamp=%s&username=%s%s',
-                        'fabidule', // $configurationService->get('cloudName'),
+                        $configurationService->get('cloudName'),
                         $_SERVER['REQUEST_TIME'],
-                        'webmaster@jungfrau.ch', // fabien.udriot@visol.ch
-                        $configurationService->get('apiSecret'), // 'DCTP8xwgieesLKxmyudsed1hNjkfab'
+                        'thomas.imboden@jungfrau.ch',
+                        $configurationService->get('apiSecret'),
                     ),
                 ),
             ];

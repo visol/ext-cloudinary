@@ -67,7 +67,7 @@ class CloudinaryResourceService
             )
             ->setMaxResults(1);
 
-        $resource = $query->execute()->fetch();
+        $resource = $query->execute()->fetchAssociative();
         return $resource ? $resource : [];
     }
 

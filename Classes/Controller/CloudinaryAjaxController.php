@@ -37,24 +37,21 @@ class CloudinaryAjaxController
             $cloudinaryResourceService = GeneralUtility::makeInstance(CloudinaryResourceService::class, $storage);
 
             foreach ($cloudinaryIds as $publicId) {
-                $identifier = $cloudinaryPathService->computeFileIdentifier([
-                    'public_id' => $publicId,
-                    // 'format' => $resource['format'],
-                ]);
+                // We must retrieve the resources so that we can determinte the format
+                $api = new Cloudinary\Api();
+                $resource = $api->resource($publicId);
+
+                $identifier = $cloudinaryPathService->computeFileIdentifier((array)$resource);
                 if ($storage->hasFile($identifier)) {
                     $files[] = $storage->getFile($identifier)->getUid();
                 } else {
-                    // we should add the file in the storage
-                    $api = new Cloudinary\Api();
-                    $resource = $api->resource($publicId);
 
                     //$cloudinaryPathService->computeFileIdentifier((array) $resource);
                     // Save mirrored file
                     $cloudinaryResourceService->save((array) $resource);
 
-                    // todo this will not work if storage has default folder such as "fileadmin"
                     // This will trigger a file indexation
-                    $files[] = 2; // $storage->getFile($identifier)->getUid();
+                    $files[] = $storage->getFile($identifier)->getUid();
                 }
             }
         } catch (\RuntimeException $e) {
