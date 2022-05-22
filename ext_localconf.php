@@ -11,7 +11,7 @@ use TYPO3\CMS\Core\Log\LogLevel;
 use TYPO3\CMS\Core\Log\Writer\FileWriter;
 use TYPO3\CMS\Core\Cache\Frontend\VariableFrontend;
 use Visol\Cloudinary\Hook\FileUploadHook;
-use Visol\Cloudinary\Form\Element\CloudinaryMediaLibraryPicker;
+
 defined('TYPO3') || die('Access denied.');
 call_user_func(function () {
     ExtensionManagementUtility::addTypoScript(
@@ -48,9 +48,10 @@ call_user_func(function () {
         'FILE:EXT:cloudinary/Configuration/FlexForm/CloudinaryFlexForm.xml',
     );
 
-    $GLOBALS['TYPO3_CONF_VARS']['LOG']['Visol'][\Cloudinary::class]['Service']['writerConfiguration'] = $GLOBALS['TYPO3_CONF_VARS']['LOG']['Visol'][\Cloudinary::class][
-        'Cache'
-    ]['writerConfiguration'] = $GLOBALS['TYPO3_CONF_VARS']['LOG']['Visol'][\Cloudinary::class]['Driver']['writerConfiguration'] = [
+    $GLOBALS['TYPO3_CONF_VARS']['LOG']['Visol'][\Cloudinary::class]['Service']['writerConfiguration']
+        = $GLOBALS['TYPO3_CONF_VARS']['LOG']['Visol'][\Cloudinary::class]['Cache']['writerConfiguration']
+        = $GLOBALS['TYPO3_CONF_VARS']['LOG']['Visol'][\Cloudinary::class]['Driver']['writerConfiguration']
+        = [
         // configuration for WARNING severity, including all
         // levels with higher severity (ERROR, CRITICAL, EMERGENCY)
         LogLevel::INFO => [
@@ -71,9 +72,4 @@ call_user_func(function () {
     // Hook for traditional file upload, replace
     $GLOBALS['TYPO3_CONF_VARS']['SC_OPTIONS']['t3lib/class.t3lib_extfilefunc.php']['processData'][] = FileUploadHook::class;
 
-//    $GLOBALS['TYPO3_CONF_VARS']['SYS']['formEngine']['nodeRegistry'][1649771630] = [
-//        'nodeName' => 'cloudinaryMediaLibraryField',
-//        'priority' => 40,
-//        'class' => CloudinaryMediaLibraryPicker::class,
-//    ];
 });
