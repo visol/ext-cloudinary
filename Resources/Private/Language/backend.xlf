@@ -16,6 +16,9 @@
             <trans-unit id="driverConfiguration.basePath">
                 <source>A possible base path to store files in a parent directory. Example `production/`</source>
             </trans-unit>
+            <trans-unit id="driverConfiguration.authenticationEmail">
+                <source>Email used for authentication (auto-login) in file reference fields in TCEForm.</source>
+            </trans-unit>
             <trans-unit id="driverConfiguration.timeout">
                 <source>Cloudinary API timeout</source>
             </trans-unit>

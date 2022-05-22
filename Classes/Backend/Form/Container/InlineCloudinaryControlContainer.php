@@ -3,6 +3,7 @@
 namespace Visol\Cloudinary\Backend\Form\Container;
 
 use TYPO3\CMS\Backend\Form\Container\InlineControlContainer;
+use TYPO3\CMS\Core\Configuration\ExtensionConfiguration;
 use TYPO3\CMS\Core\Database\ConnectionPool;
 use TYPO3\CMS\Core\Database\Query\QueryBuilder;
 use TYPO3\CMS\Core\Resource\ResourceFactory;
@@ -75,22 +76,32 @@ class InlineCloudinaryControlContainer extends InlineControlContainer
      */
     protected function getCloudinaryStorages(): array
     {
-        /** @var QueryBuilder $query */
-        $query = GeneralUtility::makeInstance(ConnectionPool::class)->getQueryBuilderForTable('sys_file_storage');
+        $configuration = GeneralUtility::makeInstance(ExtensionConfiguration::class)->get('cloudinary');
 
-        $storages = $query
-            ->select('*')
-            ->from('sys_file_storage')
-            ->where($query->expr()->eq('driver', $query->expr()->literal(CloudinaryFastDriver::DRIVER_TYPE)))
-            ->execute()
-            ->fetchAllAssociative();
+        // fetch the storage from the configuration
+        $storages = array_filter(GeneralUtility::trimExplode(',', $configuration['tceform_cludinary_storage']));
+        if (empty($storages)) {
+            // empty... we fetch all storages
+
+            /** @var QueryBuilder $query */
+            $query = GeneralUtility::makeInstance(ConnectionPool::class)->getQueryBuilderForTable('sys_file_storage');
+
+            $storageItems = $query
+                ->select('*')
+                ->from('sys_file_storage')
+                ->where($query->expr()->eq('driver', $query->expr()->literal(CloudinaryFastDriver::DRIVER_TYPE)))
+                ->execute()
+                ->fetchAllAssociativeIndexed();
+
+            $storages = array_keys($storageItems);
+        }
 
         /** @var ResourceFactory $resourceFactory */
         $resourceFactory = GeneralUtility::makeInstance(ResourceFactory::class);
 
         $storageObjects = [];
         foreach ($storages as $storage) {
-            $storageObjects[] = $resourceFactory->getStorageObject($storage['uid']);
+            $storageObjects[] = $resourceFactory->getStorageObject($storage);
         }
         return $storageObjects;
     }
@@ -113,7 +124,7 @@ class InlineCloudinaryControlContainer extends InlineControlContainer
                 'storageUid' => $storage->getUid(),
                 'cloudName' => $configurationService->get('cloudName'),
                 'apiKey' => $configurationService->get('apiKey'),
-                'username' => 'thomas.imboden@jungfrau.ch',
+                'username' => $configurationService->get('authenticationEmail'),
                 'timestamp' => $_SERVER['REQUEST_TIME'],
                 'signature' => hash(
                     'sha256',
@@ -121,7 +132,7 @@ class InlineCloudinaryControlContainer extends InlineControlContainer
                         'cloud_name=%s&timestamp=%s&username=%s%s',
                         $configurationService->get('cloudName'),
                         $_SERVER['REQUEST_TIME'],
-                        'thomas.imboden@jungfrau.ch',
+                        $configurationService->get('authenticationEmail'),
                         $configurationService->get('apiSecret'),
                     ),
                 ),
