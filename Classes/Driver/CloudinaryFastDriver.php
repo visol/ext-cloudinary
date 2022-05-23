@@ -119,6 +119,7 @@ class CloudinaryFastDriver extends AbstractHierarchicalFilesystemDriver
     {
         // Test connection if we are in the edit view of this storage
         if (
+            !Environment::isCli() &&
             ApplicationType::fromRequest($GLOBALS['TYPO3_REQUEST'])->isBackend() &&
             !empty($_GET['edit']['sys_file_storage'])
         ) {
