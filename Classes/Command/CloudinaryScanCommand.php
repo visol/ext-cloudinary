@@ -27,7 +27,7 @@ class CloudinaryScanCommand extends AbstractCloudinaryCommand
     /**
      * @var ResourceStorage
      */
-    protected $storage;
+    protected ResourceStorage $storage;
 
     /**
      * @param InputInterface $input
@@ -55,12 +55,6 @@ class CloudinaryScanCommand extends AbstractCloudinaryCommand
             ->setHelp('Usage: ./vendor/bin/typo3 cloudinary:scan [0-9]');
     }
 
-    /**
-     * @param InputInterface $input
-     * @param OutputInterface $output
-     *
-     * @return int
-     */
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
         if (!$this->checkDriverType($this->storage)) {
@@ -92,9 +86,6 @@ class CloudinaryScanCommand extends AbstractCloudinaryCommand
         return 0;
     }
 
-    /**
-     * @return object|CloudinaryScanService
-     */
     protected function getCloudinaryScanService(): CloudinaryScanService
     {
         return GeneralUtility::makeInstance(CloudinaryScanService::class, $this->storage, $this->io);

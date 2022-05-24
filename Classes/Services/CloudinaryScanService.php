@@ -153,7 +153,7 @@ class CloudinaryScanService
                     $result = $this->getCloudinaryResourceService()->save($resource);
 
                     // Find if the file exists in sys_file already
-                    if (!$this->isFileIndexed($fileIdentifier)) {
+                    if (!$this->fileExistsInStorage($fileIdentifier)) {
 
                         if ($this->io) {
                             $this->io->writeln('Indexing new file: ' . $fileIdentifier);
@@ -204,7 +204,7 @@ class CloudinaryScanService
      *
      * @return bool
      */
-    protected function isFileIndexed(string $fileIdentifier): bool
+    protected function fileExistsInStorage(string $fileIdentifier): bool
     {
         $query = $this->getQueryBuilder();
         $query->count('*')

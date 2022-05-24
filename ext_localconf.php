@@ -48,6 +48,10 @@ call_user_func(function () {
         'FILE:EXT:cloudinary/Configuration/FlexForm/CloudinaryFlexForm.xml',
     );
 
+    /* @var \TYPO3\CMS\Core\Resource\Index\ExtractorRegistry $metaDataExtractorRegistry */
+    $metaDataExtractorRegistry = \TYPO3\CMS\Core\Utility\GeneralUtility::makeInstance(\TYPO3\CMS\Core\Resource\Index\ExtractorRegistry::class);
+    $metaDataExtractorRegistry->registerExtractionService(\Visol\Cloudinary\Services\Extractor\CloudinaryMetaDataExtractor::class);
+
     $GLOBALS['TYPO3_CONF_VARS']['LOG']['Visol'][\Cloudinary::class]['Service']['writerConfiguration']
         = $GLOBALS['TYPO3_CONF_VARS']['LOG']['Visol'][\Cloudinary::class]['Cache']['writerConfiguration']
         = $GLOBALS['TYPO3_CONF_VARS']['LOG']['Visol'][\Cloudinary::class]['Driver']['writerConfiguration']
