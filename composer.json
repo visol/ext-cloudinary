@@ -6,7 +6,7 @@
     "GPL-2.0-or-later"
   ],
   "require": {
-    "cloudinary/cloudinary_php": "^1.15",
+    "cloudinary/cloudinary_php": "^2.7",
     "ext-json": "*",
     "php": ">=7.3.0"
   },
