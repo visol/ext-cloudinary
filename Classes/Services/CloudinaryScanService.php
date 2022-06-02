@@ -173,7 +173,7 @@ class CloudinaryScanService
                     $this->statistics[self::TOTAL]++;
                 }
             }
-        } while (!empty($response) && array_key_exists('next_cursor', $response));
+        } while (!empty($response) && isset($response['next_cursor']));
 
         $this->postScan();
 
