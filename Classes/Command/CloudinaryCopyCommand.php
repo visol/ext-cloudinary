@@ -75,8 +75,6 @@ class CloudinaryCopyCommand extends AbstractCloudinaryCommand
     }
 
     /**
-     * Move file
-     *
      * @param InputInterface $input
      * @param OutputInterface $output
      */
