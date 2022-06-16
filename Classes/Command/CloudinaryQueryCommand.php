@@ -45,7 +45,6 @@ use Visol\Cloudinary\Filters\RegularExpressionFilter;
  */
 class CloudinaryQueryCommand extends AbstractCloudinaryCommand
 {
-
     /**
      * @var ResourceStorage
      */
@@ -59,9 +58,10 @@ class CloudinaryQueryCommand extends AbstractCloudinaryCommand
     {
         $this->io = new SymfonyStyle($input, $output);
 
-        $this->storage = ResourceFactory::getInstance()->getStorageObject(
-            $input->getArgument('storage')
-        );
+        /** @var ResourceFactory $resourceFactory */
+        $resourceFactory = GeneralUtility::makeInstance(ResourceFactory::class);
+
+        $this->storage = $resourceFactory->getStorageObject($input->getArgument('storage'));
     }
 
     /**
@@ -70,62 +70,16 @@ class CloudinaryQueryCommand extends AbstractCloudinaryCommand
     protected function configure()
     {
         $message = 'Query a given storage such a list, count files or folders';
-        $this
-            ->setDescription(
-                $message
-            )
-            ->addOption(
-                'path',
-                '',
-                InputOption::VALUE_OPTIONAL,
-                'Give a folder identifier as a base path',
-                '/'
-            )
-            ->addOption(
-                'folder',
-                '',
-                InputOption::VALUE_NONE,
-                'Before scanning empty all resources for a given storage',
-            )
-            ->addOption(
-                'yes',
-                'y',
-                InputOption::VALUE_OPTIONAL,
-                'Accept everything by default',
-                false
-            )
-            ->addOption(
-                'count',
-                'c',
-                InputOption::VALUE_NONE,
-                'Count files'
-            )
-            ->addOption(
-                'filter',
-                'f',
-                InputOption::VALUE_OPTIONAL,
-                'Possible filter with regular expression'
-            )
-            ->addOption(
-                'recursive',
-                'r',
-                InputOption::VALUE_NONE,
-                'Recursive lookup'
-            )
-            ->addOption(
-                'delete',
-                'd',
-                InputOption::VALUE_NONE,
-                'Delete found files / folders.'
-            )
-            ->addArgument(
-                'storage',
-                InputArgument::REQUIRED,
-                'Storage identifier'
-            )
-            ->setHelp(
-                'Usage: ./vendor/bin/typo3 cloudinary:query [0-9]'
-            );
+        $this->setDescription($message)
+            ->addOption('path', '', InputOption::VALUE_OPTIONAL, 'Give a folder identifier as a base path', '/')
+            ->addOption('folder', '', InputOption::VALUE_NONE, 'Before scanning empty all resources for a given storage')
+            ->addOption('yes', 'y', InputOption::VALUE_OPTIONAL, 'Accept everything by default', false)
+            ->addOption('count', 'c', InputOption::VALUE_NONE, 'Count files')
+            ->addOption('filter', 'f', InputOption::VALUE_OPTIONAL, 'Possible filter with regular expression')
+            ->addOption('recursive', 'r', InputOption::VALUE_NONE, 'Recursive lookup')
+            ->addOption('delete', 'd', InputOption::VALUE_NONE, 'Delete found files / folders.')
+            ->addArgument('storage', InputArgument::REQUIRED, 'Storage identifier')
+            ->setHelp('Usage: ./vendor/bin/typo3 cloudinary:query [0-9]');
     }
 
     /**
@@ -141,13 +95,9 @@ class CloudinaryQueryCommand extends AbstractCloudinaryCommand
 
         // Get the chance to define a filter
         if ($input->getOption('filter')) {
-
             RegularExpressionFilter::setRegularExpression($input->getOption('filter'));
             $filters = $this->storage->getFileAndFolderNameFilters();
-            $filters[] = [
-                RegularExpressionFilter::class,
-                'filter'
-            ];
+            $filters[] = [RegularExpressionFilter::class, 'filter'];
             $this->storage->setFileAndFolderNameFilters($filters);
         }
 
@@ -164,10 +114,7 @@ class CloudinaryQueryCommand extends AbstractCloudinaryCommand
                 $numberOfFolders = count($folders);
                 if ($input->getOption('delete') && $numberOfFolders) {
                     $this->log();
-                    $message = sprintf(
-                        'You are about to recursively delete %s folder(s). Are you sure?',
-                        count($folders)
-                    );
+                    $message = sprintf('You are about to recursively delete %s folder(s). Are you sure?', count($folders));
                     if ($this->io->confirm($message, false)) {
                         /** @var Folder $folder */
                         foreach ($folders as $folder) {
@@ -181,20 +128,13 @@ class CloudinaryQueryCommand extends AbstractCloudinaryCommand
 
                 $numberOfFiles = count($files);
                 if ($input->getOption('delete') && $numberOfFiles) {
-
                     $this->log();
-                    $message = sprintf(
-                        'You are about to delete %s files(s) from storage "%s". Are you sure?',
-                        $numberOfFiles,
-                        $this->storage->getName()
-                    );
+                    $message = sprintf('You are about to delete %s files(s) from storage "%s". Are you sure?', $numberOfFiles, $this->storage->getName());
                     if ($this->io->confirm($message, false)) {
                         /** @var File $file */
                         foreach ($files as $file) {
                             $this->log('Deleting %s', [$file->getIdentifier()]);
-                            $file->exists()
-                                ? $file->delete()
-                                : $this->error('Missing file %s', [$file->getIdentifier()]);
+                            $file->exists() ? $file->delete() : $this->error('Missing file %s', [$file->getIdentifier()]);
                         }
                     }
                 }
@@ -211,15 +151,7 @@ class CloudinaryQueryCommand extends AbstractCloudinaryCommand
      */
     protected function listFoldersAction(InputInterface $input): array
     {
-        $folders = $this->storage->getFoldersInFolder(
-            $this->getFolder(
-                $input->getOption('path')
-            ),
-            0,
-            0,
-            true,
-            $input->getOption('recursive')
-        );
+        $folders = $this->storage->getFoldersInFolder($this->getFolder($input->getOption('path')), 0, 0, true, $input->getOption('recursive'));
 
         foreach ($folders as $folder) {
             $this->log($folder->getIdentifier());
@@ -235,17 +167,7 @@ class CloudinaryQueryCommand extends AbstractCloudinaryCommand
      */
     protected function listFilesAction(InputInterface $input): array
     {
-
-        $files = $this->storage->getFilesInFolder(
-            $this->getFolder(
-                $input->getOption('path')
-            ),
-            0,
-            0,
-            true,
-            $input->getOption('recursive')
-
-        );
+        $files = $this->storage->getFilesInFolder($this->getFolder($input->getOption('path')), 0, 0, true, $input->getOption('recursive'));
 
         foreach ($files as $file) {
             $this->log($file->getIdentifier());
@@ -260,15 +182,9 @@ class CloudinaryQueryCommand extends AbstractCloudinaryCommand
      */
     protected function countFoldersAction(InputInterface $input): void
     {
-        $numberOfFolders = $this->storage->countFoldersInFolder(
-            $this->getFolder(
-                $input->getOption('path')
-            ),
-            true,
-            $input->getOption('recursive')
-        );
+        $numberOfFolders = $this->storage->countFoldersInFolder($this->getFolder($input->getOption('path')), true, $input->getOption('recursive'));
 
-        $this->log('I found %s folder(s)', [$numberOfFolders,]);
+        $this->log('I found %s folder(s)', [$numberOfFolders]);
     }
 
     /**
@@ -278,16 +194,9 @@ class CloudinaryQueryCommand extends AbstractCloudinaryCommand
      */
     protected function countFilesAction(InputInterface $input): void
     {
+        $numberOfFiles = $this->storage->countFilesInFolder($this->getFolder($input->getOption('path')), true, $input->getOption('recursive'));
 
-        $numberOfFiles = $this->storage->countFilesInFolder(
-            $this->getFolder(
-                $input->getOption('path')
-            ),
-            true,
-            $input->getOption('recursive')
-        );
-
-        $this->log('I found %s files(s)', [$numberOfFiles,]);
+        $this->log('I found %s files(s)', [$numberOfFiles]);
     }
 
     /**
@@ -297,17 +206,14 @@ class CloudinaryQueryCommand extends AbstractCloudinaryCommand
      */
     protected function getFolder($folderIdentifier): Folder
     {
-        $folderIdentifier = $folderIdentifier === DIRECTORY_SEPARATOR
-            ? $folderIdentifier
-            : DIRECTORY_SEPARATOR . trim($folderIdentifier, '/') . DIRECTORY_SEPARATOR;
+        $folderIdentifier =
+            $folderIdentifier === DIRECTORY_SEPARATOR ? $folderIdentifier : DIRECTORY_SEPARATOR . trim($folderIdentifier, '/') . DIRECTORY_SEPARATOR;
 
         return GeneralUtility::makeInstance(
             Folder::class,
             $this->storage,
             $folderIdentifier,
-            $folderIdentifier === DIRECTORY_SEPARATOR
-                ? ''
-                : $folderIdentifier
+            $folderIdentifier === DIRECTORY_SEPARATOR ? '' : $folderIdentifier,
         );
     }
 }

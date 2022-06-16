@@ -8,7 +8,7 @@ namespace Visol\Cloudinary\Services;
  * For the full copyright and license information, please read the
  * LICENSE.md file that was distributed with this source code.
  */
-
+use TYPO3\CMS\Core\Log\Logger;
 use Cloudinary\Search;
 use Symfony\Component\Console\Style\SymfonyStyle;
 use TYPO3\CMS\Core\Database\ConnectionPool;
@@ -132,7 +132,7 @@ class CloudinaryScanService
             );
 
             /** @var Search $search */
-            $search = new \Cloudinary\Search();
+            $search = new Search();
 
             $response = $search
                 ->expression(implode(' AND ', $expressions))
@@ -153,7 +153,7 @@ class CloudinaryScanService
                     $result = $this->getCloudinaryResourceService()->save($resource);
 
                     // Find if the file exists in sys_file already
-                    if (!$this->isFileIndexed($fileIdentifier)) {
+                    if (!$this->fileExistsInStorage($fileIdentifier)) {
 
                         if ($this->io) {
                             $this->io->writeln('Indexing new file: ' . $fileIdentifier);
@@ -173,7 +173,7 @@ class CloudinaryScanService
                     $this->statistics[self::TOTAL]++;
                 }
             }
-        } while (!empty($response) && array_key_exists('next_cursor', $response));
+        } while (!empty($response) && isset($response['next_cursor']));
 
         $this->postScan();
 
@@ -204,7 +204,7 @@ class CloudinaryScanService
      *
      * @return bool
      */
-    protected function isFileIndexed(string $fileIdentifier): bool
+    protected function fileExistsInStorage(string $fileIdentifier): bool
     {
         $query = $this->getQueryBuilder();
         $query->count('*')
@@ -279,7 +279,7 @@ class CloudinaryScanService
      */
     protected function log(string $message, array $arguments = [], array $data = [])
     {
-        /** @var \TYPO3\CMS\Core\Log\Logger $logger */
+        /** @var Logger $logger */
         $logger = GeneralUtility::makeInstance(LogManager::class)->getLogger(__CLASS__);
         $logger->log(
             LogLevel::INFO,

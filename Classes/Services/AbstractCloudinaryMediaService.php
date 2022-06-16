@@ -2,6 +2,9 @@
 
 namespace Visol\Cloudinary\Services;
 
+use Cloudinary\Uploader;
+use Doctrine\DBAL\Exception\UniqueConstraintViolationException;
+use TYPO3\CMS\Core\Log\Logger;
 use TYPO3\CMS\Core\Log\LogLevel;
 use TYPO3\CMS\Core\Log\LogManager;
 use TYPO3\CMS\Core\Resource\File;
@@ -44,10 +47,10 @@ abstract class AbstractCloudinaryMediaService
 
         if (!$explicitData) {
             $this->initializeApi($file->getStorage());
-            $explicitData = \Cloudinary\Uploader::explicit($publicId, $options);
+            $explicitData = Uploader::explicit($publicId, $options);
             try {
                 $this->explicitDataCacheRepository->save($file->getStorage()->getUid(), $publicId, $options, $explicitData);
-            } catch (\Doctrine\DBAL\Exception\UniqueConstraintViolationException $e) {
+            } catch (UniqueConstraintViolationException $e) {
                 // ignore
             }
         }
@@ -62,7 +65,7 @@ abstract class AbstractCloudinaryMediaService
      */
     protected function error(string $message, array $arguments = [], array $data = [])
     {
-        /** @var \TYPO3\CMS\Core\Log\Logger $logger */
+        /** @var Logger $logger */
         $logger = GeneralUtility::makeInstance(LogManager::class)->getLogger(__CLASS__);
         $logger->log(
             LogLevel::ERROR,

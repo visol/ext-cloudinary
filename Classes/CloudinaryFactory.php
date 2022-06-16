@@ -9,6 +9,7 @@
 
 namespace Visol\Cloudinary;
 
+use TYPO3\CMS\Core\Configuration\ExtensionConfiguration;
 use TYPO3\CMS\Core\Resource\Folder;
 use TYPO3\CMS\Core\Resource\ResourceFactory;
 use TYPO3\CMS\Core\Resource\ResourceStorage;
@@ -19,17 +20,16 @@ use TYPO3\CMS\Core\Utility\GeneralUtility;
  */
 class CloudinaryFactory extends \Exception
 {
-
     /**
      * @return ResourceStorage
      */
     public static function getDefaultStorage(): ResourceStorage
     {
-        // TODO: change me after typo3 v9 migration
-        //       GeneralUtility::makeInstance(ExtensionConfiguration::class)->get('default_cloudinary_storage')
-        $extensionConfiguration = (array)unserialize($GLOBALS['TYPO3_CONF_VARS']['EXT']['extConf']['cloudinary']);
-        $defaultCloudinaryStorageUid = (int)$extensionConfiguration['default_cloudinary_storage'];
-        return ResourceFactory::getInstance()->getStorageObject($defaultCloudinaryStorageUid);
+        $defaultCloudinaryStorageUid = GeneralUtility::makeInstance(ExtensionConfiguration::class)->get('cloudinary', 'default_cloudinary_storage');
+
+        /** @var ResourceFactory $resourceFactory */
+        $resourceFactory = GeneralUtility::makeInstance(ResourceFactory::class);
+        return $resourceFactory->getStorageObject($defaultCloudinaryStorageUid);
     }
 
     /**
@@ -40,10 +40,12 @@ class CloudinaryFactory extends \Exception
      */
     public static function getFolder($folderIdentifier, ResourceStorage $storage = null): Folder
     {
+        // prettier-ignore
         $folderIdentifier = $folderIdentifier === DIRECTORY_SEPARATOR
             ? $folderIdentifier
             : DIRECTORY_SEPARATOR . trim($folderIdentifier, '/') . DIRECTORY_SEPARATOR;
 
+        // prettier-ignore
         return GeneralUtility::makeInstance(
             Folder::class,
             $storage

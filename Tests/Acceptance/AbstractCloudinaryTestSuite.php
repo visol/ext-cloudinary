@@ -5,10 +5,10 @@ namespace Visol\Cloudinary\Tests\Acceptance;
 use Symfony\Component\Console\Style\SymfonyStyle;
 use TYPO3\CMS\Core\Resource\ResourceFactory;
 use TYPO3\CMS\Core\Resource\ResourceStorage;
+use TYPO3\CMS\Core\Utility\GeneralUtility;
 
 abstract class AbstractCloudinaryTestSuite
 {
-
     /**
      * @var ResourceStorage
      */
@@ -27,7 +27,9 @@ abstract class AbstractCloudinaryTestSuite
      */
     public function __construct(int $fakeStorageId, SymfonyStyle $io)
     {
-        $this->storage = ResourceFactory::getInstance()->getStorageObject($fakeStorageId);;
+        /** @var ResourceFactory $resourceFactory */
+        $resourceFactory = GeneralUtility::makeInstance(ResourceFactory::class);
+        $this->storage = $resourceFactory->getStorageObject($fakeStorageId);
         $this->io = $io;
     }
 
@@ -61,11 +63,6 @@ abstract class AbstractCloudinaryTestSuite
     protected function getAlternativeName(string $fileName, string $suffix): string
     {
         $pathParts = pathinfo($fileName);
-        return str_replace(
-            '.' . $pathParts['extension'],
-            '-' . $suffix . '.' . $pathParts['extension'],
-            $fileName
-        );
+        return str_replace('.' . $pathParts['extension'], '-' . $suffix . '.' . $pathParts['extension'], $fileName);
     }
-
 }

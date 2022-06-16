@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="utf-8" standalone="yes" ?>
 <xliff version="1.0">
     <file source-language="en" datatype="plaintext" original="messages" date="2019-09-19T09:11:39Z"
-          product-name="cloudinary">
-        <header/>
+    product-name="cloudinary">
+        <header />
         <body>
             <trans-unit id="driverConfiguration.cloudName">
                 <source>Cloudinary Cloud Name</source>
@@ -13,21 +13,27 @@
             <trans-unit id="driverConfiguration.apiSecret">
                 <source>Cloudinary API Secret</source>
             </trans-unit>
-			<trans-unit id="driverConfiguration.basePath">
-				<source>A possible base path to store files in a parent directory. Example `production/`</source>
-			</trans-unit>
+            <trans-unit id="driverConfiguration.basePath">
+                <source>A possible base path to store files in a parent directory. Example `production/`</source>
+            </trans-unit>
+            <trans-unit id="driverConfiguration.authenticationEmail">
+                <source>Email used for authentication (auto-login) in file reference fields in TCEForm.</source>
+            </trans-unit>
             <trans-unit id="driverConfiguration.timeout">
                 <source>Cloudinary API timeout</source>
             </trans-unit>
-			<trans-unit id="driverConfiguration.message.connectionTestFailed.title">
-				<source>Cloudinary connection failed</source>
-			</trans-unit>
-			<trans-unit id="driverConfiguration.message.connectionTestSuccessful.title">
-				<source>Connection successful</source>
-			</trans-unit>
-			<trans-unit id="driverConfiguration.message.connectionTestSuccessful.message">
-				<source>Congratulations! Cloudinary is successfully connected to TYPO3.</source>
-			</trans-unit>
+            <trans-unit id="driverConfiguration.message.connectionTestFailed.title">
+                <source>Cloudinary connection failed</source>
+            </trans-unit>
+            <trans-unit id="driverConfiguration.message.connectionTestSuccessful.title">
+                <source>Connection successful</source>
+            </trans-unit>
+            <trans-unit id="driverConfiguration.message.connectionTestSuccessful.message">
+                <source>Congratulations! Cloudinary is successfully connected to TYPO3.</source>
+            </trans-unit>
+            <trans-unit id="tt_content.tx_cloudinary_resources">
+                <source>Cloudinary resources</source>
+            </trans-unit>
         </body>
     </file>
 </xliff>

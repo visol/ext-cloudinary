@@ -20,7 +20,6 @@ use TYPO3\CMS\Core\Utility\GeneralUtility;
  */
 class CloudinaryResourceService
 {
-
     /**
      * @var string
      */
@@ -64,17 +63,12 @@ class CloudinaryResourceService
             ->from($this->tableName)
             ->where(
                 $query->expr()->eq('storage', $this->storage->getUid()),
-                $query->expr()->eq(
-                    'public_id_hash',
-                    $query->expr()->literal(sha1($publicId))
-                )
+                $query->expr()->eq('public_id_hash', $query->expr()->literal(sha1($publicId))),
             )
             ->setMaxResults(1);
 
-        $resource = $query->execute()->fetch();
-        return $resource
-            ? $resource
-            : [];
+        $resource = $query->execute()->fetchAssociative();
+        return $resource ? $resource : [];
     }
 
     /**
@@ -85,36 +79,31 @@ class CloudinaryResourceService
      *
      * @return array
      */
-    public function getResources(string $folder, array $orderings = [], array $pagination = [], bool $recursive = false): array
-    {
+    public function getResources(
+        string $folder,
+        array $orderings = [],
+        array $pagination = [],
+        bool $recursive = false
+    ): array {
         $query = $this->getQueryBuilder();
         $query
             ->select('*')
             ->from($this->tableName)
-            ->where(
-                $query->expr()->eq('storage', $this->storage->getUid())
-            );
+            ->where($query->expr()->eq('storage', $this->storage->getUid()));
 
         // We should handle recursion
         $expresion = $recursive
-            ? $query->expr()->like(
-                'folder',
-                $query->expr()->literal($folder . '%')
-            )
-            : $query->expr()->eq(
-                'folder',
-                $query->expr()->literal($folder)
-            );
+            ? $query->expr()->like('folder', $query->expr()->literal($folder . '%'))
+            : $query->expr()->eq('folder', $query->expr()->literal($folder));
         $query->andWhere($expresion);
 
         if ($orderings) {
             $query->orderBy($orderings['fieldName'], $orderings['direction']);
         }
 
-
-        if ($pagination && (int)$pagination['maxResult'] > 0) {
-            $query->setMaxResults((int)$pagination['maxResult']);
-            $query->setFirstResult((int)$pagination['firstResult']);
+        if ($pagination && (int) $pagination['maxResult'] > 0) {
+            $query->setMaxResults((int) $pagination['maxResult']);
+            $query->setFirstResult((int) $pagination['firstResult']);
         }
         return $query->execute()->fetchAll();
     }
@@ -131,24 +120,15 @@ class CloudinaryResourceService
         $query
             ->count('*')
             ->from($this->tableName)
-            ->where(
-                $query->expr()->eq('storage', $this->storage->getUid())
-            );
+            ->where($query->expr()->eq('storage', $this->storage->getUid()));
 
         // We should handle recursion
         $expresion = $recursive
-            ? $query->expr()->like(
-                'folder',
-                $query->expr()->literal($folder . '%')
-            )
-            : $query->expr()->eq(
-                'folder',
-                $query->expr()->literal($folder)
-            );
+            ? $query->expr()->like('folder', $query->expr()->literal($folder . '%'))
+            : $query->expr()->eq('folder', $query->expr()->literal($folder));
         $query->andWhere($expresion);
 
-
-        return (int)$query->execute()->fetchColumn(0);
+        return (int) $query->execute()->fetchColumn(0);
     }
 
     /**
@@ -190,8 +170,8 @@ class CloudinaryResourceService
         }
 
         return $this->exists($publicIdHash)
-            ? ['updated' => $this->update($cloudinaryResource, $publicIdHash)]
-            : ['created' => $this->add($cloudinaryResource)];
+            ? ['updated' => $this->update($cloudinaryResource, $publicIdHash), 'publicIdHash' => $publicIdHash]
+            : ['created' => $this->add($cloudinaryResource), 'publicIdHash' => $publicIdHash];
     }
 
     /**
@@ -201,10 +181,7 @@ class CloudinaryResourceService
      */
     protected function add(array $cloudinaryResource): int
     {
-        return $this->getConnection()->insert(
-            $this->tableName,
-            $this->getValues($cloudinaryResource)
-        );
+        return $this->getConnection()->insert($this->tableName, $this->getValues($cloudinaryResource));
     }
 
     /**
@@ -215,14 +192,10 @@ class CloudinaryResourceService
      */
     protected function update(array $cloudinaryResource, string $publicIdHash): int
     {
-        return $this->getConnection()->update(
-            $this->tableName,
-            $this->getValues($cloudinaryResource),
-            [
-                'public_id_hash' => $publicIdHash,
-                'storage' => $this->storage->getUid(),
-            ]
-        );
+        return $this->getConnection()->update($this->tableName, $this->getValues($cloudinaryResource), [
+            'public_id_hash' => $publicIdHash,
+            'storage' => $this->storage->getUid(),
+        ]);
     }
 
     /**
@@ -238,13 +211,10 @@ class CloudinaryResourceService
             ->from($this->tableName)
             ->where(
                 $query->expr()->eq('storage', $this->storage->getUid()),
-                $query->expr()->eq(
-                    'public_id_hash',
-                    $query->expr()->literal($publicIdHash)
-                )
+                $query->expr()->eq('public_id_hash', $query->expr()->literal($publicIdHash)),
             );
 
-        return (int)$query->execute()->fetchColumn(0);
+        return (int) $query->execute()->fetchOne(0);
     }
 
     /**
@@ -262,16 +232,16 @@ class CloudinaryResourceService
             'folder' => $this->getFolder($cloudinaryResource),
             'filename' => $this->getFileName($cloudinaryResource),
             'format' => $this->getValue('format', $cloudinaryResource),
-            'version' => (int)$this->getValue('version', $cloudinaryResource),
+            'version' => (int) $this->getValue('version', $cloudinaryResource),
             'resource_type' => $this->getValue('resource_type', $cloudinaryResource),
             'type' => $this->getValue('type', $cloudinaryResource),
             'created_at' => $this->getCreatedAt($cloudinaryResource),
             'uploaded_at' => $this->getUpdatedAt($cloudinaryResource),
-            'bytes' => (int)$this->getValue('bytes', $cloudinaryResource),
-            'width' => (int)$this->getValue('width', $cloudinaryResource),
-            'height' => (int)$this->getValue('height', $cloudinaryResource),
-            'aspect_ratio' => (double)$this->getValue('aspect_ratio', $cloudinaryResource),
-            'pixels' => (int)$this->getValue('pixels', $cloudinaryResource),
+            'bytes' => (int) $this->getValue('bytes', $cloudinaryResource),
+            'width' => (int) $this->getValue('width', $cloudinaryResource),
+            'height' => (int) $this->getValue('height', $cloudinaryResource),
+            'aspect_ratio' => (float) $this->getValue('aspect_ratio', $cloudinaryResource),
+            'pixels' => (int) $this->getValue('pixels', $cloudinaryResource),
             'url' => $this->getValue('url', $cloudinaryResource),
             'secure_url' => $this->getValue('secure_url', $cloudinaryResource),
             'status' => $this->getValue('status', $cloudinaryResource),
@@ -293,9 +263,7 @@ class CloudinaryResourceService
      */
     protected function getValue(string $key, array $cloudinaryResource): string
     {
-        return isset($cloudinaryResource[$key])
-            ? (string)$cloudinaryResource[$key]
-            : '';
+        return isset($cloudinaryResource[$key]) ? (string) $cloudinaryResource[$key] : '';
     }
 
     /**
@@ -316,9 +284,7 @@ class CloudinaryResourceService
     protected function getFolder(array $cloudinaryResource): string
     {
         $folder = dirname($this->getValue('public_id', $cloudinaryResource));
-        return $folder === '.'
-            ? ''
-            : $folder;
+        return $folder === '.' ? '' : $folder;
     }
 
     /**
@@ -329,10 +295,7 @@ class CloudinaryResourceService
     protected function getCreatedAt(array $cloudinaryResource): string
     {
         $createdAt = $this->getValue('created_at', $cloudinaryResource);
-        return date(
-            'Y-m-d h:i:s',
-            strtotime($createdAt)
-        );
+        return date('Y-m-d h:i:s', strtotime($createdAt));
     }
 
     /**
@@ -357,10 +320,7 @@ class CloudinaryResourceService
             ? $this->getValue('updated_at', $cloudinaryResource)
             : $this->getValue('created_at', $cloudinaryResource);
 
-        return date(
-            'Y-m-d h:i:s',
-            strtotime($updatedAt)
-        );
+        return date('Y-m-d h:i:s', strtotime($updatedAt));
     }
 
     /**

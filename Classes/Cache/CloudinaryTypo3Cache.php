@@ -8,7 +8,9 @@ namespace Visol\Cloudinary\Cache;
  * For the full copyright and license information, please read the
  * LICENSE.md file that was distributed with this source code.
  */
-
+use TYPO3\CMS\Core\Cache\Frontend\AbstractFrontend;
+use TYPO3\CMS\Core\Cache\CacheManager;
+use TYPO3\CMS\Core\Log\Logger;
 use TYPO3\CMS\Core\Log\LogLevel;
 use TYPO3\CMS\Core\Log\LogManager;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
@@ -20,7 +22,6 @@ use TYPO3\CMS\Core\Utility\GeneralUtility;
  */
 class CloudinaryTypo3Cache
 {
-
     const TAG_FOLDER = 'folder';
 
     const TAG_FILE = 'file';
@@ -46,11 +47,6 @@ class CloudinaryTypo3Cache
     public function __construct(int $storageUid)
     {
         $this->storageUid = $storageUid;
-
-        #$extensionConfiguration = (array)unserialize($GLOBALS['TYPO3_CONF_VARS']['EXT']['extConf']['cloudinary']);
-        #if (isset($extensionConfiguration['is_cache_enabled'])) {
-        #    $this->isCacheEnabled = (bool)$extensionConfiguration['is_cache_enabled'];
-        #}
     }
 
     /**
@@ -59,9 +55,7 @@ class CloudinaryTypo3Cache
      */
     public function getCachedFiles(string $folderIdentifier)
     {
-        return $this->get(
-            $this->computeFileCacheKey($folderIdentifier)
-        );
+        return $this->get($this->computeFileCacheKey($folderIdentifier));
     }
 
     /**
@@ -70,11 +64,7 @@ class CloudinaryTypo3Cache
      */
     public function setCachedFiles(string $folderIdentifier, array $files): void
     {
-        $this->set(
-            $this->computeFileCacheKey($folderIdentifier),
-            $files,
-            self::TAG_FILE
-        );
+        $this->set($this->computeFileCacheKey($folderIdentifier), $files, self::TAG_FILE);
     }
 
     /**
@@ -83,9 +73,7 @@ class CloudinaryTypo3Cache
      */
     public function getCachedFolders(string $folderIdentifier)
     {
-        return $this->get(
-            $this->computeFolderCacheKey($folderIdentifier)
-        );
+        return $this->get($this->computeFolderCacheKey($folderIdentifier));
     }
 
     /**
@@ -94,11 +82,7 @@ class CloudinaryTypo3Cache
      */
     public function setCachedFolders(string $folderIdentifier, array $folders): void
     {
-        $this->set(
-            $this->computeFolderCacheKey($folderIdentifier),
-            $folders,
-            self::TAG_FOLDER
-        );
+        $this->set($this->computeFolderCacheKey($folderIdentifier), $folders, self::TAG_FOLDER);
     }
 
     /**
@@ -107,9 +91,7 @@ class CloudinaryTypo3Cache
      */
     protected function get(string $identifier)
     {
-        return $this->isCacheEnabled
-            ? $this->getCacheInstance()->get($identifier)
-            : false;
+        return $this->isCacheEnabled ? $this->getCacheInstance()->get($identifier) : false;
     }
 
     /**
@@ -120,14 +102,7 @@ class CloudinaryTypo3Cache
     protected function set(string $identifier, array $data, $tag): void
     {
         if ($this->isCacheEnabled) {
-            $this->getCacheInstance()->set(
-                $identifier,
-                $data,
-                [
-                    $tag
-                ],
-                self::LIFETIME
-            );
+            $this->getCacheInstance()->set($identifier, $data, [$tag], self::LIFETIME);
 
             $this->log('Caching "%s" data with folder identifier "%s"', [$tag, $identifier]);
         }
@@ -140,11 +115,7 @@ class CloudinaryTypo3Cache
     protected function computeFolderCacheKey($folderIdentifier): string
     {
         // Sanitize the cache format as the key can not contains certain characters such as "/", ":", etc..
-        return sprintf(
-            'storage-%s-folders-%s',
-            $this->storageUid,
-            str_replace('/', '%', $folderIdentifier)
-        );
+        return sprintf('storage-%s-folders-%s', $this->storageUid, str_replace('/', '%', $folderIdentifier));
     }
 
     /**
@@ -154,11 +125,7 @@ class CloudinaryTypo3Cache
     protected function computeFileCacheKey($folderIdentifier): string
     {
         // Sanitize the cache format as the key can not contains certain characters such as "/", ":", etc..
-        return sprintf(
-            'storage-%s-files-%s',
-            $this->storageUid,
-            str_replace('/', '%', $folderIdentifier)
-        );
+        return sprintf('storage-%s-files-%s', $this->storageUid, str_replace('/', '%', $folderIdentifier));
     }
 
     /**
@@ -189,7 +156,7 @@ class CloudinaryTypo3Cache
     }
 
     /**
-     * @return \TYPO3\CMS\Core\Cache\Frontend\AbstractFrontend
+     * @return AbstractFrontend
      */
     protected function getCacheInstance()
     {
@@ -199,13 +166,12 @@ class CloudinaryTypo3Cache
     /**
      * Return the Cache Manager
      *
-     * @return \TYPO3\CMS\Core\Cache\CacheManager|object
+     * @return CacheManager|object
      */
     protected function getCacheManager()
     {
-        return GeneralUtility::makeInstance(\TYPO3\CMS\Core\Cache\CacheManager::class);
+        return GeneralUtility::makeInstance(CacheManager::class);
     }
-
 
     /**
      * @param string $message
@@ -213,7 +179,7 @@ class CloudinaryTypo3Cache
      */
     public function log(string $message, array $arguments = [])
     {
-        /** @var \TYPO3\CMS\Core\Log\Logger $logger */
+        /** @var Logger $logger */
         $logger = GeneralUtility::makeInstance(LogManager::class)->getLogger(__CLASS__);
         #$logger->log(
         #    LogLevel::INFO,

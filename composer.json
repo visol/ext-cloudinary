@@ -6,17 +6,20 @@
     "GPL-2.0-or-later"
   ],
   "require": {
+    "typo3/cms-core": "^11",
     "cloudinary/cloudinary_php": "^1.15",
     "ext-json": "*",
     "php": ">=7.3.0"
   },
   "autoload": {
     "psr-4": {
+      "Visol\\Cloudinary\\Tests\\": "Tests/",
       "Visol\\Cloudinary\\": "Classes/"
     }
   },
-  "suggest": {
-  },
-  "require-dev": {
+  "extra": {
+    "typo3/cms": {
+      "extension-key": "cloudinary"
+    }
   }
 }

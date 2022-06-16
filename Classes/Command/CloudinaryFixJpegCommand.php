@@ -16,13 +16,13 @@ use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Style\SymfonyStyle;
 use TYPO3\CMS\Core\Resource\ResourceFactory;
 use TYPO3\CMS\Core\Resource\ResourceStorage;
+use TYPO3\CMS\Core\Utility\GeneralUtility;
 
 /**
  * Class CloudinaryFixJpegCommand
  */
 class CloudinaryFixJpegCommand extends AbstractCloudinaryCommand
 {
-
     /**
      * @var ResourceStorage
      */
@@ -38,9 +38,9 @@ class CloudinaryFixJpegCommand extends AbstractCloudinaryCommand
 
         $this->isSilent = $input->getOption('silent');
 
-        $this->targetStorage = ResourceFactory::getInstance()->getStorageObject(
-            $input->getArgument('target')
-        );
+        /** @var ResourceFactory $resourceFactory */
+        $resourceFactory = GeneralUtility::makeInstance(ResourceFactory::class);
+        $this->targetStorage = $resourceFactory->getStorageObject($input->getArgument('target'));
     }
 
     /**
@@ -49,32 +49,11 @@ class CloudinaryFixJpegCommand extends AbstractCloudinaryCommand
     protected function configure()
     {
         $message = 'After "moving" files you should fix the jpeg extension. Consult README.md for more info.';
-        $this
-            ->setDescription(
-                $message
-            )
-            ->addOption(
-                'silent',
-                's',
-                InputOption::VALUE_OPTIONAL,
-                'Mute output as much as possible',
-                false
-            )
-            ->addOption(
-                'yes',
-                'y',
-                InputOption::VALUE_OPTIONAL,
-                'Accept everything by default',
-                false
-            )
-            ->addArgument(
-                'target',
-                InputArgument::REQUIRED,
-                'Target storage identifier'
-            )
-            ->setHelp(
-                'Usage: ./vendor/bin/typo3 cloudinary:fix [0-9]'
-            );
+        $this->setDescription($message)
+            ->addOption('silent', 's', InputOption::VALUE_OPTIONAL, 'Mute output as much as possible', false)
+            ->addOption('yes', 'y', InputOption::VALUE_OPTIONAL, 'Accept everything by default', false)
+            ->addArgument('target', InputArgument::REQUIRED, 'Target storage identifier')
+            ->setHelp('Usage: ./vendor/bin/typo3 cloudinary:fix [0-9]');
     }
 
     /**
@@ -87,7 +66,6 @@ class CloudinaryFixJpegCommand extends AbstractCloudinaryCommand
      */
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
-
         if (!$this->checkDriverType($this->targetStorage)) {
             $this->log('Look out! target storage is not of type "cloudinary"');
             return 1;
@@ -95,20 +73,16 @@ class CloudinaryFixJpegCommand extends AbstractCloudinaryCommand
 
         $files = $this->getJpegFiles();
 
-
         if (count($files) === 0) {
             $this->log('No files found, no work for me!');
             return 0;
         }
 
-        $this->log(
-            'I will update %s files by replacing "jpeg" to "jpg" in various fields in storage "%s" (%s)',
-            [
-                count($files),
-                $this->targetStorage->getUid(),
-                $this->targetStorage->getName(),
-            ]
-        );
+        $this->log('I will update %s files by replacing "jpeg" to "jpg" in various fields in storage "%s" (%s)', [
+            count($files),
+            $this->targetStorage->getUid(),
+            $this->targetStorage->getName(),
+        ]);
 
         // A chance to the user to confirm the action
         if ($input->getOption('yes') === false) {
@@ -122,7 +96,8 @@ class CloudinaryFixJpegCommand extends AbstractCloudinaryCommand
 
         // Handle extension case
         $connection = $this->getConnection();
-        $query = "
+        $query =
+            "
 UPDATE sys_file 
 SET extension = REPLACE(extension, 'jpeg', 'jpg'), 
     identifier = REPLACE(identifier, '.jpeg', '.jpg'),  
@@ -143,13 +118,7 @@ WHERE storage = " . $this->targetStorage->getUid();
         $query
             ->select('*')
             ->from($this->tableName)
-            ->where(
-                $query->expr()->eq('storage', $this->targetStorage->getUid()),
-                $query->expr()->eq(
-                    'extension',
-                    $query->expr()->literal('jpeg')
-                )
-            );
+            ->where($query->expr()->eq('storage', $this->targetStorage->getUid()), $query->expr()->eq('extension', $query->expr()->literal('jpeg')));
 
         return $query->execute()->fetchAll();
     }

@@ -1,0 +1,50 @@
+services:
+  _defaults:
+    autowire: true
+    autoconfigure: true
+    public: false
+
+  Visol\Cloudinary\:
+    resource: '../Classes/*'
+
+  Visol\Cloudinary\Command\CloudinaryCopyCommand:
+    tags:
+      - name: 'console.command'
+        command: 'cloudinary:copy'
+        schedulable: false
+        description: Copy bunch of images from a local storage to a cloudinary storage
+
+  Visol\Cloudinary\Command\CloudinaryMoveCommand:
+    tags:
+      - name: 'console.command'
+        command: 'cloudinary:move'
+        schedulable: false
+        description: Move bunch of images to a cloudinary storage. Consult the README.md for more info.
+
+  Visol\Cloudinary\Command\CloudinaryAcceptanceTestCommand:
+    tags:
+      - name: 'console.command'
+        command: 'cloudinary:tests'
+        schedulable: false
+        description: Run a suite of Acceptance Tests.
+
+  Visol\Cloudinary\Command\CloudinaryFixJpegCommand:
+    tags:
+      - name: 'console.command'
+        command: 'cloudinary:fix'
+        schedulable: false
+        description: After "moving" files you should fix the jpeg extension. Consult README.md for more info.
+
+  Visol\Cloudinary\Command\CloudinaryScanCommand:
+    tags:
+      - name: 'console.command'
+        command: 'cloudinary:scan'
+        schedulable: false
+        description: Scan and warm up a cloudinary storage.
+
+  Visol\Cloudinary\Command\CloudinaryQueryCommand:
+    tags:
+      - name: 'console.command'
+        command: 'cloudinary:query'
+        schedulable: false
+        description: Query a given storage such a list, count files or folders.

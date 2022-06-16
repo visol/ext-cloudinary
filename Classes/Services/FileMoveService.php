@@ -8,7 +8,8 @@ namespace Visol\Cloudinary\Services;
  * For the full copyright and license information, please read the
  * LICENSE.md file that was distributed with this source code.
  */
-
+use Cloudinary\Api;
+use Cloudinary\Uploader;
 use Doctrine\DBAL\Driver\Connection;
 use TYPO3\CMS\Core\Database\ConnectionPool;
 use TYPO3\CMS\Core\Database\Query\QueryBuilder;
@@ -49,7 +50,7 @@ class FileMoveService
             ->computeCloudinaryPublicId($fileObject->getIdentifier());
 
         try {
-            $api = new \Cloudinary\Api();
+            $api = new Api();
             $resource = $api->resource($publicId);
             $fileExists = !empty($resource);
         } catch (\Exception $exception) {
@@ -181,7 +182,7 @@ class FileMoveService
             : $this->getAbsolutePath($fileObject);
 
         // Upload the file
-        $resource = \Cloudinary\Uploader::upload(
+        $resource = Uploader::upload(
             $fileNameAndPath,
             $options
         );
