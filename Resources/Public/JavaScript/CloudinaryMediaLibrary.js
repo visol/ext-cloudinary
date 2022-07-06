@@ -38,9 +38,7 @@ define([
           // search: { expression: 'resource_type:image' }, // todo we could have video, how to filter _processed_file
         },
         {
-          showHandler: function () {
-            // cloudinaryIds: ['7Pq_2qd3JJE', 'Anreise-Bahnhoefe-Parking/Bahnhof-Grindelwald-Grund']
-          },
+          // showHandler: function () {},
           insertHandler: function (data) {
             NProgress.start();
 
