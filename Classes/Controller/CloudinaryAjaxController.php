@@ -37,9 +37,18 @@ class CloudinaryAjaxController
             $cloudinaryResourceService = GeneralUtility::makeInstance(CloudinaryResourceService::class, $storage);
 
             foreach ($cloudinaryIds as $publicId) {
-                // We must retrieve the resources so that we can determinte the format
-                $api = new Cloudinary\Api();
-                $resource = $api->resource($publicId);
+
+                // We must retrieve the resources so that we can determine the format
+                $search = new \Cloudinary\Search();
+                $search->expression('public_id:' . $publicId);
+                $search->max_results(1);
+                $response = $search->execute();
+
+                if (empty($response['resources'])) {
+                    throw new \RuntimeException('Missing resources ' . $publicId, 1657125439);
+                } else {
+                    $resource = $response['resources'][0];
+                }
 
                 $identifier = $cloudinaryPathService->computeFileIdentifier((array)$resource);
                 if ($storage->hasFile($identifier)) {
