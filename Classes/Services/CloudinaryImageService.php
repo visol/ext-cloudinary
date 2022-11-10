@@ -26,7 +26,6 @@ use Visol\Cloudinary\Utility\CloudinaryApiUtility;
  */
 class CloudinaryImageService extends AbstractCloudinaryMediaService
 {
-
     /**
      * @var ExplicitDataCacheRepository
      */
@@ -36,6 +35,13 @@ class CloudinaryImageService extends AbstractCloudinaryMediaService
      * @var StorageRepository
      */
     protected $storageRepository;
+
+    protected array $defaultOptions = [
+        'type' => 'upload',
+        'resource_type' => 'image',
+        'fetch_format' => 'auto',
+        'quality' => 'auto',
+    ];
 
     /**
      *
@@ -152,6 +158,16 @@ class CloudinaryImageService extends AbstractCloudinaryMediaService
 
     public function max($items) {
         return max($items);
+    }
+
+    public function getImageUrl(File $file, array $options = []): string
+    {
+        $options = array_merge($this->defaultOptions, $options);
+
+        $publicId = $this->getPublicIdForFile($file);
+
+        $this->initializeApi($file->getStorage());
+        return \Cloudinary::cloudinary_url($publicId, $options);
     }
 
     /**
