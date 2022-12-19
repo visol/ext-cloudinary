@@ -88,13 +88,14 @@ class CloudinaryScanCommand extends AbstractCloudinaryCommand
             );
         }
 
-        $message = "Statistics for files: \n\n- created: %s\n- updated: %s\n- total: %s\n- deleted: %s";
+        $message = "Statistics for files: \n\n- created: %s\n- updated: %s\n- total: %s\n- deleted: %s\n- failed: %s";
         $message .= "\n\nStatistics for folders: \n\n- deleted: %s";
         $this->success($message, [
             $result['created'],
             $result['updated'],
             $result['total'],
             $result['deleted'],
+            $result['failed'],
             $result['folder_deleted'],
         ]);
 
