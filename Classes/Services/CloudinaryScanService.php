@@ -30,6 +30,7 @@ class CloudinaryScanService
     private const UPDATED = 'updated';
     private const DELETED = 'deleted';
     private const TOTAL = 'total';
+    private const FAILED = 'failed';
     private const FOLDER_DELETED = 'folder_deleted';
 
     /**
@@ -55,6 +56,7 @@ class CloudinaryScanService
         self::UPDATED => 0,
         self::DELETED => 0,
         self::TOTAL => 0,
+        self::FAILED => 0,
 
         self::FOLDER_DELETED => 0,
     ];
@@ -143,34 +145,42 @@ class CloudinaryScanService
 
             if (is_array($response['resources'])) {
                 foreach ($response['resources'] as $resource) {
-
                     $fileIdentifier = $this->getCloudinaryPathService()->computeFileIdentifier($resource);
-                    if ($this->io) {
-                        $this->io->writeln($fileIdentifier);
-                    }
-
-                    // Save mirrored file
-                    $result = $this->getCloudinaryResourceService()->save($resource);
-
-                    // Find if the file exists in sys_file already
-                    if (!$this->fileExistsInStorage($fileIdentifier)) {
-
+                    try {
                         if ($this->io) {
-                            $this->io->writeln('Indexing new file: ' . $fileIdentifier);
-                            $this->io->writeln('');
+                            $this->io->writeln($fileIdentifier);
                         }
 
-                        // This will trigger a file indexation
-                        $this->storage->getFile($fileIdentifier);
+                        // Save mirrored file
+                        $result = $this->getCloudinaryResourceService()->save($resource);
+
+                        // Find if the file exists in sys_file already
+                        if (!$this->fileExistsInStorage($fileIdentifier)) {
+
+                            if ($this->io) {
+                                $this->io->writeln('Indexing new file: ' . $fileIdentifier);
+                                $this->io->writeln('');
+                            }
+
+                            // This will trigger a file indexation
+                            $this->storage->getFile($fileIdentifier);
+                        }
+
+                        // For the stats, we collect the number of files touched
+                        $key = key($result);
+                        $this->statistics[$key] += $result[$key];
+
+                        // In any case we can add a file to the counter.
+                        // Later we can verify the total corresponds to the "created" + "updated" + "deleted" files
+                        $this->statistics[self::TOTAL]++;
                     }
-
-                    // For the stats, we collect the number of files touched
-                    $key = key($result);
-                    $this->statistics[$key] += $result[$key];
-
-                    // In any case we can add a file to the counter.
-                    // Later we can verify the total corresponds to the "created" + "updated" + "deleted" files
-                    $this->statistics[self::TOTAL]++;
+                    catch (\Exception $e) {
+                        $this->statistics[self::FAILED]++;
+                        if ($this->io) {
+                            $this->io->warning(sprintf('Error could not process "%s"', $fileIdentifier));
+                        }
+                        // ignore
+                    }
                 }
             }
         } while (!empty($response) && isset($response['next_cursor']));
