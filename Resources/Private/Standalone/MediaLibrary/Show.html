@@ -1,7 +1,1 @@
-<script>
-	window.cloudinaryCredentials = JSON.parse('{cloudinaryCredentials -> f:format.raw()}')
-</script>
-<span id="btn-{objectGroup}" class="btn-cloudinary-media-library" data-object-group="{objectGroup}" data-is-initialized="0"></span>
-
-<f:asset.script identifier="cloudinary-media-library" src="https://media-library.cloudinary.com/global/all.js"/>
-<f:be.pageRenderer includeRequireJsModules="{0:'TYPO3/CMS/Cloudinary/CloudinaryMediaLibrary'}"/>
+<span id="btn-{objectGroup}" class="btn-cloudinary-media-library" data-cloudinary-credentials='{cloudinaryCredentials -> f:format.raw()}' data-object-group="{objectGroup}" data-is-initialized="0"></span>
