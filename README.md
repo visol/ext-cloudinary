@@ -10,6 +10,16 @@ It offers various services among other:
 * Manipulation of images and videos such as cropping, resizing and much more...
 * DAM functionalities where images can be tagged and metadata edited
 
+## Compatibility and Maintenance
+
+This package is currently maintained for the following versions:
+
+| TYPO3 Version | Package Version | Branch  | Maintained    |
+|---------------|-----------------|---------|---------------|
+| TYPO3 11.5.x  | 4.x             | master  | Yes           |
+| TYPO3 11.5.x  | 3.x             | -       | No            |
+| TYPO3 11.5.x  | 0.x             | -       | No            |
+
 Installation
 ============
 
