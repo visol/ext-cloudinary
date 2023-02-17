@@ -215,6 +215,7 @@ class CloudinaryImageService extends AbstractCloudinaryMediaService
             'format' => 'auto',
             'flags' => 'lossy',
             'quality' => 'auto',
+            'fetch_format' => 'auto',
         ];
 
         if (isset($settings['aspectRatio']) && $settings['aspectRatio']) {
