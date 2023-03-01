@@ -8,6 +8,9 @@ namespace Visol\Cloudinary\Services;
  * For the full copyright and license information, please read the
  * LICENSE.md file that was distributed with this source code.
  */
+
+use Cloudinary\Api;
+use TYPO3\CMS\Core\Exception;
 use TYPO3\CMS\Core\Log\Logger;
 use Cloudinary\Search;
 use Symfony\Component\Console\Style\SymfonyStyle;
@@ -20,9 +23,6 @@ use TYPO3\CMS\Core\Utility\GeneralUtility;
 use Visol\Cloudinary\Driver\CloudinaryDriver;
 use Visol\Cloudinary\Utility\CloudinaryApiUtility;
 
-/**
- * Class CloudinaryScanService
- */
 class CloudinaryScanService
 {
 
@@ -33,25 +33,13 @@ class CloudinaryScanService
     private const FAILED = 'failed';
     private const FOLDER_DELETED = 'folder_deleted';
 
-    /**
-     * @var ResourceStorage
-     */
-    protected $storage;
+    protected ResourceStorage $storage;
 
-    /**
-     * @var CloudinaryPathService
-     */
-    protected $cloudinaryPathService;
+    protected CloudinaryPathService $cloudinaryPathService;
 
-    /**
-     * @var string
-     */
-    protected $processedFolder = '_processed_';
+    protected string $processedFolder = '_processed_';
 
-    /**
-     * @var array
-     */
-    protected $statistics = [
+    protected array $statistics = [
         self::CREATED => 0,
         self::UPDATED => 0,
         self::DELETED => 0,
@@ -61,19 +49,8 @@ class CloudinaryScanService
         self::FOLDER_DELETED => 0,
     ];
 
-    /**
-     * @var SymfonyStyle|null
-     */
-    protected $io;
+    protected ?SymfonyStyle $io = null;
 
-    /**
-     * CloudinaryScanService constructor.
-     *
-     * @param ResourceStorage $storage
-     * @param SymfonyStyle|null $io
-     *
-     * @throws \Exception
-     */
     public function __construct(ResourceStorage $storage, SymfonyStyle $io = null)
     {
         if ($storage->getDriverType() !== CloudinaryDriver::DRIVER_TYPE) {
@@ -83,18 +60,23 @@ class CloudinaryScanService
         $this->io = $io;
     }
 
-    /**
-     * @return void
-     */
-    public function empty(): void
+    public function deleteAll(): void
     {
         $this->getCloudinaryResourceService()->deleteAll();
         $this->getCloudinaryFolderService()->deleteAll();
     }
 
-    /**
-     * @return array
-     */
+    public function scanOne(string $publicId): array|null
+    {
+        try {
+            $resource = (array)$this->getApi()->resource($publicId);
+            $result = $this->getCloudinaryResourceService()->save($resource);
+        } catch (Exception $exception) {
+            $result = null;
+        }
+        return $result;
+    }
+
     public function scan(): array
     {
         $this->preScan();
@@ -113,16 +95,14 @@ class CloudinaryScanService
             $expressions[] = sprintf('NOT folder=%s/*', $this->processedFolder);
         }
 
-        if ($this->io) {
-            $this->io->writeln('Mirroring...' . chr(10));
-        }
+        $this->console('Mirroring...', true);
 
         do {
             $nextCursor = isset($response)
                 ? $response['next_cursor']
                 : '';
 
-            $this->log(
+            $this->info(
                 '[API][SEARCH] Cloudinary\Search() - fetch resources from folder "%s" %s',
                 [
                     $cloudinaryFolder,
@@ -147,9 +127,7 @@ class CloudinaryScanService
                 foreach ($response['resources'] as $resource) {
                     $fileIdentifier = $this->getCloudinaryPathService()->computeFileIdentifier($resource);
                     try {
-                        if ($this->io) {
-                            $this->io->writeln($fileIdentifier);
-                        }
+                        $this->console($fileIdentifier);
 
                         // Save mirrored file
                         $result = $this->getCloudinaryResourceService()->save($resource);
@@ -157,10 +135,7 @@ class CloudinaryScanService
                         // Find if the file exists in sys_file already
                         if (!$this->fileExistsInStorage($fileIdentifier)) {
 
-                            if ($this->io) {
-                                $this->io->writeln('Indexing new file: ' . $fileIdentifier);
-                                $this->io->writeln('');
-                            }
+                            $this->console('Indexing new file: ' . $fileIdentifier, true);
 
                             // This will trigger a file indexation
                             $this->storage->getFile($fileIdentifier);
@@ -173,12 +148,9 @@ class CloudinaryScanService
                         // In any case we can add a file to the counter.
                         // Later we can verify the total corresponds to the "created" + "updated" + "deleted" files
                         $this->statistics[self::TOTAL]++;
-                    }
-                    catch (\Exception $e) {
+                    } catch (\Exception $e) {
                         $this->statistics[self::FAILED]++;
-                        if ($this->io) {
-                            $this->io->warning(sprintf('Error could not process "%s"', $fileIdentifier));
-                        }
+                        $this->console(sprintf('Error could not process "%s"', $fileIdentifier));
                         // ignore
                     }
                 }
@@ -190,30 +162,19 @@ class CloudinaryScanService
         return $this->statistics;
     }
 
-    /**
-     * @return void
-     */
     protected function preScan(): void
     {
         $this->getCloudinaryResourceService()->markAsMissing();
         $this->getCloudinaryFolderService()->markAsMissing();
     }
 
-    /**
-     * @return void
-     */
     protected function postScan(): void
     {
-        $identifier = ['missing' => 1];
-        $this->statistics[self::DELETED] = $this->getCloudinaryResourceService()->deleteAll($identifier);
-        $this->statistics[self::FOLDER_DELETED] = $this->getCloudinaryFolderService()->deleteAll($identifier);
+        $identifiers = ['missing' => 1];
+        $this->statistics[self::DELETED] = $this->getCloudinaryResourceService()->deleteAll($identifiers);
+        $this->statistics[self::FOLDER_DELETED] = $this->getCloudinaryFolderService()->deleteAll($identifiers);
     }
 
-    /**
-     * @param string $fileIdentifier
-     *
-     * @return bool
-     */
     protected function fileExistsInStorage(string $fileIdentifier): bool
     {
         $query = $this->getQueryBuilder();
@@ -230,12 +191,9 @@ class CloudinaryScanService
                 )
             );
 
-        return (bool)$query->execute()->fetchColumn(0);
+        return (bool)$query->execute()->fetchOne(0);
     }
 
-    /**
-     * @return object|QueryBuilder
-     */
     protected function getQueryBuilder(): QueryBuilder
     {
         /** @var ConnectionPool $connectionPool */
@@ -243,33 +201,21 @@ class CloudinaryScanService
         return $connectionPool->getQueryBuilderForTable('sys_file');
     }
 
-    /**
-     * @return void
-     */
-    protected function initializeApi()
+    protected function initializeApi(): void
     {
         CloudinaryApiUtility::initializeByConfiguration($this->storage->getConfiguration());
     }
 
-    /**
-     * @return object|CloudinaryResourceService
-     */
     protected function getCloudinaryResourceService(): CloudinaryResourceService
     {
         return GeneralUtility::makeInstance(CloudinaryResourceService::class, $this->storage);
     }
 
-    /**
-     * @return object|CloudinaryFolderService
-     */
     protected function getCloudinaryFolderService(): CloudinaryFolderService
     {
         return GeneralUtility::makeInstance(CloudinaryFolderService::class, $this->storage->getUid());
     }
 
-    /**
-     * @return CloudinaryPathService
-     */
     protected function getCloudinaryPathService(): CloudinaryPathService
     {
         if (!$this->cloudinaryPathService) {
@@ -282,12 +228,16 @@ class CloudinaryScanService
         return $this->cloudinaryPathService;
     }
 
-    /**
-     * @param string $message
-     * @param array $arguments
-     * @param array $data
-     */
-    protected function log(string $message, array $arguments = [], array $data = [])
+    protected function getApi()
+    {
+        // Initialize and configure the API for each call
+        $this->initializeApi();
+
+        // create a new instance upon each API call to avoid driver confusion
+        return new Api();
+    }
+
+    protected function info(string $message, array $arguments = [], array $data = []): void
     {
         /** @var Logger $logger */
         $logger = GeneralUtility::makeInstance(LogManager::class)->getLogger(__CLASS__);
@@ -296,5 +246,15 @@ class CloudinaryScanService
             vsprintf($message, $arguments),
             $data
         );
+    }
+
+    protected function console(string $message, $additionalBlankLine = false): void
+    {
+        if ($this->io) {
+            $this->io->writeln($message);
+            if ($additionalBlankLine) {
+                $this->io->writeln('');
+            }
+        }
     }
 }

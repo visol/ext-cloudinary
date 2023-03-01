@@ -20,29 +20,15 @@ use TYPO3\CMS\Core\Utility\GeneralUtility;
  */
 class CloudinaryResourceService
 {
-    /**
-     * @var string
-     */
-    protected $tableName = 'tx_cloudinary_resource';
+    protected string $tableName = 'tx_cloudinary_resource';
 
-    /**
-     * @var ResourceStorage
-     */
-    protected $storage;
+    protected ResourceStorage $storage;
 
-    /**
-     * CloudinaryResourceService constructor.
-     *
-     * @param ResourceStorage $storage
-     */
     public function __construct(ResourceStorage $storage)
     {
         $this->storage = $storage;
     }
 
-    /**
-     * @return int
-     */
     public function markAsMissing(): int
     {
         $values = ['missing' => 1];
@@ -50,11 +36,6 @@ class CloudinaryResourceService
         return $this->getConnection()->update($this->tableName, $values, $identifier);
     }
 
-    /**
-     * @param string $publicId
-     *
-     * @return array
-     */
     public function getResource(string $publicId): array
     {
         $query = $this->getQueryBuilder();
@@ -68,17 +49,9 @@ class CloudinaryResourceService
             ->setMaxResults(1);
 
         $resource = $query->execute()->fetchAssociative();
-        return $resource ? $resource : [];
+        return $resource ?: [];
     }
 
-    /**
-     * @param string $folder
-     * @param array $orderings
-     * @param array $pagination
-     * @param bool $recursive
-     *
-     * @return array
-     */
     public function getResources(
         string $folder,
         array $orderings = [],
@@ -105,15 +78,9 @@ class CloudinaryResourceService
             $query->setMaxResults((int) $pagination['maxResult']);
             $query->setFirstResult((int) $pagination['firstResult']);
         }
-        return $query->execute()->fetchAll();
+        return $query->execute()->fetchAllAssociative();
     }
 
-    /**
-     * @param string $folder
-     * @param bool $recursive
-     *
-     * @return int
-     */
     public function count(string $folder, bool $recursive = false): int
     {
         $query = $this->getQueryBuilder();
@@ -128,14 +95,9 @@ class CloudinaryResourceService
             : $query->expr()->eq('folder', $query->expr()->literal($folder));
         $query->andWhere($expresion);
 
-        return (int) $query->execute()->fetchColumn(0);
+        return (int) $query->execute()->fetchOne(0);
     }
 
-    /**
-     * @param string $publicId
-     *
-     * @return int
-     */
     public function delete(string $publicId): int
     {
         $identifier['public_id'] = $publicId;
@@ -143,22 +105,12 @@ class CloudinaryResourceService
         return $this->getConnection()->delete($this->tableName, $identifier);
     }
 
-    /**
-     * @param array $identifier
-     *
-     * @return int
-     */
-    public function deleteAll(array $identifier = []): int
+    public function deleteAll(array $identifiers = []): int
     {
-        $identifier['storage'] = $this->storage->getUid();
-        return $this->getConnection()->delete($this->tableName, $identifier);
+        $identifiers['storage'] = $this->storage->getUid();
+        return $this->getConnection()->delete($this->tableName, $identifiers);
     }
 
-    /**
-     * @param array $cloudinaryResource
-     *
-     * @return array
-     */
     public function save(array $cloudinaryResource): array
     {
         $publicIdHash = $this->getPublicIdHash($cloudinaryResource);
@@ -174,22 +126,11 @@ class CloudinaryResourceService
             : ['created' => $this->add($cloudinaryResource), 'publicIdHash' => $publicIdHash];
     }
 
-    /**
-     * @param array $cloudinaryResource
-     *
-     * @return int
-     */
     protected function add(array $cloudinaryResource): int
     {
         return $this->getConnection()->insert($this->tableName, $this->getValues($cloudinaryResource));
     }
 
-    /**
-     * @param array $cloudinaryResource
-     * @param string $publicIdHash
-     *
-     * @return int
-     */
     protected function update(array $cloudinaryResource, string $publicIdHash): int
     {
         return $this->getConnection()->update($this->tableName, $this->getValues($cloudinaryResource), [
@@ -198,11 +139,6 @@ class CloudinaryResourceService
         ]);
     }
 
-    /**
-     * @param string $publicIdHash
-     *
-     * @return int
-     */
     protected function exists(string $publicIdHash): int
     {
         $query = $this->getQueryBuilder();
@@ -217,11 +153,6 @@ class CloudinaryResourceService
         return (int) $query->execute()->fetchOne(0);
     }
 
-    /**
-     * @param array $cloudinaryResource
-     *
-     * @return array
-     */
     protected function getValues(array $cloudinaryResource): array
     {
         $publicIdHash = $this->getPublicIdHash($cloudinaryResource);
@@ -255,85 +186,47 @@ class CloudinaryResourceService
         ];
     }
 
-    /**
-     * @param string $key
-     * @param array $cloudinaryResource
-     *
-     * @return string
-     */
     protected function getValue(string $key, array $cloudinaryResource): string
     {
         return isset($cloudinaryResource[$key]) ? (string) $cloudinaryResource[$key] : '';
     }
 
-    /**
-     * @param array $cloudinaryResource
-     *
-     * @return string
-     */
     protected function getFileName(array $cloudinaryResource): string
     {
         return basename($this->getValue('public_id', $cloudinaryResource));
     }
 
-    /**
-     * @param array $cloudinaryResource
-     *
-     * @return string
-     */
     protected function getFolder(array $cloudinaryResource): string
     {
         $folder = dirname($this->getValue('public_id', $cloudinaryResource));
         return $folder === '.' ? '' : $folder;
     }
 
-    /**
-     * @param array $cloudinaryResource
-     *
-     * @return string
-     */
     protected function getCreatedAt(array $cloudinaryResource): string
     {
         $createdAt = $this->getValue('created_at', $cloudinaryResource);
         return date('Y-m-d h:i:s', strtotime($createdAt));
     }
 
-    /**
-     * @param array $cloudinaryResource
-     *
-     * @return string
-     */
     protected function getPublicIdHash(array $cloudinaryResource): string
     {
         $publicId = $this->getValue('public_id', $cloudinaryResource);
         return sha1($publicId);
     }
 
-    /**
-     * @param array $cloudinaryResource
-     *
-     * @return string
-     */
     protected function getUpdatedAt(array $cloudinaryResource): string
     {
         $updatedAt = $this->getValue('updated_at', $cloudinaryResource)
-            ? $this->getValue('updated_at', $cloudinaryResource)
-            : $this->getValue('created_at', $cloudinaryResource);
+            ?: $this->getValue('created_at', $cloudinaryResource);
 
         return date('Y-m-d h:i:s', strtotime($updatedAt));
     }
 
-    /**
-     * @return object|CloudinaryFolderService
-     */
     protected function getCloudinaryFolderService(): CloudinaryFolderService
     {
         return GeneralUtility::makeInstance(CloudinaryFolderService::class, $this->storage->getUid());
     }
 
-    /**
-     * @return object|QueryBuilder
-     */
     protected function getQueryBuilder(): QueryBuilder
     {
         /** @var ConnectionPool $connectionPool */
@@ -341,9 +234,6 @@ class CloudinaryResourceService
         return $connectionPool->getQueryBuilderForTable($this->tableName);
     }
 
-    /**
-     * @return object|Connection
-     */
     protected function getConnection(): Connection
     {
         /** @var ConnectionPool $connectionPool */
