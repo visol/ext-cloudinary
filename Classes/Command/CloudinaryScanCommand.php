@@ -71,7 +71,7 @@ class CloudinaryScanCommand extends AbstractCloudinaryCommand
         if ($input->getOption('empty') === null || $input->getOption('empty')) {
             $this->log('Emptying all mirrored resources for storage "%s"', [$this->storage->getUid()]);
             $this->log();
-            $this->getCloudinaryScanService()->empty();
+            $this->getCloudinaryScanService()->deleteAll();
         }
 
         $this->log('Hint! Look at the log to get more insight:');

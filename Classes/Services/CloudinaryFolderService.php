@@ -14,37 +14,18 @@ use TYPO3\CMS\Core\Database\ConnectionPool;
 use TYPO3\CMS\Core\Database\Query\QueryBuilder;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
 
-/**
- * Class CloudinaryFolderService
- */
 class CloudinaryFolderService
 {
 
-    /**
-     * @var string
-     */
-    protected $tableName = 'tx_cloudinary_folder';
+    protected string $tableName = 'tx_cloudinary_folder';
 
-    /**
-     * @var int
-     */
-    protected $storageUid;
+    protected int $storageUid;
 
-    /**
-     * CloudinaryResourceService constructor.
-     *
-     * @param int $storageUid
-     */
     public function __construct(int $storageUid)
     {
         $this->storageUid = $storageUid;
     }
 
-    /**
-     * @param string $folder
-     *
-     * @return array
-     */
     public function getFolder(string $folder): array
     {
         $query = $this->getQueryBuilder();
@@ -59,15 +40,10 @@ class CloudinaryFolderService
                 )
             );
 
-        $folder = $query->execute()->fetch();
-        return $folder
-            ? $folder
-            : [];
+        $folder = $query->execute()->fetchAssociative();
+        return $folder ?: [];
     }
 
-    /**
-     * @return int
-     */
     public function markAsMissing(): int
     {
         $values = ['missing' => 1,];
@@ -75,12 +51,6 @@ class CloudinaryFolderService
         return $this->getConnection()->update($this->tableName, $values, $identifier);
     }
 
-    /**
-     * @param string $parentFolder
-     * @param array $orderings
-     *
-     * @return array
-     */
     public function getSubFolders(string $parentFolder, array $orderings, bool $recursive = false): array
     {
         $query = $this->getQueryBuilder();
@@ -104,15 +74,9 @@ class CloudinaryFolderService
             );
         $query->andWhere($expresion);
 
-        return $query->execute()->fetchAll();
+        return $query->execute()->fetchAllAssociative();
     }
 
-    /**
-     * @param string $parentFolder
-     * @param bool $recursive
-     *
-     * @return int
-     */
     public function countSubFolders(string $parentFolder, bool $recursive = false): int
     {
         $query = $this->getQueryBuilder();
@@ -135,14 +99,9 @@ class CloudinaryFolderService
             );
         $query->andWhere($expresion);
 
-        return (int)$query->execute()->fetchColumn(0);
+        return (int)$query->execute()->fetchOne(0);
     }
 
-    /**
-     * @param string $folder
-     *
-     * @return int
-     */
     public function delete(string $folder): int
     {
         $identifier['folder'] = $folder;
@@ -150,22 +109,12 @@ class CloudinaryFolderService
         return $this->getConnection()->delete($this->tableName, $identifier);
     }
 
-    /**
-     * @param array $identifier
-     *
-     * @return int
-     */
-    public function deleteAll(array $identifier = []): int
+    public function deleteAll(array $identifiers = []): int
     {
-        $identifier['storage'] = $this->storageUid;
-        return $this->getConnection()->delete($this->tableName, $identifier);
+        $identifiers['storage'] = $this->storageUid;
+        return $this->getConnection()->delete($this->tableName, $identifiers);
     }
 
-    /**
-     * @param string $folder
-     *
-     * @return array
-     */
     public function save(string $folder): array
     {
         $folderHash = sha1($folder);
@@ -175,11 +124,6 @@ class CloudinaryFolderService
             : ['folder_created' => $this->add($folder)];
     }
 
-    /**
-     * @param string $folder
-     *
-     * @return int
-     */
     protected function add(string $folder): int
     {
         return $this->getConnection()->insert(
@@ -188,12 +132,6 @@ class CloudinaryFolderService
         );
     }
 
-    /**
-     * @param string $folder
-     * @param string $folderHash
-     *
-     * @return int
-     */
     protected function update(string $folder, string $folderHash): int
     {
         return $this->getConnection()->update(
@@ -206,11 +144,6 @@ class CloudinaryFolderService
         );
     }
 
-    /**
-     * @param string $folderPath
-     *
-     * @return string
-     */
     protected function computeParentFolder(string $folderPath): string
     {
         return dirname($folderPath) === '.'
@@ -218,11 +151,6 @@ class CloudinaryFolderService
             : dirname($folderPath);
     }
 
-    /**
-     * @param string $folderHash
-     *
-     * @return int
-     */
     protected function exists(string $folderHash): int
     {
         $query = $this->getQueryBuilder();
@@ -237,14 +165,9 @@ class CloudinaryFolderService
                 )
             );
 
-        return (int)$query->execute()->fetchColumn(0);
+        return (int)$query->execute()->fetchOne(0);
     }
 
-    /**
-     * @param string $folder
-     *
-     * @return array
-     */
     protected function getValues(string $folder): array
     {
         return [
@@ -258,12 +181,6 @@ class CloudinaryFolderService
         ];
     }
 
-    /**
-     * @param string $key
-     * @param array $cloudinaryResource
-     *
-     * @return string
-     */
     protected function getValue(string $key, array $cloudinaryResource): string
     {
         return isset($cloudinaryResource[$key])
@@ -271,9 +188,6 @@ class CloudinaryFolderService
             : '';
     }
 
-    /**
-     * @return object|QueryBuilder
-     */
     protected function getQueryBuilder(): QueryBuilder
     {
         /** @var ConnectionPool $connectionPool */
@@ -281,13 +195,11 @@ class CloudinaryFolderService
         return $connectionPool->getQueryBuilderForTable($this->tableName);
     }
 
-    /**
-     * @return object|Connection
-     */
     protected function getConnection(): Connection
     {
         /** @var ConnectionPool $connectionPool */
         $connectionPool = GeneralUtility::makeInstance(ConnectionPool::class);
         return $connectionPool->getConnectionForTable($this->tableName);
     }
+
 }
