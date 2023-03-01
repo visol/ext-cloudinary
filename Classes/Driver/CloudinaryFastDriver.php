@@ -32,6 +32,7 @@ use Visol\Cloudinary\Services\CloudinaryResourceService;
 use Visol\Cloudinary\Services\CloudinaryPathService;
 use Visol\Cloudinary\Services\CloudinaryTestConnectionService;
 use Visol\Cloudinary\Services\ConfigurationService;
+use Visol\Cloudinary\Utility\CloudinaryFileUtility;
 
 /**
  * Class CloudinaryFastDriver
@@ -1189,35 +1190,11 @@ class CloudinaryFastDriver extends AbstractHierarchicalFilesystemDriver
     }
 
     /**
-     * Returns a temporary path for a given file, including the file extension.
-     *
-     * @param string $fileIdentifier
-     *
-     * @return string
-     */
-    protected function getTemporaryPathForFile($fileIdentifier): string
-    {
-        $temporaryFileNameAndPath =
-            Environment::getPublicPath() .
-            DIRECTORY_SEPARATOR .
-            'typo3temp/var/transient/' .
-            $this->storageUid .
-            $fileIdentifier;
-
-        $temporaryFolder = GeneralUtility::dirname($temporaryFileNameAndPath);
-
-        if (!is_dir($temporaryFolder)) {
-            GeneralUtility::mkdir_deep($temporaryFolder);
-        }
-        return $temporaryFileNameAndPath;
-    }
-
-    /**
      * We want to remove the local temporary file
      */
     protected function cleanUpTemporaryFile(string $fileIdentifier): void
     {
-        $temporaryLocalFile = $this->getTemporaryPathForFile($fileIdentifier);
+        $temporaryLocalFile = CloudinaryFileUtility::getTemporaryFile($this->storageUid, $fileIdentifier);
         if (is_file($temporaryLocalFile)) {
             unlink($temporaryLocalFile);
         }

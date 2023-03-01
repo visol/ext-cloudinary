@@ -198,16 +198,26 @@ Available targets:
 Web Hook
 --------
 
-Whenever uploading or editing a file through the Cloudinary Manager you can configure an URL
-as a web hook to be called to invalidate the cache in TYPO3. 
-This is highly recommended to keep the data consistent between Cloudinary and TYPO3. 
+
+Whenever uploading or editing a file in the cloudinary library, you can configure in the cloudinary settings a URL to 
+be called as a web hook. This is recommended to keep the data consistent between Cloudinary and TYPO3. When overridding 
+or moving a file across folders, cloudinary will inform TYPO3 that something has changed.
+
+It will basically:
+
+* invalidate the processed files
+* invalidate the page cache where the the file is involved.
+
 
 ```shell script
 https://domain.tld/?type=1573555440
 ```
 
-**Beware**: Do not rename, move or delete files in the Cloudinary Media Library. TYPO3 will not know about the change. 
-We may need to implement a web hook. For now, it is necessary to perform these action in the File module in the Backend.
+This, however, will not work out of the box and requires some manual configuration. 
+Refer to the file ext:cloudinary/Configuration/TypoScript/setup.typoscript where we define a custom type. 
+This is an example TypoScript file. Make sure that the file is loaded, and that you have defined a storage UID. 
+Your system may contain multiple Cloudinary storages, and each web hook must refer to its own Cloudinary storage.
+Eventually you will end up having as many config as you have cloudinary storage.
 
 Source of inspiration
 ---------------------
