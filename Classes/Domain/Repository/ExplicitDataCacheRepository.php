@@ -48,7 +48,7 @@ class ExplicitDataCacheRepository
                     )
                 )
             );
-        $item = $query->execute()->fetch();
+        $item = $query->execute()->fetchAssociative();
 
         if (!$item) {
             return null;

@@ -110,7 +110,7 @@ abstract class AbstractCloudinaryCommand extends Command
             }
         }
 
-        return $query->execute()->fetchAll();
+        return $query->execute()->fetchAllAssociative();
     }
 
     /**
