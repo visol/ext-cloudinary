@@ -120,6 +120,6 @@ WHERE storage = " . $this->targetStorage->getUid();
             ->from($this->tableName)
             ->where($query->expr()->eq('storage', $this->targetStorage->getUid()), $query->expr()->eq('extension', $query->expr()->literal('jpeg')));
 
-        return $query->execute()->fetchAll();
+        return $query->execute()->fetchAllAssociative();
     }
 }
