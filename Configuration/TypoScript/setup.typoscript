@@ -9,7 +9,6 @@ page_1573555440 {
         xhtml_cleaning = 0
         admPanel = 0
         disableAllHeaderCode = 1
-        additionalHeaders.10.header = Content-type:text/html
     }
     10 = COA_INT
     10 {
@@ -18,10 +17,13 @@ page_1573555440 {
             userFunc = TYPO3\CMS\Extbase\Core\Bootstrap->run
             vendorName = Visol
             extensionName = Cloudinary
-            pluginName = Cache
+            pluginName = WebHook
+            settings {
+                storage = ### !!! Add a storage uid
+            }
             switchableControllerActions {
-                CloudinaryScan {
-                    1 = scan
+                CloudinaryWebHook {
+                    1 = process
                 }
             }
         }
