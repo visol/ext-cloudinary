@@ -234,6 +234,10 @@ class CloudinaryImageService extends AbstractCloudinaryMediaService
             $transformation['background'] = $settings['background'];
         }
 
+        if (isset($settings['fetch_format']) && $settings['fetch_format']) {
+            $transformation['fetch_format'] = $settings['fetch_format'];
+        }
+
         $transformations[] = $transformation;
 
         if (!$enableResponsiveBreakpoints) {
