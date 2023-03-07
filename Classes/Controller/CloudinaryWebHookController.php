@@ -91,9 +91,11 @@ class CloudinaryWebHookController extends ActionController
                 // #. retrieve the source file
                 $file = $this->getFile($cloudinaryResource);
 
-
                 // #. flush the process files
                 $this->clearProcessedFiles($file);
+
+                // #. clean up local temporary file - var/variant folder
+                $this->cleanUpTemporaryFile($file);
 
                 // #. flush cache pages
                 $this->clearCachePages($file);
@@ -159,13 +161,19 @@ class CloudinaryWebHookController extends ActionController
 
     protected function clearProcessedFiles(File $file): void
     {
-
         $processedFiles = $this->processedFileRepository->findAllByOriginalFile($file);
-        $temporaryFileNameAndPath = CloudinaryFileUtility::getTemporaryFile($file->getStorage()->getUid(), $file->getIdentifier());
 
         foreach ($processedFiles as $processedFile) {
             $processedFile->getStorage()->setEvaluatePermissions(false);
             $processedFile->delete();
+        }
+    }
+
+    protected function cleanUpTemporaryFile(File $file): void
+    {
+        $temporaryFileNameAndPath = CloudinaryFileUtility::getTemporaryFile($file->getStorage()->getUid(), $file->getIdentifier());
+        if (is_file($temporaryFileNameAndPath)) {
+            unlink($temporaryFileNameAndPath);
         }
     }
 
