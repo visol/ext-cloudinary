@@ -10,6 +10,7 @@ namespace Visol\Cloudinary\Command;
  */
 
 use Exception;
+use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Style\SymfonyStyle;
 use TYPO3\CMS\Core\Resource\ResourceStorage;
 use TYPO3\CMS\Core\Utility\PathUtility;
@@ -27,30 +28,15 @@ use TYPO3\CMS\Core\Utility\GeneralUtility;
  */
 class CloudinaryMoveCommand extends AbstractCloudinaryCommand
 {
-    /**
-     * @var array
-     */
-    protected $faultyUploadedFiles;
+    protected array $faultyUploadedFiles;
 
-    /**
-     * @var array
-     */
-    protected $skippedFiles;
+    protected array $skippedFiles;
 
-    /**
-     * @var array
-     */
-    protected $missingFiles = [];
+    protected array $missingFiles = [];
 
-    /**
-     * @var ResourceStorage
-     */
-    protected $sourceStorage;
+    protected ResourceStorage $sourceStorage;
 
-    /**
-     * @var ResourceStorage
-     */
-    protected $targetStorage;
+    protected ResourceStorage $targetStorage;
 
     /**
      * Configure the command by defining the name, options and arguments
@@ -71,10 +57,6 @@ class CloudinaryMoveCommand extends AbstractCloudinaryCommand
             ->setHelp('Usage: ./vendor/bin/typo3 cloudinary:move 1 2');
     }
 
-    /**
-     * @param InputInterface $input
-     * @param OutputInterface $output
-     */
     protected function initialize(InputInterface $input, OutputInterface $output)
     {
         $this->io = new SymfonyStyle($input, $output);
@@ -88,26 +70,18 @@ class CloudinaryMoveCommand extends AbstractCloudinaryCommand
         $this->targetStorage = $resourceFactory->getStorageObject($input->getArgument('target'));
     }
 
-    /**
-     * Move file
-     *
-     * @param InputInterface $input
-     * @param OutputInterface $output
-     *
-     * @return int
-     */
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
         if (!$this->checkDriverType($this->targetStorage)) {
             $this->log('Look out! target storage is not of type "cloudinary"');
-            return 1;
+            return Command::INVALID;
         }
 
         $files = $this->getFiles($this->sourceStorage, $input);
 
         if (count($files) === 0) {
             $this->log('No files found, no work for me!');
-            return 0;
+            return Command::SUCCESS;
         }
 
         $this->log('I will process %s files to be moved from storage "%s" (%s) to "%s" (%s)', [
@@ -124,7 +98,8 @@ class CloudinaryMoveCommand extends AbstractCloudinaryCommand
 
             if (!$response) {
                 $this->log('Script aborted');
-                return 0;
+
+        return Command::SUCCESS;
             }
         }
 
@@ -194,14 +169,9 @@ class CloudinaryMoveCommand extends AbstractCloudinaryCommand
             $this->writeLog('skipped', $this->skippedFiles);
         }
 
-        return 0;
+        return Command::SUCCESS;
     }
 
-    /**
-     * @param File $fileObject
-     *
-     * @return bool
-     */
     protected function isFileSkipped(File $fileObject): bool
     {
         $isDisallowedPath = false;
@@ -219,35 +189,23 @@ class CloudinaryMoveCommand extends AbstractCloudinaryCommand
             $isDisallowedPath;
     }
 
-    /**
-     * @return array
-     */
     protected function getDisallowedExtensions(): array
     {
         // Empty for now
         return [];
     }
 
-    /**
-     * @return array
-     */
     protected function getDisallowedFileIdentifiers(): array
     {
         // Empty for now
         return [];
     }
 
-    /**
-     * @return array
-     */
     protected function getDisallowedPaths(): array
     {
         return ['user_upload/_temp_/', '_temp_/', '_processed_/'];
     }
 
-    /**
-     * @return object|FileMoveService
-     */
     protected function getFileMoveService(): FileMoveService
     {
         return GeneralUtility::makeInstance(FileMoveService::class);
