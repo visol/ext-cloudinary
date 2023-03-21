@@ -42,6 +42,13 @@ services:
         schedulable: false
         description: Scan and warm up a cloudinary storage.
 
+  Visol\Cloudinary\Command\CloudinaryMetadataCommand:
+    tags:
+      - name: 'console.command'
+        command: 'cloudinary:metadata'
+        schedulable: false
+        description: Set metadata on cloudinary resources such as file reference and file usage.
+
   Visol\Cloudinary\Command\CloudinaryQueryCommand:
     tags:
       - name: 'console.command'
