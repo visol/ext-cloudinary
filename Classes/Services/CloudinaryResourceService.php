@@ -65,10 +65,10 @@ class CloudinaryResourceService
             ->where($query->expr()->eq('storage', $this->storage->getUid()));
 
         // We should handle recursion
-        $expresion = $recursive
+        $expression = $recursive
             ? $query->expr()->like('folder', $query->expr()->literal($folder . '%'))
             : $query->expr()->eq('folder', $query->expr()->literal($folder));
-        $query->andWhere($expresion);
+        $query->andWhere($expression);
 
         if ($orderings) {
             $query->orderBy($orderings['fieldName'], $orderings['direction']);
