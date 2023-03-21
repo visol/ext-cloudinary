@@ -9,11 +9,13 @@ namespace Visol\Cloudinary\Command;
  * LICENSE.md file that was distributed with this source code.
  */
 
+use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Style\SymfonyStyle;
+use TYPO3\CMS\Core\Core\Environment;
 use TYPO3\CMS\Core\Resource\ResourceFactory;
 use TYPO3\CMS\Core\Resource\ResourceStorage;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
@@ -24,15 +26,8 @@ use Visol\Cloudinary\Services\CloudinaryScanService;
  */
 class CloudinaryScanCommand extends AbstractCloudinaryCommand
 {
-    /**
-     * @var ResourceStorage
-     */
     protected ResourceStorage $storage;
 
-    /**
-     * @param InputInterface $input
-     * @param OutputInterface $output
-     */
     protected function initialize(InputInterface $input, OutputInterface $output)
     {
         $this->io = new SymfonyStyle($input, $output);
@@ -42,21 +37,11 @@ class CloudinaryScanCommand extends AbstractCloudinaryCommand
         $this->storage = $resourceFactory->getStorageObject($input->getArgument('storage'));
     }
 
-    /**
-     * Configure the command by defining the name, options and arguments
-     */
     protected function configure()
     {
         $message = 'Scan and warm up a cloudinary storage.';
         $this->setDescription($message)
             ->addOption('silent', 's', InputOption::VALUE_OPTIONAL, 'Mute output as much as possible', false)
-            ->addOption(
-                'empty',
-                'e',
-                InputOption::VALUE_OPTIONAL,
-                'Before scanning empty all resources for a given storage',
-                false,
-            )
             ->addArgument('storage', InputArgument::REQUIRED, 'Storage identifier')
             ->setHelp('Usage: ./vendor/bin/typo3 cloudinary:scan [0-9]');
     }
@@ -65,17 +50,12 @@ class CloudinaryScanCommand extends AbstractCloudinaryCommand
     {
         if (!$this->checkDriverType($this->storage)) {
             $this->log('Look out! Storage is not of type "cloudinary"');
-            return 1;
+            return Command::INVALID;
         }
 
-        if ($input->getOption('empty') === null || $input->getOption('empty')) {
-            $this->log('Emptying all mirrored resources for storage "%s"', [$this->storage->getUid()]);
-            $this->log();
-            $this->getCloudinaryScanService()->deleteAll();
-        }
-
+        $logFile = Environment::getVarPath() . '/log/cloudinary.log';
         $this->log('Hint! Look at the log to get more insight:');
-        $this->log('tail -f web/typo3temp/var/logs/cloudinary.log');
+        $this->log('tail -f ' . $logFile);
         $this->log();
 
         $result = $this->getCloudinaryScanService()->scan();
@@ -99,7 +79,7 @@ class CloudinaryScanCommand extends AbstractCloudinaryCommand
             $result['folder_deleted'],
         ]);
 
-        return 0;
+        return Command::SUCCESS;
     }
 
     protected function getCloudinaryScanService(): CloudinaryScanService

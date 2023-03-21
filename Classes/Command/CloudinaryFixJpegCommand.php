@@ -9,6 +9,7 @@ namespace Visol\Cloudinary\Command;
  * LICENSE.md file that was distributed with this source code.
  */
 
+use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
@@ -23,15 +24,10 @@ use TYPO3\CMS\Core\Utility\GeneralUtility;
  */
 class CloudinaryFixJpegCommand extends AbstractCloudinaryCommand
 {
-    /**
-     * @var ResourceStorage
-     */
-    protected $targetStorage;
+    protected ResourceStorage $targetStorage;
 
-    /**
-     * @param InputInterface $input
-     * @param OutputInterface $output
-     */
+    protected string $tableName = 'sys_file';
+
     protected function initialize(InputInterface $input, OutputInterface $output)
     {
         $this->io = new SymfonyStyle($input, $output);
@@ -58,24 +54,19 @@ class CloudinaryFixJpegCommand extends AbstractCloudinaryCommand
 
     /**
      * Move file
-     *
-     * @param InputInterface $input
-     * @param OutputInterface $output
-     *
-     * @return int
      */
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
         if (!$this->checkDriverType($this->targetStorage)) {
             $this->log('Look out! target storage is not of type "cloudinary"');
-            return 1;
+            return Command::INVALID;
         }
 
         $files = $this->getJpegFiles();
 
         if (count($files) === 0) {
             $this->log('No files found, no work for me!');
-            return 0;
+            return Command::SUCCESS;
         }
 
         $this->log('I will update %s files by replacing "jpeg" to "jpg" in various fields in storage "%s" (%s)', [
@@ -90,7 +81,7 @@ class CloudinaryFixJpegCommand extends AbstractCloudinaryCommand
 
             if (!$response) {
                 $this->log('Script aborted');
-                return 0;
+                return Command::SUCCESS;
             }
         }
 
@@ -106,15 +97,13 @@ WHERE storage = " . $this->targetStorage->getUid();
 
         $connection->query($query)->execute();
 
-        return 0;
+
+        return Command::SUCCESS;
     }
 
-    /**
-     * @return array
-     */
     protected function getJpegFiles(): array
     {
-        $query = $this->getQueryBuilder();
+        $query = $this->getQueryBuilder($this->tableName);
         $query
             ->select('*')
             ->from($this->tableName)
