@@ -23,9 +23,6 @@ use TYPO3\CMS\Core\Resource\File;
 use TYPO3\CMS\Core\Resource\ResourceFactory;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
 
-/**
- * Class CloudinaryMoveCommand
- */
 class CloudinaryMoveCommand extends AbstractCloudinaryCommand
 {
     protected array $faultyUploadedFiles;

@@ -43,9 +43,6 @@ spl_autoload_register(
     }
 );
 
-/**
- * Class CloudinaryAcceptanceTestCommand
- */
 class CloudinaryAcceptanceTestCommand extends AbstractCloudinaryCommand
 {
     /**

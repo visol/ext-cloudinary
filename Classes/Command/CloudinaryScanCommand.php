@@ -21,9 +21,6 @@ use TYPO3\CMS\Core\Resource\ResourceStorage;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
 use Visol\Cloudinary\Services\CloudinaryScanService;
 
-/**
- * Class CloudinaryScanCommand
- */
 class CloudinaryScanCommand extends AbstractCloudinaryCommand
 {
     protected ResourceStorage $storage;
