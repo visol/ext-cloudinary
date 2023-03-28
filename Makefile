@@ -50,6 +50,14 @@ lint-summary:
 lint-fix:
 	phpcbf
 
+## phpstan analyse
+phpstan:
+	php -d memory_limit=512M ./vendor/bin/phpstan analyse -c phpstan.neon
+
+## phpstan adjust baseline
+phpstan-baseline:
+	php -d memory_limit=512M ./vendor/bin/phpstan analyse -c phpstan.neon --generate-baseline
+
 #######################
 # PHPUnit
 #######################
