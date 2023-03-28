@@ -56,31 +56,6 @@ parameters:
 			path: Classes/Backend/Form/Container/InlineCloudinaryControlContainer.php
 
 		-
-			message: "#^Call to an undefined method object\\:\\:getCache\\(\\)\\.$#"
-			count: 1
-			path: Classes/Cache/CloudinaryTypo3Cache.php
-
-		-
-			message: "#^Call to an undefined method object\\:\\:getLogger\\(\\)\\.$#"
-			count: 1
-			path: Classes/Cache/CloudinaryTypo3Cache.php
-
-		-
-			message: "#^Method Visol\\\\Cloudinary\\\\Cache\\\\CloudinaryTypo3Cache\\:\\:get\\(\\) should return array\\|false but returns mixed\\.$#"
-			count: 1
-			path: Classes/Cache/CloudinaryTypo3Cache.php
-
-		-
-			message: "#^Method Visol\\\\Cloudinary\\\\Cache\\\\CloudinaryTypo3Cache\\:\\:log\\(\\) has no return type specified\\.$#"
-			count: 1
-			path: Classes/Cache/CloudinaryTypo3Cache.php
-
-		-
-			message: "#^PHPDoc tag @return with type mixed is not subtype of native type string\\.$#"
-			count: 2
-			path: Classes/Cache/CloudinaryTypo3Cache.php
-
-		-
 			message: "#^Call to an undefined method object\\:\\:get\\(\\)\\.$#"
 			count: 1
 			path: Classes/CloudinaryFactory.php
@@ -96,7 +71,7 @@ parameters:
 			path: Classes/CloudinaryFactory.php
 
 		-
-			message: "#^Cannot call method fetchAll\\(\\) on Doctrine\\\\DBAL\\\\Result\\|int\\.$#"
+			message: "#^Cannot call method fetchAllAssociative\\(\\) on Doctrine\\\\DBAL\\\\Result\\|int\\.$#"
 			count: 1
 			path: Classes/Command/AbstractCloudinaryCommand.php
 
@@ -131,16 +106,6 @@ parameters:
 			path: Classes/Command/AbstractCloudinaryCommand.php
 
 		-
-			message: "#^PHPDoc tag @return with type object is not subtype of native type Doctrine\\\\DBAL\\\\Driver\\\\Connection\\.$#"
-			count: 1
-			path: Classes/Command/AbstractCloudinaryCommand.php
-
-		-
-			message: "#^PHPDoc tag @return with type object is not subtype of native type TYPO3\\\\CMS\\\\Core\\\\Database\\\\Query\\\\QueryBuilder\\.$#"
-			count: 1
-			path: Classes/Command/AbstractCloudinaryCommand.php
-
-		-
 			message: "#^Parameter \\#2 \\$string of static method TYPO3\\\\CMS\\\\Core\\\\Utility\\\\GeneralUtility\\:\\:trimExplode\\(\\) expects string, mixed given\\.$#"
 			count: 2
 			path: Classes/Command/AbstractCloudinaryCommand.php
@@ -169,6 +134,26 @@ parameters:
 			message: "#^Parameter \\#2 \\$string of static method TYPO3\\\\CMS\\\\Core\\\\Utility\\\\GeneralUtility\\:\\:trimExplode\\(\\) expects string, mixed given\\.$#"
 			count: 1
 			path: Classes/Command/CloudinaryAcceptanceTestCommand.php
+
+		-
+			message: "#^Method Visol\\\\Cloudinary\\\\Command\\\\CloudinaryApiCommand\\:\\:configure\\(\\) has no return type specified\\.$#"
+			count: 1
+			path: Classes/Command/CloudinaryApiCommand.php
+
+		-
+			message: "#^Method Visol\\\\Cloudinary\\\\Command\\\\CloudinaryApiCommand\\:\\:getApi\\(\\) has no return type specified\\.$#"
+			count: 1
+			path: Classes/Command/CloudinaryApiCommand.php
+
+		-
+			message: "#^Method Visol\\\\Cloudinary\\\\Command\\\\CloudinaryApiCommand\\:\\:initialize\\(\\) has no return type specified\\.$#"
+			count: 1
+			path: Classes/Command/CloudinaryApiCommand.php
+
+		-
+			message: "#^Parameter \\#1 \\$uid of method TYPO3\\\\CMS\\\\Core\\\\Resource\\\\ResourceFactory\\:\\:getStorageObject\\(\\) expects int\\|null, mixed given\\.$#"
+			count: 1
+			path: Classes/Command/CloudinaryApiCommand.php
 
 		-
 			message: "#^Cannot call method exists\\(\\) on TYPO3\\\\CMS\\\\Core\\\\Resource\\\\File\\|TYPO3\\\\CMS\\\\Core\\\\Resource\\\\ProcessedFile\\|null\\.$#"
@@ -241,7 +226,7 @@ parameters:
 			path: Classes/Command/CloudinaryCopyCommand.php
 
 		-
-			message: "#^Cannot call method fetchAll\\(\\) on Doctrine\\\\DBAL\\\\Result\\|int\\.$#"
+			message: "#^Cannot call method fetchAllAssociative\\(\\) on Doctrine\\\\DBAL\\\\Result\\|int\\.$#"
 			count: 1
 			path: Classes/Command/CloudinaryFixJpegCommand.php
 
@@ -271,6 +256,41 @@ parameters:
 			path: Classes/Command/CloudinaryFixJpegCommand.php
 
 		-
+			message: "#^Call to an undefined method object\\:\\:getAllSites\\(\\)\\.$#"
+			count: 1
+			path: Classes/Command/CloudinaryMetadataCommand.php
+
+		-
+			message: "#^Cannot call method fetchAllAssociative\\(\\) on Doctrine\\\\DBAL\\\\Result\\|int\\.$#"
+			count: 1
+			path: Classes/Command/CloudinaryMetadataCommand.php
+
+		-
+			message: "#^Method Visol\\\\Cloudinary\\\\Command\\\\CloudinaryMetadataCommand\\:\\:configure\\(\\) has no return type specified\\.$#"
+			count: 1
+			path: Classes/Command/CloudinaryMetadataCommand.php
+
+		-
+			message: "#^Method Visol\\\\Cloudinary\\\\Command\\\\CloudinaryMetadataCommand\\:\\:initialize\\(\\) has no return type specified\\.$#"
+			count: 1
+			path: Classes/Command/CloudinaryMetadataCommand.php
+
+		-
+			message: "#^Parameter \\#1 \\$fileIdentifier of method Visol\\\\Cloudinary\\\\Services\\\\CloudinaryPathService\\:\\:computeCloudinaryPublicId\\(\\) expects string, mixed given\\.$#"
+			count: 1
+			path: Classes/Command/CloudinaryMetadataCommand.php
+
+		-
+			message: "#^Parameter \\#1 \\$uid of method TYPO3\\\\CMS\\\\Core\\\\Resource\\\\ResourceFactory\\:\\:getStorageObject\\(\\) expects int\\|null, mixed given\\.$#"
+			count: 1
+			path: Classes/Command/CloudinaryMetadataCommand.php
+
+		-
+			message: "#^Property Visol\\\\Cloudinary\\\\Command\\\\CloudinaryMetadataCommand\\:\\:\\$cloudinaryPathService \\(Visol\\\\Cloudinary\\\\Services\\\\CloudinaryPathService\\) does not accept object\\.$#"
+			count: 1
+			path: Classes/Command/CloudinaryMetadataCommand.php
+
+		-
 			message: "#^Cannot call method exists\\(\\) on TYPO3\\\\CMS\\\\Core\\\\Resource\\\\File\\|TYPO3\\\\CMS\\\\Core\\\\Resource\\\\ProcessedFile\\|null\\.$#"
 			count: 1
 			path: Classes/Command/CloudinaryMoveCommand.php
@@ -297,11 +317,6 @@ parameters:
 
 		-
 			message: "#^Method Visol\\\\Cloudinary\\\\Command\\\\CloudinaryMoveCommand\\:\\:initialize\\(\\) has no return type specified\\.$#"
-			count: 1
-			path: Classes/Command/CloudinaryMoveCommand.php
-
-		-
-			message: "#^PHPDoc tag @return with type object is not subtype of native type Visol\\\\Cloudinary\\\\Services\\\\FileMoveService\\.$#"
 			count: 1
 			path: Classes/Command/CloudinaryMoveCommand.php
 
@@ -357,11 +372,6 @@ parameters:
 
 		-
 			message: "#^Method Visol\\\\Cloudinary\\\\Command\\\\CloudinaryQueryCommand\\:\\:initialize\\(\\) has no return type specified\\.$#"
-			count: 1
-			path: Classes/Command/CloudinaryQueryCommand.php
-
-		-
-			message: "#^PHPDoc tag @return with type object is not subtype of native type TYPO3\\\\CMS\\\\Core\\\\Resource\\\\Folder\\.$#"
 			count: 1
 			path: Classes/Command/CloudinaryQueryCommand.php
 
@@ -461,17 +471,122 @@ parameters:
 			path: Classes/Controller/CloudinaryScanController.php
 
 		-
+			message: "#^Call to an undefined method object\\:\\:flushCachesInGroupByTags\\(\\)\\.$#"
+			count: 1
+			path: Classes/Controller/CloudinaryWebHookController.php
+
+		-
+			message: "#^Call to an undefined method object\\:\\:get\\(\\)\\.$#"
+			count: 1
+			path: Classes/Controller/CloudinaryWebHookController.php
+
+		-
+			message: "#^Call to an undefined method object\\:\\:getLogger\\(\\)\\.$#"
+			count: 1
+			path: Classes/Controller/CloudinaryWebHookController.php
+
+		-
+			message: "#^Call to method send\\(\\) on an unknown class Causal\\\\Cloudflare\\\\Services\\\\CloudflareService\\.$#"
+			count: 1
+			path: Classes/Controller/CloudinaryWebHookController.php
+
+		-
+			message: "#^Cannot access offset 'to_public_id' on mixed\\.$#"
+			count: 1
+			path: Classes/Controller/CloudinaryWebHookController.php
+
+		-
+			message: "#^Cannot call method fetchAllAssociative\\(\\) on Doctrine\\\\DBAL\\\\Result\\|int\\.$#"
+			count: 1
+			path: Classes/Controller/CloudinaryWebHookController.php
+
+		-
+			message: "#^Class Causal\\\\Cloudflare\\\\Services\\\\CloudflareService not found\\.$#"
+			count: 1
+			path: Classes/Controller/CloudinaryWebHookController.php
+
+		-
+			message: "#^Constant LF not found\\.$#"
+			count: 1
+			path: Classes/Controller/CloudinaryWebHookController.php
+
+		-
+			message: "#^Method Visol\\\\Cloudinary\\\\Controller\\\\CloudinaryWebHookController\\:\\:flushCloudinaryCdn\\(\\) has parameter \\$publicId with no type specified\\.$#"
+			count: 1
+			path: Classes/Controller/CloudinaryWebHookController.php
+
+		-
+			message: "#^Method Visol\\\\Cloudinary\\\\Controller\\\\CloudinaryWebHookController\\:\\:getFile\\(\\) should return TYPO3\\\\CMS\\\\Core\\\\Resource\\\\File but returns TYPO3\\\\CMS\\\\Core\\\\Resource\\\\File\\|TYPO3\\\\CMS\\\\Core\\\\Resource\\\\ProcessedFile\\|null\\.$#"
+			count: 1
+			path: Classes/Controller/CloudinaryWebHookController.php
+
+		-
+			message: "#^Method Visol\\\\Cloudinary\\\\Controller\\\\CloudinaryWebHookController\\:\\:getQueryBuilder\\(\\) has parameter \\$tableName with no type specified\\.$#"
+			count: 1
+			path: Classes/Controller/CloudinaryWebHookController.php
+
+		-
+			message: "#^PHPDoc tag @var for variable \\$cloudflareService contains unknown class Causal\\\\Cloudflare\\\\Services\\\\CloudflareService\\.$#"
+			count: 1
+			path: Classes/Controller/CloudinaryWebHookController.php
+
+		-
+			message: "#^Parameter \\#1 \\$json of method TYPO3\\\\CMS\\\\Extbase\\\\Mvc\\\\Controller\\\\ActionController\\:\\:jsonResponse\\(\\) expects string\\|null, string\\|false given\\.$#"
+			count: 1
+			path: Classes/Controller/CloudinaryWebHookController.php
+
+		-
+			message: "#^Parameter \\#1 \\$message of method Psr\\\\Log\\\\AbstractLogger\\:\\:warning\\(\\) expects string, int given\\.$#"
+			count: 1
+			path: Classes/Controller/CloudinaryWebHookController.php
+
+		-
+			message: "#^Parameter \\#1 \\$payload of method Visol\\\\Cloudinary\\\\Controller\\\\CloudinaryWebHookController\\:\\:getRequestInfo\\(\\) expects array, mixed given\\.$#"
+			count: 1
+			path: Classes/Controller/CloudinaryWebHookController.php
+
+		-
+			message: "#^Property Visol\\\\Cloudinary\\\\Controller\\\\CloudinaryWebHookController\\:\\:\\$cloudinaryPathService \\(Visol\\\\Cloudinary\\\\Services\\\\CloudinaryPathService\\) does not accept object\\.$#"
+			count: 1
+			path: Classes/Controller/CloudinaryWebHookController.php
+
+		-
+			message: "#^Property Visol\\\\Cloudinary\\\\Controller\\\\CloudinaryWebHookController\\:\\:\\$cloudinaryResourceService \\(Visol\\\\Cloudinary\\\\Services\\\\CloudinaryResourceService\\) does not accept object\\.$#"
+			count: 1
+			path: Classes/Controller/CloudinaryWebHookController.php
+
+		-
+			message: "#^Property Visol\\\\Cloudinary\\\\Controller\\\\CloudinaryWebHookController\\:\\:\\$packageManager \\(TYPO3\\\\CMS\\\\Core\\\\Package\\\\PackageManager\\) does not accept object\\.$#"
+			count: 1
+			path: Classes/Controller/CloudinaryWebHookController.php
+
+		-
+			message: "#^Property Visol\\\\Cloudinary\\\\Controller\\\\CloudinaryWebHookController\\:\\:\\$processedFileRepository \\(TYPO3\\\\CMS\\\\Core\\\\Resource\\\\ProcessedFileRepository\\) does not accept object\\.$#"
+			count: 1
+			path: Classes/Controller/CloudinaryWebHookController.php
+
+		-
+			message: "#^Property Visol\\\\Cloudinary\\\\Controller\\\\CloudinaryWebHookController\\:\\:\\$scanService \\(Visol\\\\Cloudinary\\\\Services\\\\CloudinaryScanService\\) does not accept object\\.$#"
+			count: 1
+			path: Classes/Controller/CloudinaryWebHookController.php
+
+		-
+			message: "#^Strict comparison using \\=\\=\\= between TYPO3\\\\CMS\\\\Core\\\\Log\\\\Logger and null will always evaluate to false\\.$#"
+			count: 1
+			path: Classes/Controller/CloudinaryWebHookController.php
+
+		-
+			message: "#^Strict comparison using \\=\\=\\= between int\\<0, max\\>\\|false and null will always evaluate to false\\.$#"
+			count: 1
+			path: Classes/Controller/CloudinaryWebHookController.php
+
+		-
 			message: "#^Call to an undefined method object\\:\\:getPropertyFromAspect\\(\\)\\.$#"
 			count: 2
 			path: Classes/Domain/Repository/ExplicitDataCacheRepository.php
 
 		-
-			message: "#^Cannot call method fetch\\(\\) on Doctrine\\\\DBAL\\\\Result\\|int\\.$#"
-			count: 1
-			path: Classes/Domain/Repository/ExplicitDataCacheRepository.php
-
-		-
-			message: "#^Offset 'explicit_data' does not exist on array\\{options\\: mixed\\}\\.$#"
+			message: "#^Cannot call method fetchAssociative\\(\\) on Doctrine\\\\DBAL\\\\Result\\|int\\.$#"
 			count: 1
 			path: Classes/Domain/Repository/ExplicitDataCacheRepository.php
 
@@ -491,6 +606,11 @@ parameters:
 			path: Classes/Domain/Repository/ExplicitDataCacheRepository.php
 
 		-
+			message: "#^Parameter \\#1 \\$json of function json_decode expects string, mixed given\\.$#"
+			count: 2
+			path: Classes/Domain/Repository/ExplicitDataCacheRepository.php
+
+		-
 			message: "#^Parameter \\#1 \\$string of function sha1 expects string, string\\|false given\\.$#"
 			count: 1
 			path: Classes/Domain/Repository/ExplicitDataCacheRepository.php
@@ -501,27 +621,32 @@ parameters:
 			path: Classes/Domain/Repository/ExplicitDataCacheRepository.php
 
 		-
-			message: "#^Call to an undefined method Visol\\\\Cloudinary\\\\Driver\\\\CloudinaryDriver\\:\\:getCharsetConversion\\(\\)\\.$#"
+			message: "#^Argument of an invalid type mixed supplied for foreach, only iterables are supported\\.$#"
+			count: 3
+			path: Classes/Driver/CloudinaryDriver.php
+
+		-
+			message: "#^Call to an undefined method object\\:\\:computeCloudinaryFolderPath\\(\\)\\.$#"
+			count: 9
+			path: Classes/Driver/CloudinaryDriver.php
+
+		-
+			message: "#^Call to an undefined method object\\:\\:computeCloudinaryPublicId\\(\\)\\.$#"
+			count: 9
+			path: Classes/Driver/CloudinaryDriver.php
+
+		-
+			message: "#^Call to an undefined method object\\:\\:computeFileIdentifier\\(\\)\\.$#"
 			count: 1
 			path: Classes/Driver/CloudinaryDriver.php
 
 		-
-			message: "#^Call to an undefined method object\\:\\:flushFileCache\\(\\)\\.$#"
+			message: "#^Call to an undefined method object\\:\\:computeFolderIdentifier\\(\\)\\.$#"
 			count: 1
 			path: Classes/Driver/CloudinaryDriver.php
 
 		-
-			message: "#^Call to an undefined method object\\:\\:flushFolderCache\\(\\)\\.$#"
-			count: 1
-			path: Classes/Driver/CloudinaryDriver.php
-
-		-
-			message: "#^Call to an undefined method object\\:\\:getCachedFiles\\(\\)\\.$#"
-			count: 1
-			path: Classes/Driver/CloudinaryDriver.php
-
-		-
-			message: "#^Call to an undefined method object\\:\\:getCachedFolders\\(\\)\\.$#"
+			message: "#^Call to an undefined method object\\:\\:delete\\(\\)\\.$#"
 			count: 1
 			path: Classes/Driver/CloudinaryDriver.php
 
@@ -531,42 +656,47 @@ parameters:
 			path: Classes/Driver/CloudinaryDriver.php
 
 		-
-			message: "#^Call to an undefined method object\\:\\:setCachedFiles\\(\\)\\.$#"
+			message: "#^Call to an undefined method object\\:\\:getResourceType\\(\\)\\.$#"
+			count: 5
+			path: Classes/Driver/CloudinaryDriver.php
+
+		-
+			message: "#^Call to an undefined method object\\:\\:guessMimeType\\(\\)\\.$#"
 			count: 1
 			path: Classes/Driver/CloudinaryDriver.php
 
 		-
-			message: "#^Call to an undefined method object\\:\\:setCachedFolders\\(\\)\\.$#"
+			message: "#^Call to an undefined method object\\:\\:normalizeCloudinaryPath\\(\\)\\.$#"
+			count: 2
+			path: Classes/Driver/CloudinaryDriver.php
+
+		-
+			message: "#^Call to an undefined method object\\:\\:test\\(\\)\\.$#"
 			count: 1
 			path: Classes/Driver/CloudinaryDriver.php
 
 		-
-			message: "#^Cannot access offset 'format' on array\\|false\\.$#"
+			message: "#^Cannot access offset 0 on callable\\(\\)\\: mixed\\.$#"
 			count: 1
 			path: Classes/Driver/CloudinaryDriver.php
 
 		-
-			message: "#^Cannot access offset 'public_id' on array\\|false\\.$#"
-			count: 1
-			path: Classes/Driver/CloudinaryDriver.php
-
-		-
-			message: "#^Cannot access offset 'secure_url' on array\\|false\\.$#"
-			count: 1
-			path: Classes/Driver/CloudinaryDriver.php
-
-		-
-			message: "#^Cannot access offset 'type' on 0\\|0\\.0\\|''\\|'0'\\|array\\{\\}\\|false\\|null\\.$#"
+			message: "#^Cannot access offset 1 on callable\\(\\)\\: mixed\\.$#"
 			count: 1
 			path: Classes/Driver/CloudinaryDriver.php
 
 		-
 			message: "#^Cannot cast mixed to int\\.$#"
-			count: 1
+			count: 2
 			path: Classes/Driver/CloudinaryDriver.php
 
 		-
 			message: "#^Method Visol\\\\Cloudinary\\\\Driver\\\\CloudinaryDriver\\:\\:getFileContents\\(\\) should return string but returns string\\|false\\.$#"
+			count: 1
+			path: Classes/Driver/CloudinaryDriver.php
+
+		-
+			message: "#^Method Visol\\\\Cloudinary\\\\Driver\\\\CloudinaryDriver\\:\\:isFolderEmpty\\(\\) should return bool but returns int\\.$#"
 			count: 1
 			path: Classes/Driver/CloudinaryDriver.php
 
@@ -581,22 +711,47 @@ parameters:
 			path: Classes/Driver/CloudinaryDriver.php
 
 		-
-			message: "#^Method Visol\\\\Cloudinary\\\\Driver\\\\CloudinaryDriver\\:\\:testConnection\\(\\) has no return type specified\\.$#"
-			count: 1
-			path: Classes/Driver/CloudinaryDriver.php
-
-		-
 			message: "#^Negated boolean expression is always false\\.$#"
+			count: 3
+			path: Classes/Driver/CloudinaryDriver.php
+
+		-
+			message: "#^Offset 'extension' does not exist on array\\<string\\>\\|string\\.$#"
 			count: 1
 			path: Classes/Driver/CloudinaryDriver.php
 
 		-
-			message: "#^Parameter \\#1 \\$cloudinaryResource of method Visol\\\\Cloudinary\\\\Services\\\\CloudinaryPathService\\:\\:computeFileIdentifier\\(\\) expects array, array\\|false given\\.$#"
+			message: "#^Offset 'filename' does not exist on array\\<string\\>\\|string\\.$#"
 			count: 1
+			path: Classes/Driver/CloudinaryDriver.php
+
+		-
+			message: "#^Offset 'type' does not exist on array\\{\\}\\.$#"
+			count: 1
+			path: Classes/Driver/CloudinaryDriver.php
+
+		-
+			message: "#^Parameter \\#1 \\$folder of method Visol\\\\Cloudinary\\\\Services\\\\CloudinaryFolderService\\:\\:delete\\(\\) expects string, mixed given\\.$#"
+			count: 1
+			path: Classes/Driver/CloudinaryDriver.php
+
+		-
+			message: "#^Parameter \\#1 \\$publicId of method Visol\\\\Cloudinary\\\\Services\\\\CloudinaryResourceService\\:\\:delete\\(\\) expects string, mixed given\\.$#"
+			count: 2
 			path: Classes/Driver/CloudinaryDriver.php
 
 		-
 			message: "#^Parameter \\#1 \\$string of function rtrim expects string, string\\|null given\\.$#"
+			count: 1
+			path: Classes/Driver/CloudinaryDriver.php
+
+		-
+			message: "#^Property Visol\\\\Cloudinary\\\\Driver\\\\CloudinaryDriver\\:\\:\\$charsetConversion \\(TYPO3\\\\CMS\\\\Core\\\\Charset\\\\CharsetConverter\\) does not accept object\\.$#"
+			count: 1
+			path: Classes/Driver/CloudinaryDriver.php
+
+		-
+			message: "#^Property Visol\\\\Cloudinary\\\\Driver\\\\CloudinaryDriver\\:\\:\\$cloudinaryFolderService \\(Visol\\\\Cloudinary\\\\Services\\\\CloudinaryFolderService\\) does not accept object\\.$#"
 			count: 1
 			path: Classes/Driver/CloudinaryDriver.php
 
@@ -606,159 +761,14 @@ parameters:
 			path: Classes/Driver/CloudinaryDriver.php
 
 		-
-			message: "#^Property Visol\\\\Cloudinary\\\\Driver\\\\CloudinaryDriver\\:\\:\\$cloudinaryTypo3Cache \\(Visol\\\\Cloudinary\\\\Cache\\\\CloudinaryTypo3Cache\\) does not accept object\\.$#"
+			message: "#^Property Visol\\\\Cloudinary\\\\Driver\\\\CloudinaryDriver\\:\\:\\$cloudinaryResourceService \\(Visol\\\\Cloudinary\\\\Services\\\\CloudinaryResourceService\\) does not accept object\\.$#"
 			count: 1
 			path: Classes/Driver/CloudinaryDriver.php
 
 		-
-			message: "#^Argument of an invalid type mixed supplied for foreach, only iterables are supported\\.$#"
-			count: 3
-			path: Classes/Driver/CloudinaryFastDriver.php
-
-		-
-			message: "#^Call to an undefined method object\\:\\:computeCloudinaryFolderPath\\(\\)\\.$#"
-			count: 9
-			path: Classes/Driver/CloudinaryFastDriver.php
-
-		-
-			message: "#^Call to an undefined method object\\:\\:computeCloudinaryPublicId\\(\\)\\.$#"
-			count: 9
-			path: Classes/Driver/CloudinaryFastDriver.php
-
-		-
-			message: "#^Call to an undefined method object\\:\\:computeFileIdentifier\\(\\)\\.$#"
+			message: "#^Property Visol\\\\Cloudinary\\\\Driver\\\\CloudinaryDriver\\:\\:\\$configurationService \\(Visol\\\\Cloudinary\\\\Services\\\\ConfigurationService\\) does not accept object\\.$#"
 			count: 1
-			path: Classes/Driver/CloudinaryFastDriver.php
-
-		-
-			message: "#^Call to an undefined method object\\:\\:computeFolderIdentifier\\(\\)\\.$#"
-			count: 1
-			path: Classes/Driver/CloudinaryFastDriver.php
-
-		-
-			message: "#^Call to an undefined method object\\:\\:delete\\(\\)\\.$#"
-			count: 1
-			path: Classes/Driver/CloudinaryFastDriver.php
-
-		-
-			message: "#^Call to an undefined method object\\:\\:getLogger\\(\\)\\.$#"
-			count: 1
-			path: Classes/Driver/CloudinaryFastDriver.php
-
-		-
-			message: "#^Call to an undefined method object\\:\\:getResourceType\\(\\)\\.$#"
-			count: 5
-			path: Classes/Driver/CloudinaryFastDriver.php
-
-		-
-			message: "#^Call to an undefined method object\\:\\:guessMimeType\\(\\)\\.$#"
-			count: 1
-			path: Classes/Driver/CloudinaryFastDriver.php
-
-		-
-			message: "#^Call to an undefined method object\\:\\:normalizeCloudinaryPath\\(\\)\\.$#"
-			count: 2
-			path: Classes/Driver/CloudinaryFastDriver.php
-
-		-
-			message: "#^Call to an undefined method object\\:\\:test\\(\\)\\.$#"
-			count: 1
-			path: Classes/Driver/CloudinaryFastDriver.php
-
-		-
-			message: "#^Cannot access offset 0 on callable\\(\\)\\: mixed\\.$#"
-			count: 1
-			path: Classes/Driver/CloudinaryFastDriver.php
-
-		-
-			message: "#^Cannot access offset 1 on callable\\(\\)\\: mixed\\.$#"
-			count: 1
-			path: Classes/Driver/CloudinaryFastDriver.php
-
-		-
-			message: "#^Cannot cast mixed to int\\.$#"
-			count: 2
-			path: Classes/Driver/CloudinaryFastDriver.php
-
-		-
-			message: "#^Method Visol\\\\Cloudinary\\\\Driver\\\\CloudinaryFastDriver\\:\\:getFileContents\\(\\) should return string but returns string\\|false\\.$#"
-			count: 1
-			path: Classes/Driver/CloudinaryFastDriver.php
-
-		-
-			message: "#^Method Visol\\\\Cloudinary\\\\Driver\\\\CloudinaryFastDriver\\:\\:isFolderEmpty\\(\\) should return bool but returns int\\.$#"
-			count: 1
-			path: Classes/Driver/CloudinaryFastDriver.php
-
-		-
-			message: "#^Method Visol\\\\Cloudinary\\\\Driver\\\\CloudinaryFastDriver\\:\\:log\\(\\) has no return type specified\\.$#"
-			count: 1
-			path: Classes/Driver/CloudinaryFastDriver.php
-
-		-
-			message: "#^Method Visol\\\\Cloudinary\\\\Driver\\\\CloudinaryFastDriver\\:\\:sanitizeFileName\\(\\) should return string but returns string\\|null\\.$#"
-			count: 1
-			path: Classes/Driver/CloudinaryFastDriver.php
-
-		-
-			message: "#^Negated boolean expression is always false\\.$#"
-			count: 3
-			path: Classes/Driver/CloudinaryFastDriver.php
-
-		-
-			message: "#^Offset 'extension' does not exist on array\\<string\\>\\|string\\.$#"
-			count: 1
-			path: Classes/Driver/CloudinaryFastDriver.php
-
-		-
-			message: "#^Offset 'filename' does not exist on array\\<string\\>\\|string\\.$#"
-			count: 1
-			path: Classes/Driver/CloudinaryFastDriver.php
-
-		-
-			message: "#^Offset 'type' does not exist on array\\{\\}\\.$#"
-			count: 1
-			path: Classes/Driver/CloudinaryFastDriver.php
-
-		-
-			message: "#^Parameter \\#1 \\$folder of method Visol\\\\Cloudinary\\\\Services\\\\CloudinaryFolderService\\:\\:delete\\(\\) expects string, mixed given\\.$#"
-			count: 1
-			path: Classes/Driver/CloudinaryFastDriver.php
-
-		-
-			message: "#^Parameter \\#1 \\$publicId of method Visol\\\\Cloudinary\\\\Services\\\\CloudinaryResourceService\\:\\:delete\\(\\) expects string, mixed given\\.$#"
-			count: 2
-			path: Classes/Driver/CloudinaryFastDriver.php
-
-		-
-			message: "#^Parameter \\#1 \\$string of function rtrim expects string, string\\|null given\\.$#"
-			count: 1
-			path: Classes/Driver/CloudinaryFastDriver.php
-
-		-
-			message: "#^Property Visol\\\\Cloudinary\\\\Driver\\\\CloudinaryFastDriver\\:\\:\\$charsetConversion \\(TYPO3\\\\CMS\\\\Core\\\\Charset\\\\CharsetConverter\\) does not accept object\\.$#"
-			count: 1
-			path: Classes/Driver/CloudinaryFastDriver.php
-
-		-
-			message: "#^Property Visol\\\\Cloudinary\\\\Driver\\\\CloudinaryFastDriver\\:\\:\\$cloudinaryFolderService \\(Visol\\\\Cloudinary\\\\Services\\\\CloudinaryFolderService\\) does not accept object\\.$#"
-			count: 1
-			path: Classes/Driver/CloudinaryFastDriver.php
-
-		-
-			message: "#^Property Visol\\\\Cloudinary\\\\Driver\\\\CloudinaryFastDriver\\:\\:\\$cloudinaryPathService \\(Visol\\\\Cloudinary\\\\Services\\\\CloudinaryPathService\\) does not accept object\\.$#"
-			count: 1
-			path: Classes/Driver/CloudinaryFastDriver.php
-
-		-
-			message: "#^Property Visol\\\\Cloudinary\\\\Driver\\\\CloudinaryFastDriver\\:\\:\\$cloudinaryResourceService \\(Visol\\\\Cloudinary\\\\Services\\\\CloudinaryResourceService\\) does not accept object\\.$#"
-			count: 1
-			path: Classes/Driver/CloudinaryFastDriver.php
-
-		-
-			message: "#^Property Visol\\\\Cloudinary\\\\Driver\\\\CloudinaryFastDriver\\:\\:\\$configurationService \\(Visol\\\\Cloudinary\\\\Services\\\\ConfigurationService\\) does not accept object\\.$#"
-			count: 1
-			path: Classes/Driver/CloudinaryFastDriver.php
+			path: Classes/Driver/CloudinaryDriver.php
 
 		-
 			message: "#^Method Visol\\\\Cloudinary\\\\Filters\\\\RegularExpressionFilter\\:\\:filter\\(\\) should return bool but returns int\\|true\\.$#"
@@ -831,28 +841,23 @@ parameters:
 			path: Classes/Services/CloudinaryFolderService.php
 
 		-
-			message: "#^Cannot call method fetch\\(\\) on Doctrine\\\\DBAL\\\\Result\\|int\\.$#"
+			message: "#^Cannot call method fetchAllAssociative\\(\\) on Doctrine\\\\DBAL\\\\Result\\|int\\.$#"
 			count: 1
 			path: Classes/Services/CloudinaryFolderService.php
 
 		-
-			message: "#^Cannot call method fetchAll\\(\\) on Doctrine\\\\DBAL\\\\Result\\|int\\.$#"
+			message: "#^Cannot call method fetchAssociative\\(\\) on Doctrine\\\\DBAL\\\\Result\\|int\\.$#"
 			count: 1
 			path: Classes/Services/CloudinaryFolderService.php
 
 		-
-			message: "#^Cannot call method fetchColumn\\(\\) on Doctrine\\\\DBAL\\\\Result\\|int\\.$#"
+			message: "#^Cannot call method fetchOne\\(\\) on Doctrine\\\\DBAL\\\\Result\\|int\\.$#"
 			count: 2
 			path: Classes/Services/CloudinaryFolderService.php
 
 		-
-			message: "#^PHPDoc tag @return with type object is not subtype of native type Doctrine\\\\DBAL\\\\Driver\\\\Connection\\.$#"
-			count: 1
-			path: Classes/Services/CloudinaryFolderService.php
-
-		-
-			message: "#^PHPDoc tag @return with type object is not subtype of native type TYPO3\\\\CMS\\\\Core\\\\Database\\\\Query\\\\QueryBuilder\\.$#"
-			count: 1
+			message: "#^Cannot cast mixed to int\\.$#"
+			count: 2
 			path: Classes/Services/CloudinaryFolderService.php
 
 		-
@@ -936,7 +941,7 @@ parameters:
 			path: Classes/Services/CloudinaryResourceService.php
 
 		-
-			message: "#^Cannot call method fetchAll\\(\\) on Doctrine\\\\DBAL\\\\Result\\|int\\.$#"
+			message: "#^Cannot call method fetchAllAssociative\\(\\) on Doctrine\\\\DBAL\\\\Result\\|int\\.$#"
 			count: 1
 			path: Classes/Services/CloudinaryResourceService.php
 
@@ -946,37 +951,17 @@ parameters:
 			path: Classes/Services/CloudinaryResourceService.php
 
 		-
-			message: "#^Cannot call method fetchColumn\\(\\) on Doctrine\\\\DBAL\\\\Result\\|int\\.$#"
-			count: 1
-			path: Classes/Services/CloudinaryResourceService.php
-
-		-
 			message: "#^Cannot call method fetchOne\\(\\) on Doctrine\\\\DBAL\\\\Result\\|int\\.$#"
-			count: 1
+			count: 2
 			path: Classes/Services/CloudinaryResourceService.php
 
 		-
 			message: "#^Cannot cast mixed to int\\.$#"
-			count: 1
+			count: 2
 			path: Classes/Services/CloudinaryResourceService.php
 
 		-
 			message: "#^Method Visol\\\\Cloudinary\\\\Services\\\\CloudinaryResourceService\\:\\:getCloudinaryFolderService\\(\\) should return Visol\\\\Cloudinary\\\\Services\\\\CloudinaryFolderService but returns object\\.$#"
-			count: 1
-			path: Classes/Services/CloudinaryResourceService.php
-
-		-
-			message: "#^PHPDoc tag @return with type object is not subtype of native type Doctrine\\\\DBAL\\\\Driver\\\\Connection\\.$#"
-			count: 1
-			path: Classes/Services/CloudinaryResourceService.php
-
-		-
-			message: "#^PHPDoc tag @return with type object is not subtype of native type TYPO3\\\\CMS\\\\Core\\\\Database\\\\Query\\\\QueryBuilder\\.$#"
-			count: 1
-			path: Classes/Services/CloudinaryResourceService.php
-
-		-
-			message: "#^PHPDoc tag @return with type object is not subtype of native type Visol\\\\Cloudinary\\\\Services\\\\CloudinaryFolderService\\.$#"
 			count: 1
 			path: Classes/Services/CloudinaryResourceService.php
 
@@ -991,7 +976,17 @@ parameters:
 			path: Classes/Services/CloudinaryScanService.php
 
 		-
-			message: "#^Cannot call method fetchColumn\\(\\) on Doctrine\\\\DBAL\\\\Result\\|int\\.$#"
+			message: "#^Cannot call method fetchOne\\(\\) on Doctrine\\\\DBAL\\\\Result\\|int\\.$#"
+			count: 1
+			path: Classes/Services/CloudinaryScanService.php
+
+		-
+			message: "#^Method Visol\\\\Cloudinary\\\\Services\\\\CloudinaryScanService\\:\\:console\\(\\) has parameter \\$additionalBlankLine with no type specified\\.$#"
+			count: 1
+			path: Classes/Services/CloudinaryScanService.php
+
+		-
+			message: "#^Method Visol\\\\Cloudinary\\\\Services\\\\CloudinaryScanService\\:\\:getApi\\(\\) has no return type specified\\.$#"
 			count: 1
 			path: Classes/Services/CloudinaryScanService.php
 
@@ -1006,27 +1001,7 @@ parameters:
 			path: Classes/Services/CloudinaryScanService.php
 
 		-
-			message: "#^Method Visol\\\\Cloudinary\\\\Services\\\\CloudinaryScanService\\:\\:log\\(\\) has no return type specified\\.$#"
-			count: 1
-			path: Classes/Services/CloudinaryScanService.php
-
-		-
 			message: "#^Negated boolean expression is always false\\.$#"
-			count: 1
-			path: Classes/Services/CloudinaryScanService.php
-
-		-
-			message: "#^PHPDoc tag @return with type object is not subtype of native type TYPO3\\\\CMS\\\\Core\\\\Database\\\\Query\\\\QueryBuilder\\.$#"
-			count: 1
-			path: Classes/Services/CloudinaryScanService.php
-
-		-
-			message: "#^PHPDoc tag @return with type object is not subtype of native type Visol\\\\Cloudinary\\\\Services\\\\CloudinaryFolderService\\.$#"
-			count: 1
-			path: Classes/Services/CloudinaryScanService.php
-
-		-
-			message: "#^PHPDoc tag @return with type object is not subtype of native type Visol\\\\Cloudinary\\\\Services\\\\CloudinaryResourceService\\.$#"
 			count: 1
 			path: Classes/Services/CloudinaryScanService.php
 
@@ -1171,6 +1146,11 @@ parameters:
 			path: Classes/Utility/CloudinaryApiUtility.php
 
 		-
+			message: "#^Method Visol\\\\Cloudinary\\\\Utility\\\\CloudinaryFileUtility\\:\\:getTemporaryFile\\(\\) has parameter \\$storageUid with no type specified\\.$#"
+			count: 1
+			path: Classes/Utility/CloudinaryFileUtility.php
+
+		-
 			message: "#^Call to an undefined method TYPO3\\\\CMS\\\\Core\\\\Resource\\\\FileInterface\\:\\:getOriginalFile\\(\\)\\.$#"
 			count: 1
 			path: Classes/ViewHelpers/CloudinaryImageDataViewHelper.php
@@ -1211,7 +1191,32 @@ parameters:
 			path: Classes/ViewHelpers/CloudinaryImageDataViewHelper.php
 
 		-
+			message: "#^Parameter \\#1 \\$identifier of method TYPO3Fluid\\\\Fluid\\\\Core\\\\Variables\\\\VariableProviderInterface\\:\\:add\\(\\) expects string, mixed given\\.$#"
+			count: 1
+			path: Classes/ViewHelpers/CloudinaryImageDataViewHelper.php
+
+		-
+			message: "#^Parameter \\#1 \\$identifier of method TYPO3Fluid\\\\Fluid\\\\Core\\\\Variables\\\\VariableProviderInterface\\:\\:remove\\(\\) expects string, mixed given\\.$#"
+			count: 1
+			path: Classes/ViewHelpers/CloudinaryImageDataViewHelper.php
+
+		-
 			message: "#^Parameter \\#1 \\$src of method TYPO3\\\\CMS\\\\Extbase\\\\Service\\\\ImageService\\:\\:getImage\\(\\) expects string, int\\|string given\\.$#"
+			count: 1
+			path: Classes/ViewHelpers/CloudinaryImageDataViewHelper.php
+
+		-
+			message: "#^Parameter \\#1 \\$url of function parse_url expects string, mixed given\\.$#"
+			count: 1
+			path: Classes/ViewHelpers/CloudinaryImageDataViewHelper.php
+
+		-
+			message: "#^Parameter \\#2 \\$image of method TYPO3\\\\CMS\\\\Extbase\\\\Service\\\\ImageService\\:\\:getImage\\(\\) expects TYPO3\\\\CMS\\\\Core\\\\Resource\\\\FileInterface\\|TYPO3\\\\CMS\\\\Extbase\\\\Domain\\\\Model\\\\FileReference\\|null, mixed given\\.$#"
+			count: 1
+			path: Classes/ViewHelpers/CloudinaryImageDataViewHelper.php
+
+		-
+			message: "#^Parameter \\#3 \\$treatIdAsReference of method TYPO3\\\\CMS\\\\Extbase\\\\Service\\\\ImageService\\:\\:getImage\\(\\) expects bool, mixed given\\.$#"
 			count: 1
 			path: Classes/ViewHelpers/CloudinaryImageDataViewHelper.php
 
@@ -1242,5 +1247,20 @@ parameters:
 
 		-
 			message: "#^Method Visol\\\\Cloudinary\\\\ViewHelpers\\\\CloudinaryImageViewHelper\\:\\:injectImageService\\(\\) has no return type specified\\.$#"
+			count: 1
+			path: Classes/ViewHelpers/CloudinaryImageViewHelper.php
+
+		-
+			message: "#^Parameter \\#1 \\$src of method TYPO3\\\\CMS\\\\Extbase\\\\Service\\\\ImageService\\:\\:getImage\\(\\) expects string, mixed given\\.$#"
+			count: 1
+			path: Classes/ViewHelpers/CloudinaryImageViewHelper.php
+
+		-
+			message: "#^Parameter \\#2 \\$image of method TYPO3\\\\CMS\\\\Extbase\\\\Service\\\\ImageService\\:\\:getImage\\(\\) expects TYPO3\\\\CMS\\\\Core\\\\Resource\\\\FileInterface\\|TYPO3\\\\CMS\\\\Extbase\\\\Domain\\\\Model\\\\FileReference\\|null, mixed given\\.$#"
+			count: 1
+			path: Classes/ViewHelpers/CloudinaryImageViewHelper.php
+
+		-
+			message: "#^Parameter \\#3 \\$treatIdAsReference of method TYPO3\\\\CMS\\\\Extbase\\\\Service\\\\ImageService\\:\\:getImage\\(\\) expects bool, mixed given\\.$#"
 			count: 1
 			path: Classes/ViewHelpers/CloudinaryImageViewHelper.php
