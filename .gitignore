@@ -2,5 +2,6 @@
 .prettierrc
 package.json
 yarn.lock
+composer.lock
 /public/*
 /vendor/*
