@@ -9,12 +9,12 @@ namespace Visol\Cloudinary\Controller;
  * LICENSE.md file that was distributed with this source code.
  */
 
-use Causal\Cloudflare\Services\CloudflareService;
+use Psr\EventDispatcher\EventDispatcherInterface;
 use Psr\Http\Message\ResponseInterface;
 use TYPO3\CMS\Core\Cache\CacheManager;
-use TYPO3\CMS\Core\Configuration\ExtensionConfiguration;
 use TYPO3\CMS\Core\Database\ConnectionPool;
 use TYPO3\CMS\Core\Database\Query\QueryBuilder;
+use TYPO3\CMS\Core\Exception;
 use TYPO3\CMS\Core\Log\Logger;
 use TYPO3\CMS\Core\Log\LogManager;
 use TYPO3\CMS\Core\Package\PackageManager;
@@ -24,6 +24,7 @@ use TYPO3\CMS\Core\Resource\ResourceFactory;
 use TYPO3\CMS\Core\Resource\ResourceStorage;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
 use TYPO3\CMS\Extbase\Mvc\Controller\ActionController;
+use Visol\Cloudinary\Events\ClearCachePageEvent;
 use Visol\Cloudinary\Exceptions\CloudinaryNotFoundException;
 use Visol\Cloudinary\Exceptions\PublicIdMissingException;
 use Visol\Cloudinary\Exceptions\UnknownRequestTypeException;
@@ -52,6 +53,12 @@ class CloudinaryWebHookController extends ActionController
 
     protected PackageManager $packageManager;
 
+    /**
+     * @var EventDispatcherInterface
+     */
+    protected $eventDispatcher;
+
+
     protected function initializeAction(): void
     {
         $this->checkEnvironment();
@@ -60,6 +67,9 @@ class CloudinaryWebHookController extends ActionController
         $resourceFactory = GeneralUtility::makeInstance(ResourceFactory::class);
 
         $storage = $resourceFactory->getStorageObject((int)$this->settings['storage']);
+
+        $this->eventDispatcher = GeneralUtility::makeInstance(EventDispatcherInterface::class);
+
         $this->cloudinaryResourceService = GeneralUtility::makeInstance(
             CloudinaryResourceService::class,
             $storage,
@@ -85,7 +95,7 @@ class CloudinaryWebHookController extends ActionController
     public function processAction(): ResponseInterface
     {
         $parsedBody = (string)file_get_contents('php://input');
-        $payload = json_decode($parsedBody, true);
+        $payload = (array)json_decode($parsedBody, true);
         self::getLogger()->debug($parsedBody);
 
         if ($this->shouldStopProcessing($payload)) {
@@ -101,11 +111,11 @@ class CloudinaryWebHookController extends ActionController
             foreach ($publicIds as $publicId) {
 
                 if ($requestType === self::NOTIFICATION_TYPE_DELETE) {
-                    if (strpos($publicId, '_processed_') === null) {
+                    if (str_contains($publicId, '_processed_')) {
+                        $message = 'Processed file deleted. Nothing to do, stopping here...';
+                    } else {
                         $message = sprintf('Deleted file "%s", this should not happen. A file is going to be missing.', $publicId);
                         self::getLogger()->warning($message);
-                    } else {
-                        $message = 'Processed file deleted. Nothing to do, stopping here...';
                     }
 
                     // early return
@@ -117,6 +127,7 @@ class CloudinaryWebHookController extends ActionController
                     $this->cloudinaryResourceService->delete($publicId);
 
                     // Fetch the new cloudinary resource
+                    /** @var string $nextPublicId */
                     $nextPublicId = $payload['to_public_id'];
                     $previousCloudinaryResource = $cloudinaryResource = $this->getCloudinaryResource($nextPublicId);
 
@@ -151,51 +162,10 @@ class CloudinaryWebHookController extends ActionController
             ]);
         }
 
-        return $this->sendResponse(['result' => 'ok', 'message' => 'I did my job with success!']);
+        return $this->sendResponse(['result' => 'ok', 'message' => 'Success! I did my job.']);
     }
 
-    protected function flushCloudflareCdn(array $tags): void
-    {
-        $config = GeneralUtility::makeInstance(ExtensionConfiguration::class)->get('cloudflare');
-
-        /** @var CloudflareService $cloudflareService */
-        $cloudflareService = GeneralUtility::makeInstance(CloudflareService::class, $config);
-
-        $domains = $config['domains'] ? GeneralUtility::trimExplode(',', $config['domains'], true) : [];
-
-        foreach ($domains as $domain) {
-            try {
-                [$identifier, $zoneName] = explode('|', $domain, 2);
-                $result = $cloudflareService->send(
-                    '/zones/' . $identifier . '/purge_cache',
-                    [
-                        'tags' => $tags,
-                    ],
-                    'DELETE'
-                );
-
-                if (is_array($result) && $result['success']) {
-                    $message = vsprintf('Cleared the cache on Cloudflare using Cache-Tag (domain: "%s")', [$zoneName, implode(LF, $result['errors'])]);
-                    self::getLogger()->info($message);
-                } else {
-                    if (is_array($result['errors'])) {
-                        foreach ($result['errors'] as $error) {
-                            $message = vsprintf('Failed to clear the cache on Cloudflare using Cache-Tag (domain: "%s"): code %s, %s', [$zoneName, $error['code'], $error['message']]);
-                            self::getLogger()->warning($message);
-                        }
-                    } else {
-                        $message = vsprintf('Failed to clear the cache on Cloudflare using Cache-Tag (domain: "%s")', [$zoneName]);
-                        self::getLogger()->warning($message);
-                    }
-                }
-            } catch (\RuntimeException $e) {
-                self::getLogger()->error($e->getMessage());
-            }
-        }
-
-    }
-
-    protected function flushCloudinaryCdn($publicId): void
+    protected function flushCloudinaryCdn(string $publicId): void
     {
         // Invalidate CDN cache
         \Cloudinary\Uploader::explicit(
@@ -223,7 +193,13 @@ class CloudinaryWebHookController extends ActionController
     protected function getFile(array $cloudinaryResource): File
     {
         $fileIdentifier = $this->cloudinaryPathService->computeFileIdentifier($cloudinaryResource);
-        return $this->storage->getFileByIdentifier($fileIdentifier);
+        /** @var File|null $file */
+        $file = $this->storage->getFileByIdentifier($fileIdentifier);
+
+        if (!$file) {
+            throw new Exception('No file could be fine for file identifier ' . $fileIdentifier);
+        }
+        return $file;
     }
 
     protected function getRequestInfo(array $payload): array
@@ -297,15 +273,15 @@ class CloudinaryWebHookController extends ActionController
         GeneralUtility::makeInstance(CacheManager::class)
             ->flushCachesInGroupByTags('pages', $tags);
 
-        // #. flush cloudinary cdn cache if extension is available
-        if ($this->packageManager->isPackageAvailable('cloudflare')) {
-            $this->flushCloudflareCdn($tags);
-        }
+        $this->eventDispatcher->dispatch(
+            new ClearCachePageEvent($tags)
+        );
     }
 
     protected function findPagesWithFileReferences(File $file): array
     {
         $queryBuilder = $this->getQueryBuilder('sys_file_reference');
+        // @phpstan-ignore-next-line
         return $queryBuilder
             ->select('pid')
             ->from('sys_file_reference')
@@ -363,7 +339,7 @@ class CloudinaryWebHookController extends ActionController
     protected function sendResponse(array $data): ResponseInterface
     {
         return $this->jsonResponse(
-            json_encode($data)
+            (string)json_encode($data)
         );
     }
 
@@ -375,7 +351,7 @@ class CloudinaryWebHookController extends ActionController
         }
     }
 
-    protected function getQueryBuilder($tableName): QueryBuilder
+    protected function getQueryBuilder(string $tableName): QueryBuilder
     {
         /** @var ConnectionPool $connectionPool */
         $connectionPool = GeneralUtility::makeInstance(ConnectionPool::class);
@@ -386,7 +362,9 @@ class CloudinaryWebHookController extends ActionController
     {
         /** @var Logger $logger */
         static $logger = null;
+        // @phpstan-ignore-next-line
         if ($logger === null) {
+            /** @var LogManager $logger */
             $logger = GeneralUtility::makeInstance(LogManager::class)->getLogger(__CLASS__);
         }
         return $logger;
