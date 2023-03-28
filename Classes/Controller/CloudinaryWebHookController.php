@@ -100,19 +100,37 @@ class CloudinaryWebHookController extends ActionController
 
             foreach ($publicIds as $publicId) {
 
-                self::getLogger()->warning($publicId, ['asdf']);
-
                 if ($requestType === self::NOTIFICATION_TYPE_DELETE) {
                     if (strpos($publicId, '_processed_') === null) {
                         $message = sprintf('Deleted file "%s", this should not happen. A file is going to be missing.', $publicId);
+                        self::getLogger()->warning($message);
                     } else {
-                        $message = sprintf('Processed file deleted "%s". Nothing to do, stopping here...', $publicId);
+                        $message = 'Processed file deleted. Nothing to do, stopping here...';
                     }
-                    self::getLogger()->warning($message);
-                    continue;
-                }
 
-                $cloudinaryResource = $this->getCloudinaryResource($publicId);
+                    // early return
+                    return $this->sendResponse(['result' => 'ok', 'message' => $message]);
+
+                } elseif ($requestType === self::NOTIFICATION_TYPE_RENAME) { // #. handle file rename
+
+                    // Delete the old cache resource
+                    $this->cloudinaryResourceService->delete($publicId);
+
+                    // Fetch the new cloudinary resource
+                    $nextPublicId = $payload['to_public_id'];
+                    $previousCloudinaryResource = $cloudinaryResource = $this->getCloudinaryResource($nextPublicId);
+
+                    $previousCloudinaryResource['public_id'] = $publicId;
+                    $previousFileIdentifier = $this->cloudinaryPathService->computeFileIdentifier($previousCloudinaryResource);
+                    $nextFileIdentifier = $this->cloudinaryPathService->computeFileIdentifier($cloudinaryResource);
+
+                    $this->handleFileRename($previousFileIdentifier, $nextFileIdentifier);
+                } else {
+                    $cloudinaryResource = $this->getCloudinaryResource($publicId);
+
+                    // #. flush cloudinary cdn cache only for valid publicId
+                    $this->flushCloudinaryCdn($publicId);
+                }
 
                 // #. retrieve the source file
                 $file = $this->getFile($cloudinaryResource);
@@ -125,30 +143,15 @@ class CloudinaryWebHookController extends ActionController
 
                 // #. flush cache pages
                 $this->clearCachePages($file);
-
-                // #. flush cloudinary cdn cache
-                $this->flushCloudinaryCdn($publicId);
-
-                // #. handle file rename
-                if ($requestType === self::NOTIFICATION_TYPE_RENAME) {
-
-                    // Delete the old cache resource
-                    $this->cloudinaryResourceService->delete($publicId);
-
-                    // Rename the resource
-                    $nextPublicId = $payload['to_public_id'];
-                    $nextCloudinaryResource = $this->scanService->scanOne($nextPublicId);
-                    $this->handleFileRename($file, $nextCloudinaryResource);
-                }
             }
         } catch (\Exception $e) {
             return $this->sendResponse([
-                'result' => 'ko',
+                'result' => 'exception',
                 'message' => $e->getMessage(),
             ]);
         }
 
-        return $this->sendResponse(['result' => 'ok', 'message' => 'Cache flushed']);
+        return $this->sendResponse(['result' => 'ok', 'message' => 'I did my job with success!']);
     }
 
     protected function flushCloudflareCdn(array $tags): void
@@ -166,7 +169,7 @@ class CloudinaryWebHookController extends ActionController
                 $result = $cloudflareService->send(
                     '/zones/' . $identifier . '/purge_cache',
                     [
-                        'tags' => [$tags],
+                        'tags' => $tags,
                     ],
                     'DELETE'
                 );
@@ -175,8 +178,15 @@ class CloudinaryWebHookController extends ActionController
                     $message = vsprintf('Cleared the cache on Cloudflare using Cache-Tag (domain: "%s")', [$zoneName, implode(LF, $result['errors'])]);
                     self::getLogger()->info($message);
                 } else {
-                    $message = vsprintf('Failed to clear the cache on Cloudflare using Cache-Tag (domain: "%s"): %s', [$zoneName, implode(LF, $result['errors'] ?? [])]);
-                    self::getLogger()->warning($message);
+                    if (is_array($result['errors'])) {
+                        foreach ($result['errors'] as $error) {
+                            $message = vsprintf('Failed to clear the cache on Cloudflare using Cache-Tag (domain: "%s"): code %s, %s', [$zoneName, $error['code'], $error['message']]);
+                            self::getLogger()->warning($message);
+                        }
+                    } else {
+                        $message = vsprintf('Failed to clear the cache on Cloudflare using Cache-Tag (domain: "%s")', [$zoneName]);
+                        self::getLogger()->warning($message);
+                    }
                 }
             } catch (\RuntimeException $e) {
                 self::getLogger()->error($e->getMessage());
@@ -197,16 +207,16 @@ class CloudinaryWebHookController extends ActionController
         );
     }
 
-    protected function handleFileRename(File $file, array $cloudinaryResource): void
+    protected function handleFileRename(string $previousFileIdentifier, string $nextFileIdentifier): void
     {
-        $nextFileIdentifier = $this->cloudinaryPathService->computeFileIdentifier($cloudinaryResource);
         $tableName = 'sys_file';
         $q = $this->getQueryBuilder($tableName);
         $q->update($tableName)
             ->where(
-                $q->expr()->eq('uid', $file->getUid())
+                $q->expr()->eq('storage', $this->storage->getUid()),
+                $q->expr()->eq('identifier', $q->expr()->literal($previousFileIdentifier))
             )
-            ->set('identifier', $q->quoteIdentifier($nextFileIdentifier), false)
+            ->set('identifier', $q->expr()->literal($nextFileIdentifier), false)
             ->executeStatement();
     }
 
