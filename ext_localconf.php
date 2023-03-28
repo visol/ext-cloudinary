@@ -78,13 +78,6 @@ call_user_func(callback: function () {
         ],
     ];
 
-    if (!isset($GLOBALS['TYPO3_CONF_VARS']['SYS']['caching']['cacheConfigurations']['cloudinary'])) {
-        // cache configuration, see https://docs.typo3.org/typo3cms/CoreApiReference/ApiOverview/CachingFramework/Configuration/Index.html#cache-configurations
-        $GLOBALS['TYPO3_CONF_VARS']['SYS']['caching']['cacheConfigurations']['cloudinary']['frontend'] = VariableFrontend::class;
-        $GLOBALS['TYPO3_CONF_VARS']['SYS']['caching']['cacheConfigurations']['cloudinary']['groups'] = ['all', 'cloudinary'];
-        $GLOBALS['TYPO3_CONF_VARS']['SYS']['caching']['cacheConfigurations']['cloudinary']['options']['defaultLifetime'] = 2592000;
-    }
-
     // Hook for traditional file upload, replace
     $GLOBALS['TYPO3_CONF_VARS']['SC_OPTIONS']['t3lib/class.t3lib_extfilefunc.php']['processData'][] = FileUploadHook::class;
 
