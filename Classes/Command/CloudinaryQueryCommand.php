@@ -22,28 +22,6 @@ use TYPO3\CMS\Core\Resource\ResourceStorage;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
 use Visol\Cloudinary\Filters\RegularExpressionFilter;
 
-/**
- * Examples:
- *
- * ./vendor/bin/typo3 cloudinary:query 2
- *
- * # List of files withing a folder
- * ./vendor/bin/typo3 cloudinary:query 2 --path=/foo/
- *
- * # List of files withing a folder with recursive flag
- * ./vendor/bin/typo3 cloudinary:query 2 --path=/foo/ --recursive
- *
- * # List of files withing a folder with filter flag
- * ./vendor/bin/typo3 cloudinary:query 2 --path=/foo/ --filter='[0-9,a-z]\.jpg'
- *
- *  # Count files / folder
- * ./vendor/bin/typo3 cloudinary:query 2 --count
- *
- *  # List of folders instead of files
- * ./vendor/bin/typo3 cloudinary:query 2 --folder
- *
- * Class CloudinaryQueryCommand
- */
 class CloudinaryQueryCommand extends AbstractCloudinaryCommand
 {
     protected ResourceStorage $storage;
@@ -57,6 +35,27 @@ class CloudinaryQueryCommand extends AbstractCloudinaryCommand
 
         $this->storage = $resourceFactory->getStorageObject($input->getArgument('storage'));
     }
+
+    protected string $help = '
+Usage: ./vendor/bin/typo3 cloudinary:query [0-9 - storage id]
+
+Examples
+
+# List of files withing a folder
+typo3 cloudinary:query 2 --path=/foo/
+
+# List of files withing a folder with recursive flag
+typo3 cloudinary:query 2 --path=/foo/ --recursive
+
+# List of files withing a folder with filter flag
+typo3 cloudinary:query 2 --path=/foo/ --filter=\'[0-9,a-z]\.jpg\'
+
+ # Count files / folder
+typo3 cloudinary:query 2 --count
+
+ # List of folders instead of files
+typo3 cloudinary:query 2 --folder
+    ' ;
 
     /**
      * Configure the command by defining the name, options and arguments
@@ -73,8 +72,9 @@ class CloudinaryQueryCommand extends AbstractCloudinaryCommand
             ->addOption('recursive', 'r', InputOption::VALUE_NONE, 'Recursive lookup')
             ->addOption('delete', 'd', InputOption::VALUE_NONE, 'Delete found files / folders.')
             ->addArgument('storage', InputArgument::REQUIRED, 'Storage identifier')
-            ->setHelp('Usage: ./vendor/bin/typo3 cloudinary:query [0-9]');
+            ->setHelp($this->help);
     }
+
 
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
