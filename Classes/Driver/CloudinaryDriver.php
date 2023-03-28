@@ -34,10 +34,7 @@ use Visol\Cloudinary\Services\CloudinaryTestConnectionService;
 use Visol\Cloudinary\Services\ConfigurationService;
 use Visol\Cloudinary\Utility\CloudinaryFileUtility;
 
-/**
- * Class CloudinaryFastDriver
- */
-class CloudinaryFastDriver extends AbstractHierarchicalFilesystemDriver
+class CloudinaryDriver extends AbstractHierarchicalFilesystemDriver
 {
     public const DRIVER_TYPE = 'VisolCloudinary';
     const ROOT_FOLDER_IDENTIFIER = '/';
