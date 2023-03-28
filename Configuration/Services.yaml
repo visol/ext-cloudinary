@@ -7,6 +7,13 @@ services:
   Visol\Cloudinary\:
     resource: '../Classes/*'
 
+  Visol\Cloudinary\Command\CloudinaryApiCommand:
+    tags:
+      - name: 'console.command'
+        command: 'cloudinary:api'
+        schedulable: false
+        description: Interact with cloudinary api
+
   Visol\Cloudinary\Command\CloudinaryCopyCommand:
     tags:
       - name: 'console.command'
