@@ -16,9 +16,11 @@ use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Style\SymfonyStyle;
+use TYPO3\CMS\Core\Resource\File;
 use TYPO3\CMS\Core\Resource\ResourceFactory;
 use TYPO3\CMS\Core\Resource\ResourceStorage;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
+use Visol\Cloudinary\Services\CloudinaryPathService;
 use Visol\Cloudinary\Utility\CloudinaryApiUtility;
 
 class CloudinaryApiCommand extends AbstractCloudinaryCommand
@@ -26,12 +28,15 @@ class CloudinaryApiCommand extends AbstractCloudinaryCommand
     protected ResourceStorage $storage;
 
     protected string $help = '
-Usage: ./vendor/bin/typo3 cloudinary:api [0-9 storage id]
+Usage: ./vendor/bin/typo3 cloudinary:api [storage-uid]
 
 Examples
 
 # Query by public id
 typo3 cloudinary:api [0-9] --publicId=\'foo-bar\'
+
+# Query by file uid
+typo3 cloudinary:api --fileUid=\'[0-9]\'
 
 # Query with an expression
 # @see https://cloudinary.com/documentation/search_api
@@ -53,9 +58,10 @@ typo3 cloudinary:api [0-9] --expression=\'resource_type:image AND tags=kitten AN
         $message = 'Interact with cloudinary API';
         $this->setDescription($message)
             ->addOption('silent', 's', InputOption::VALUE_OPTIONAL, 'Mute output as much as possible', false)
+            ->addOption('fileUid', '', InputOption::VALUE_OPTIONAL, 'File uid', '')
             ->addOption('publicId', '', InputOption::VALUE_OPTIONAL, 'Cloudinary public id', '')
             ->addOption('expression', '', InputOption::VALUE_OPTIONAL, 'Cloudinary search expression', '')
-            ->addArgument('storage', InputArgument::REQUIRED, 'Storage identifier')
+            ->addArgument('storage', InputArgument::OPTIONAL, 'Storage identifier')
             ->setHelp($this->help);
     }
 
@@ -69,9 +75,19 @@ typo3 cloudinary:api [0-9] --expression=\'resource_type:image AND tags=kitten AN
         $publicId = $input->getOption('publicId');
         $expression = $input->getOption('expression');
 
+        // @phpstan-ignore-next-line
+        $fileUid = (int)$input->getOption('fileUid');
+        if ($fileUid) {
+            /** @var ResourceFactory $resourceFactory */
+            $resourceFactory = GeneralUtility::makeInstance(ResourceFactory::class);
+            $file = $resourceFactory->getFileObject($fileUid);
+
+            $this->storage = $file->getStorage(); // just to be sure
+            $publicId = $this->getPublicIdFromFile($file);
+        }
+
         $this->initializeApi();
         try {
-
             if ($publicId) {
                 $resource = $this->getApi()->resource($publicId);
                 $this->log(var_export((array)$resource, true));
@@ -88,6 +104,16 @@ typo3 cloudinary:api [0-9] --expression=\'resource_type:image AND tags=kitten AN
         }
 
         return Command::SUCCESS;
+    }
+
+    protected function getPublicIdFromFile(File $file): string
+    {
+        /** @var CloudinaryPathService $cloudinaryPathService */
+        $cloudinaryPathService = GeneralUtility::makeInstance(
+            CloudinaryPathService::class,
+            $file->getStorage()->getConfiguration(),
+        );
+        return $cloudinaryPathService->computeCloudinaryPublicId($file->getIdentifier());
     }
 
     protected function getApi()
