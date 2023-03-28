@@ -11,15 +11,11 @@ namespace Visol\Cloudinary\Slots;
 use TYPO3\CMS\Core\Resource\Service\FileProcessingService;
 use TYPO3\CMS\Core\Resource\Driver\DriverInterface;
 use TYPO3\CMS\Core\Resource\File;
-use TYPO3\CMS\Core\Resource\FileInterface;
 use TYPO3\CMS\Core\Resource\ProcessedFile;
 use TYPO3\CMS\Core\Resource\ProcessedFileRepository;
-use TYPO3\CMS\Core\Resource\ResourceFactory;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
-use Visol\Cloudinary\Driver\CloudinaryFastDriver;
+use Visol\Cloudinary\Driver\CloudinaryDriver;
 use Visol\Cloudinary\Services\CloudinaryImageService;
-use Visol\Cloudinary\Services\CloudinaryPathService;
-use Visol\Cloudinary\Services\CloudinaryResourceService;
 
 class FileProcessingSlot
 {
@@ -27,7 +23,7 @@ class FileProcessingSlot
     // We want to remove all processed files
     public function preFileProcess(FileProcessingService $fileProcessingService, DriverInterface $driver, ProcessedFile $processedFile, File $file, $taskType, array $configuration)
     {
-        if (!$driver instanceof CloudinaryFastDriver) {
+        if (!$driver instanceof CloudinaryDriver) {
             return;
         }
 

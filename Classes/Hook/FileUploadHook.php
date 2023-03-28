@@ -7,7 +7,7 @@ use TYPO3\CMS\Core\Utility\File\ExtendedFileUtility;
 use TYPO3\CMS\Core\Utility\File\ExtendedFileUtilityProcessDataHookInterface;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
 use Visol\Cloudinary\Domain\Repository\ExplicitDataCacheRepository;
-use Visol\Cloudinary\Driver\CloudinaryFastDriver;
+use Visol\Cloudinary\Driver\CloudinaryDriver;
 use Visol\Cloudinary\Services\CloudinaryImageService;
 
 class FileUploadHook implements ExtendedFileUtilityProcessDataHookInterface
@@ -27,7 +27,7 @@ class FileUploadHook implements ExtendedFileUtilityProcessDataHookInterface
             }
             /** @var File $file */
             $file = $result[0][0];
-            if ($file->getStorage()->getDriverType() !== CloudinaryFastDriver::DRIVER_TYPE) {
+            if ($file->getStorage()->getDriverType() !== CloudinaryDriver::DRIVER_TYPE) {
                 return;
             }
             $cloudinaryImageService = GeneralUtility::makeInstance(CloudinaryImageService::class);
