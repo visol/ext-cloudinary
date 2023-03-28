@@ -8,9 +8,8 @@ use Visol\Cloudinary\Backend\Form\Container\InlineCloudinaryControlContainer;
 use TYPO3\CMS\Core\Resource\Driver\DriverRegistry;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
 use Visol\Cloudinary\Controller\CloudinaryWebHookController;
-use Visol\Cloudinary\Driver\CloudinaryFastDriver;
+use Visol\Cloudinary\Driver\CloudinaryDriver;
 use TYPO3\CMS\Core\Log\Writer\FileWriter;
-use TYPO3\CMS\Core\Cache\Frontend\VariableFrontend;
 use Visol\Cloudinary\Hook\FileUploadHook;
 
 defined('TYPO3') || die('Access denied.');
@@ -38,8 +37,8 @@ call_user_func(callback: function () {
     /** @var DriverRegistry $driverRegistry */
     $driverRegistry = GeneralUtility::makeInstance(DriverRegistry::class);
     $driverRegistry->registerDriverClass(
-        CloudinaryFastDriver::class,
-        CloudinaryFastDriver::DRIVER_TYPE,
+        CloudinaryDriver::class,
+        CloudinaryDriver::DRIVER_TYPE,
         \Cloudinary::class,
         'FILE:EXT:cloudinary/Configuration/FlexForm/CloudinaryFlexForm.xml',
     );
