@@ -42,19 +42,19 @@ Usage: ./vendor/bin/typo3 cloudinary:query [0-9 - storage id]
 Examples
 
 # List of files withing a folder
-typo3 cloudinary:query 2 --path=/foo/
+typo3 cloudinary:query [0-9] --path=/foo/
 
 # List of files withing a folder with recursive flag
-typo3 cloudinary:query 2 --path=/foo/ --recursive
+typo3 cloudinary:query [0-9] --path=/foo/ --recursive
 
 # List of files withing a folder with filter flag
-typo3 cloudinary:query 2 --path=/foo/ --filter=\'[0-9,a-z]\.jpg\'
+typo3 cloudinary:query [0-9] --path=/foo/ --filter=\'[0-9,a-z]\.jpg\'
 
  # Count files / folder
-typo3 cloudinary:query 2 --count
+typo3 cloudinary:query [0-9] --count
 
  # List of folders instead of files
-typo3 cloudinary:query 2 --folder
+typo3 cloudinary:query [0-9] --folder
     ' ;
 
     /**
