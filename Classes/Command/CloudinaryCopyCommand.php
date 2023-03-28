@@ -21,9 +21,6 @@ use TYPO3\CMS\Core\Resource\ResourceFactory;
 use TYPO3\CMS\Core\Resource\ResourceStorage;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
 
-/**
- * Class CloudinaryCopyCommand
- */
 class CloudinaryCopyCommand extends AbstractCloudinaryCommand
 {
     protected array $missingFiles = [];

@@ -75,7 +75,6 @@ typo3 cloudinary:query 2 --folder
             ->setHelp($this->help);
     }
 
-
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
         if (!$this->checkDriverType($this->storage)) {

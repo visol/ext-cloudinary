@@ -19,9 +19,6 @@ use TYPO3\CMS\Core\Resource\ResourceFactory;
 use TYPO3\CMS\Core\Resource\ResourceStorage;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
 
-/**
- * Class CloudinaryFixJpegCommand
- */
 class CloudinaryFixJpegCommand extends AbstractCloudinaryCommand
 {
     protected ResourceStorage $targetStorage;
