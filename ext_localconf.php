@@ -2,7 +2,6 @@
 
 use TYPO3\CMS\Core\Core\Environment;
 use TYPO3\CMS\Core\Log\LogLevel;
-use TYPO3\CMS\Core\Utility\ExtensionManagementUtility;
 use TYPO3\CMS\Extbase\Utility\ExtensionUtility;
 use Visol\Cloudinary\Backend\Form\Container\InlineCloudinaryControlContainer;
 use TYPO3\CMS\Core\Resource\Driver\DriverRegistry;
