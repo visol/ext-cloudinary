@@ -103,8 +103,10 @@ class CloudinaryWebHookController extends ActionController
             return $this->sendResponse(['result' => 'ok', 'message' => 'Nothing to do...']);
         }
 
+
         try {
             [$requestType, $publicIds] = $this->getRequestInfo($payload);
+            $clearCachePages = [];
 
             self::getLogger()->debug(sprintf('Start flushing cache for file action "%s". ', $requestType));
             $this->initializeApi();
@@ -154,7 +156,7 @@ class CloudinaryWebHookController extends ActionController
                 $this->cleanUpTemporaryFile($file);
 
                 // #. flush cache pages
-                $this->clearCachePages($file);
+                $clearCachePages = $this->clearCachePages($file);
             }
         } catch (\Exception $e) {
             return $this->sendResponse([
@@ -163,7 +165,10 @@ class CloudinaryWebHookController extends ActionController
             ]);
         }
 
-        return $this->sendResponse(['result' => 'ok', 'message' => 'Success! Job done.']);
+        $message = $clearCachePages
+            ? 'Success! Cache flushed for pages ' . implode(',', $clearCachePages)
+            : 'Success! Job done';
+        return $this->sendResponse(['result' => 'ok', 'message' => $message]);
     }
 
     protected function flushCloudinaryCdn(string $publicId): void
@@ -280,11 +285,11 @@ class CloudinaryWebHookController extends ActionController
         }
     }
 
-    protected function clearCachePages(File $file): void
+    protected function clearCachePages(File $file): array
     {
         $tags = [];
         foreach ($this->findPagesWithFileReferences($file) as $page) {
-            $tags[] = 'pageId_' . $page['pid'];
+            $tags[$page['pid']] = 'pageId_' . $page['pid'];
         }
 
         GeneralUtility::makeInstance(CacheManager::class)
@@ -293,6 +298,8 @@ class CloudinaryWebHookController extends ActionController
         $this->eventDispatcher->dispatch(
             new ClearCachePageEvent($tags)
         );
+
+        return array_keys($tags);
     }
 
     protected function findPagesWithFileReferences(File $file): array
