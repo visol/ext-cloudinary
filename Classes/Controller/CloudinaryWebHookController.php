@@ -23,6 +23,7 @@ use TYPO3\CMS\Core\Resource\ProcessedFileRepository;
 use TYPO3\CMS\Core\Resource\ResourceFactory;
 use TYPO3\CMS\Core\Resource\ResourceStorage;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
+use TYPO3\CMS\Core\Utility\PathUtility;
 use TYPO3\CMS\Extbase\Mvc\Controller\ActionController;
 use Visol\Cloudinary\Events\ClearCachePageEvent;
 use Visol\Cloudinary\Exceptions\CloudinaryNotFoundException;
@@ -105,7 +106,7 @@ class CloudinaryWebHookController extends ActionController
         try {
             [$requestType, $publicIds] = $this->getRequestInfo($payload);
 
-            self::getLogger()->debug(sprintf('Start cache flushing for file "%s". ', $requestType));
+            self::getLogger()->debug(sprintf('Start flushing cache for file action "%s". ', $requestType));
             $this->initializeApi();
 
             foreach ($publicIds as $publicId) {
@@ -179,6 +180,9 @@ class CloudinaryWebHookController extends ActionController
 
     protected function handleFileRename(string $previousFileIdentifier, string $nextFileIdentifier): void
     {
+        $nextFolderIdentifier = PathUtility::dirname($nextFileIdentifier);
+        $nextFolderIdentifierHash = sha1($this->canonicalizeAndCheckFolderIdentifier($nextFolderIdentifier));
+        $nextFileIdentifierHash = sha1($this->canonicalizeAndCheckFileIdentifier($nextFileIdentifier));
         $tableName = 'sys_file';
         $q = $this->getQueryBuilder($tableName);
         $q->update($tableName)
@@ -187,19 +191,32 @@ class CloudinaryWebHookController extends ActionController
                 $q->expr()->eq('identifier', $q->expr()->literal($previousFileIdentifier))
             )
             ->set('identifier', $q->expr()->literal($nextFileIdentifier), false)
+            ->set('identifier_hash', $q->expr()->literal($nextFileIdentifierHash), false)
+            ->set('folder_hash', $q->expr()->literal($nextFolderIdentifierHash), false)
+            ->setMaxResults(1)
             ->executeStatement();
     }
 
     protected function getFile(array $cloudinaryResource): File
     {
         $fileIdentifier = $this->cloudinaryPathService->computeFileIdentifier($cloudinaryResource);
-        /** @var File|null $file */
-        $file = $this->storage->getFileByIdentifier($fileIdentifier);
+        $tableName = 'sys_file';
+        $q = $this->getQueryBuilder($tableName);
+        $fileRecord = $q->select('*')
+            ->from($tableName)
+            ->where(
+                $q->expr()->eq('storage', $this->storage->getUid()),
+                $q->expr()->eq('identifier', $q->expr()->literal($fileIdentifier))
+            )
+            ->execute()
+            ->fetchAssociative();
 
-        if (!$file) {
-            throw new Exception('No file could be fine for file identifier ' . $fileIdentifier);
+        if (!$fileRecord) {
+            throw new Exception('No indexed file could be fine for public id ' . $cloudinaryResource['public_id']);
         }
-        return $file;
+
+        $resourceFactory = GeneralUtility::makeInstance(ResourceFactory::class);
+        return $resourceFactory->getFileObject($fileRecord['uid']);
     }
 
     protected function getRequestInfo(array $payload): array
@@ -281,17 +298,28 @@ class CloudinaryWebHookController extends ActionController
     protected function findPagesWithFileReferences(File $file): array
     {
         $queryBuilder = $this->getQueryBuilder('sys_file_reference');
+
         // @phpstan-ignore-next-line
         return $queryBuilder
             ->select('pid')
             ->from('sys_file_reference')
-            ->groupBy('pid') // no support for distinct
+            //->groupBy('pid') // no support for distinct
             ->andWhere(
                 'pid > 0',
                 'uid_local = ' . $file->getUid()
             )
             ->execute()
             ->fetchAllAssociative();
+    }
+
+    protected function canonicalizeAndCheckFileIdentifier(string $fileIdentifier): string
+    {
+        return '/' . ltrim($fileIdentifier, '/');
+    }
+
+    protected function canonicalizeAndCheckFolderIdentifier(string $folderPath): string
+    {
+        return rtrim($this->canonicalizeAndCheckFileIdentifier($folderPath), '/') . '/';
     }
 
     /**
