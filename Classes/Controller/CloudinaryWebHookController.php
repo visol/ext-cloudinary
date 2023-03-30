@@ -163,7 +163,7 @@ class CloudinaryWebHookController extends ActionController
             ]);
         }
 
-        return $this->sendResponse(['result' => 'ok', 'message' => 'Success! I did my job.']);
+        return $this->sendResponse(['result' => 'ok', 'message' => 'Success! Job done.']);
     }
 
     protected function flushCloudinaryCdn(string $publicId): void
