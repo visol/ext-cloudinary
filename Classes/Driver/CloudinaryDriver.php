@@ -9,23 +9,20 @@ namespace Visol\Cloudinary\Driver;
  * LICENSE.md file that was distributed with this source code.
  */
 
+use Cloudinary\Api\Admin\AdminApi;
+use Cloudinary\Api\Upload\UploadApi;
 use TYPO3\CMS\Core\Http\ApplicationType;
 use TYPO3\CMS\Core\Resource\Exception\InvalidFileNameException;
-use Cloudinary;
-use Cloudinary\Api;
-use Cloudinary\Uploader;
 use RuntimeException;
 use TYPO3\CMS\Core\Charset\CharsetConverter;
 use TYPO3\CMS\Core\Core\Environment;
 use TYPO3\CMS\Core\Log\Logger;
 use TYPO3\CMS\Core\Resource\ResourceFactory;
-use TYPO3\CMS\Core\Type\File\FileInfo;
 use TYPO3\CMS\Core\Log\LogLevel;
 use TYPO3\CMS\Core\Log\LogManager;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
 use TYPO3\CMS\Core\Utility\PathUtility;
 use TYPO3\CMS\Core\Resource\Driver\AbstractHierarchicalFilesystemDriver;
-use TYPO3\CMS\Core\Resource\Exception;
 use TYPO3\CMS\Core\Resource\ResourceStorage;
 use Visol\Cloudinary\Domain\Repository\ExplicitDataCacheRepository;
 use Visol\Cloudinary\Services\CloudinaryFolderService;
@@ -33,6 +30,7 @@ use Visol\Cloudinary\Services\CloudinaryResourceService;
 use Visol\Cloudinary\Services\CloudinaryPathService;
 use Visol\Cloudinary\Services\CloudinaryTestConnectionService;
 use Visol\Cloudinary\Services\ConfigurationService;
+use Visol\Cloudinary\Utility\CloudinaryApiUtility;
 use Visol\Cloudinary\Utility\CloudinaryFileUtility;
 use Visol\Cloudinary\Utility\MimeTypeUtility;
 
@@ -270,16 +268,13 @@ class CloudinaryDriver extends AbstractHierarchicalFilesystemDriver
         $cloudinaryPublicId = $this->getCloudinaryPathService()->computeCloudinaryPublicId($fileIdentifier);
 
         $this->log(
-            '[API] Cloudinary\Uploader::upload() - add resource "%s"',
+            '[API] UploadApi - add resource "%s"',
             [$cloudinaryPublicId],
             ['addFile()'],
         );
 
-        // Before calling API, make sure we are connected with the right "bucket"
-        $this->initializeApi();
-
         // Upload the file
-        $cloudinaryResource = Uploader::upload($localFilePath, [
+        $cloudinaryResource = (array)$this->getUploadApi()->upload($localFilePath, [
             'public_id' => PathUtility::basename($cloudinaryPublicId),
             'folder' => $this->getCloudinaryPathService()->computeCloudinaryFolderPath($targetFolderIdentifier),
             'resource_type' => $this->getCloudinaryPathService()->getResourceType($fileIdentifier),
@@ -314,10 +309,7 @@ class CloudinaryDriver extends AbstractHierarchicalFilesystemDriver
     {
         $targetFileIdentifier = $this->canonicalizeFolderIdentifierAndFileName($targetFolderIdentifier, $fileName);
 
-        // Before calling API, make sure we are connected with the right "bucket"
-        $this->initializeApi();
-
-        $cloudinaryResource = Uploader::upload($this->getPublicUrl($fileIdentifier), [
+        $cloudinaryResource = (array)$this->getUploadApi()->upload($this->getPublicUrl($fileIdentifier), [
             'public_id' => PathUtility::basename(
                 $this->getCloudinaryPathService()->computeCloudinaryPublicId($targetFileIdentifier),
             ),
@@ -347,11 +339,8 @@ class CloudinaryDriver extends AbstractHierarchicalFilesystemDriver
             $this->getCloudinaryPathService()->computeCloudinaryPublicId($fileIdentifier),
         );
 
-        // Before calling the API, make sure we are connected with the right "bucket"
-        $this->initializeApi();
-
         // Upload the file
-        $cloudinaryResource = Uploader::upload($localFilePath, [
+        $cloudinaryResource = (array)$this->getUploadApi()->upload($localFilePath, [
             'public_id' => PathUtility::basename($cloudinaryPublicId),
             'folder' => $this->getCloudinaryPathService()->computeCloudinaryFolderPath(
                 PathUtility::dirname($fileIdentifier),
@@ -375,12 +364,12 @@ class CloudinaryDriver extends AbstractHierarchicalFilesystemDriver
     {
         $cloudinaryPublicId = $this->getCloudinaryPathService()->computeCloudinaryPublicId($fileIdentifier);
         $this->log(
-            '[API] Cloudinary\Api::delete_resources - delete resource "%s"',
+            '[API] Delete resource "%s"',
             [$cloudinaryPublicId],
             ['deleteFile'],
         );
 
-        $response = $this->getApi()->delete_resources($cloudinaryPublicId, [
+        $response = $this->getAdminApi()->deleteAssets($cloudinaryPublicId, [
             'resource_type' => $this->getCloudinaryPathService()->getResourceType($fileIdentifier),
         ]);
 
@@ -405,11 +394,11 @@ class CloudinaryDriver extends AbstractHierarchicalFilesystemDriver
 
         if ($deleteRecursively) {
             $this->log(
-                '[API] Cloudinary\Api::delete_resources_by_prefix() - folder "%s"',
+                '[API] Delete folder "%s"',
                 [$cloudinaryFolder],
                 ['deleteFolder'],
             );
-            $response = $this->getApi()->delete_resources_by_prefix($cloudinaryFolder);
+            $response = $this->getAdminApi()->deleteAssetsByPrefix($cloudinaryFolder);
 
             foreach ($response['deleted'] as $publicId => $status) {
                 if ($status === 'deleted') {
@@ -421,11 +410,11 @@ class CloudinaryDriver extends AbstractHierarchicalFilesystemDriver
         // We make sure the folder exists first. It will also delete sub-folder if those ones are empty.
         if ($this->folderExists($folderIdentifier)) {
             $this->log(
-                '[API] Cloudinary\Api::delete_folder() - folder "%s"',
+                '[API] Delete folder "%s"',
                 [$cloudinaryFolder],
                 ['deleteFolder'],
             );
-            $response = $this->getApi()->delete_folder($cloudinaryFolder);
+            $response = $this->getAdminApi()->deleteFolder($cloudinaryFolder);
 
             foreach ($response['deleted'] as $folder) {
                 $this->getCloudinaryFolderService()->delete($folder);
@@ -482,8 +471,8 @@ class CloudinaryDriver extends AbstractHierarchicalFilesystemDriver
         );
         $cloudinaryFolder = $this->getCloudinaryPathService()->normalizeCloudinaryPublicId($canonicalFolderPath);
 
-        $this->log('[API] Cloudinary\Api::createFolder() - folder "%s"', [$cloudinaryFolder], ['createFolder']);
-        $response = $this->getApi()->create_folder($cloudinaryFolder);
+        $this->log('[API] Create folder "%s"', [$cloudinaryFolder], ['createFolder']);
+        $response = $this->getAdminApi()->createFolder($cloudinaryFolder);
 
         if (!$response['success']) {
             throw new \Exception('Folder creation failed: ' . $cloudinaryFolder, 1591775050);
@@ -532,11 +521,9 @@ class CloudinaryDriver extends AbstractHierarchicalFilesystemDriver
         $newCloudinaryPublicId = $this->getCloudinaryPathService()->computeCloudinaryPublicId($newFileIdentifier);
 
         if ($cloudinaryPublicId !== $newCloudinaryPublicId) {
-            // Before calling API, make sure we are connected with the right "bucket"
-            $this->initializeApi();
 
             // Rename the file
-            $cloudinaryResource = Uploader::rename($cloudinaryPublicId, $newCloudinaryPublicId, [
+            $cloudinaryResource = (array)$this->getUploadApi()->rename($cloudinaryPublicId, $newCloudinaryPublicId, [
                 'resource_type' => $this->getCloudinaryPathService()->getResourceType($fileIdentifier),
                 'overwrite' => true,
             ]);
@@ -581,9 +568,6 @@ class CloudinaryDriver extends AbstractHierarchicalFilesystemDriver
             // Replace last folder name by the new folder name
             $pathSegments[$numberOfSegments - 2] = $newFolderName;
             $newFolderIdentifier = implode('/', $pathSegments);
-
-            // Before calling the API, make sure we are connected with the right "bucket"
-            $this->initializeApi();
 
             $renamedFiles[$folderIdentifier] = $newFolderIdentifier;
 
@@ -1133,25 +1117,14 @@ class CloudinaryDriver extends AbstractHierarchicalFilesystemDriver
         return $this->cloudinaryFolderService;
     }
 
-    protected function initializeApi(): void
+    protected function getUploadApi(): UploadApi
     {
-        Cloudinary::config([
-            'cloud_name' => $this->configurationService->get('cloudName'),
-            'api_key' => $this->configurationService->get('apiKey'),
-            'api_secret' => $this->configurationService->get('apiSecret'),
-            'timeout' => $this->configurationService->get('timeout'),
-            'secure' => true,
-        ]);
+        return CloudinaryApiUtility::getCloudinary($this->configuration)->uploadApi();
     }
 
-    protected function getApi(): Api
+    protected function getAdminApi(): AdminApi
     {
-        $this->initializeApi();
-
-        // The object \Cloudinary\Api behaves like a singleton object.
-        // The problem: if we have multiple driver instances / configuration, we don't get the expected result
-        // meaning we are wrongly fetching resources from other cloudinary "buckets" because of the singleton behaviour
-        // Therefore it is better to create a new instance upon each API call to avoid driver confusion
-        return new Api();
+        return CloudinaryApiUtility::getCloudinary($this->configuration)->adminApi();
     }
+
 }

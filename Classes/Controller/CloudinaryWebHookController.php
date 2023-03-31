@@ -9,6 +9,7 @@ namespace Visol\Cloudinary\Controller;
  * LICENSE.md file that was distributed with this source code.
  */
 
+use Cloudinary\Api\Upload\UploadApi;
 use Psr\EventDispatcher\EventDispatcherInterface;
 use Psr\Http\Message\ResponseInterface;
 use TYPO3\CMS\Core\Cache\CacheManager;
@@ -109,7 +110,6 @@ class CloudinaryWebHookController extends ActionController
             $clearCachePages = [];
 
             self::getLogger()->debug(sprintf('Start flushing cache for file action "%s". ', $requestType));
-            $this->initializeApi();
 
             foreach ($publicIds as $publicId) {
 
@@ -174,7 +174,7 @@ class CloudinaryWebHookController extends ActionController
     protected function flushCloudinaryCdn(string $publicId): void
     {
         // Invalidate CDN cache
-        \Cloudinary\Uploader::explicit(
+        $this->getUploadApi()->explicit(
             $publicId,
             [
                 'type' => 'upload',
@@ -405,9 +405,9 @@ class CloudinaryWebHookController extends ActionController
         return $logger;
     }
 
-    protected function initializeApi(): void
+    protected function getUploadApi(): UploadApi
     {
-        CloudinaryApiUtility::initializeByConfiguration($this->storage->getConfiguration());
+        return CloudinaryApiUtility::getCloudinary($this->storage)->uploadApi();
     }
 
 }
