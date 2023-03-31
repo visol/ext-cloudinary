@@ -9,8 +9,8 @@ namespace Visol\Cloudinary\Command;
  * LICENSE.md file that was distributed with this source code.
  */
 
-use Cloudinary\Api;
-use Cloudinary\Search;
+use Cloudinary\Api\Admin\AdminApi;
+use Cloudinary\Api\Search\SearchApi;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
@@ -107,10 +107,9 @@ typo3 cloudinary:api [0-9] --expression="folder=fileadmin/_processed_/*" --delet
             $publicId = $this->getPublicIdFromFile($file);
         }
 
-        $this->initializeApi();
         try {
             if ($publicId) {
-                $resource = $this->getApi()->resource($publicId);
+                $resource = $this->getAdminApi()->asset($publicId);
                 $this->log(var_export((array)$resource, true));
             } elseif ($expression) {
 
@@ -120,14 +119,11 @@ typo3 cloudinary:api [0-9] --expression="folder=fileadmin/_processed_/*" --delet
                         ? $response['next_cursor']
                         : '';
 
-                    /** @var Search $search */
-                    $search = new Search();
-
-                    $response = $search
+                    $response = $this->getSearchApi()
                         ->expression($expression)
-                        ->sort_by('public_id', 'asc')
-                        ->max_results(100)
-                        ->next_cursor($nextCursor)
+                        ->sortBy('public_id', 'asc')
+                        ->maxResults(100)
+                        ->nextCursor($nextCursor)
                         ->execute();
 
                     if (is_array($response['resources'])) {
@@ -146,7 +142,7 @@ typo3 cloudinary:api [0-9] --expression="folder=fileadmin/_processed_/*" --delet
                         if ($delete) {
                             $counter++;
                             $this->log("\nDeleting batch #$counter...\n");
-                            $this->getApi()->delete_resources($_resources);
+                            $this->getAdminApi()->deleteAssets($_resources);
                         }
                     }
                 } while (!empty($response) && isset($response['next_cursor']));
@@ -171,14 +167,14 @@ typo3 cloudinary:api [0-9] --expression="folder=fileadmin/_processed_/*" --delet
         return $cloudinaryPathService->computeCloudinaryPublicId($file->getIdentifier());
     }
 
-    protected function getApi()
+    protected function getSearchApi(): SearchApi
     {
-        // create a new instance upon each API call to avoid driver confusion
-        return new Api();
+        return CloudinaryApiUtility::getCloudinary($this->storage)->searchApi();
     }
 
-    protected function initializeApi(): void
+    protected function getAdminApi(): AdminApi
     {
-        CloudinaryApiUtility::initializeByConfiguration($this->storage->getConfiguration());
+        return CloudinaryApiUtility::getCloudinary($this->storage)->adminApi();
     }
+
 }

@@ -2,20 +2,15 @@
 
 namespace Visol\Cloudinary\Services\Extractor;
 
-use Cloudinary;
-use Psr\Log\LoggerAwareInterface;
-use Psr\Log\LoggerAwareTrait;
-use Psr\Log\LogLevel;
-use TYPO3\CMS\Core\Resource;
+use Cloudinary\Api\Admin\AdminApi;
 use TYPO3\CMS\Core\Resource\File;
 use TYPO3\CMS\Core\Resource\Index\ExtractorInterface;
 use TYPO3\CMS\Core\Resource\ResourceStorage;
-use TYPO3\CMS\Core\Type\File\ImageInfo;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
 use Visol\Cloudinary\Driver\CloudinaryDriver;
 use Visol\Cloudinary\Services\CloudinaryPathService;
 use Visol\Cloudinary\Services\CloudinaryResourceService;
-use Visol\Cloudinary\Services\ConfigurationService;
+use Visol\Cloudinary\Utility\CloudinaryApiUtility;
 
 class CloudinaryMetaDataExtractor implements ExtractorInterface
 {
@@ -78,11 +73,10 @@ class CloudinaryMetaDataExtractor implements ExtractorInterface
 
         // We are force calling cloudinary API
         if (!$resource) {
-            // Ask cloudinary to fetch the resource for us
-            $this->initializeApi($file->getStorage());
 
-            $api = new Cloudinary\Api();
-            $resource = $api->resource($publicId);
+            // Ask cloudinary to fetch the resource for us
+            $resource = $this->getAdminApi($file->getStorage())
+                ->asset($publicId);
         }
 
         return [
@@ -91,16 +85,9 @@ class CloudinaryMetaDataExtractor implements ExtractorInterface
         ];
     }
 
-    protected function initializeApi(ResourceStorage $storage): void
+    protected function getAdminApi(ResourceStorage $storage): AdminApi
     {
-        $configurationService = GeneralUtility::makeInstance(ConfigurationService::class, $storage->getConfiguration());
-
-        Cloudinary::config([
-            'cloud_name' => $configurationService->get('cloudName'),
-            'api_key' => $configurationService->get('apiKey'),
-            'api_secret' => $configurationService->get('apiSecret'),
-            'timeout' => $configurationService->get('timeout'),
-            'secure' => true,
-        ]);
+        return CloudinaryApiUtility::getCloudinary($storage)->adminApi();
     }
+
 }

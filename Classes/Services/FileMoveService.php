@@ -9,8 +9,8 @@ namespace Visol\Cloudinary\Services;
  * LICENSE.md file that was distributed with this source code.
  */
 
-use Cloudinary\Api;
-use Cloudinary\Uploader;
+use Cloudinary\Api\Admin\AdminApi;
+use Cloudinary\Api\Upload\UploadApi;
 use Doctrine\DBAL\Driver\Connection;
 use TYPO3\CMS\Core\Database\ConnectionPool;
 use TYPO3\CMS\Core\Database\Query\QueryBuilder;
@@ -28,7 +28,6 @@ class FileMoveService
 
     public function fileExists(File $fileObject, ResourceStorage $targetStorage): bool
     {
-        $this->initializeApi($targetStorage);
         $this->initializeCloudinaryService($targetStorage);
 
         // Retrieve the Public Id based on the file identifier
@@ -36,8 +35,7 @@ class FileMoveService
             ->computeCloudinaryPublicId($fileObject->getIdentifier());
 
         try {
-            $api = new Api();
-            $resource = $api->resource($publicId);
+            $resource = $this->getAdminApi($targetStorage)->asset($publicId);
             $fileExists = !empty($resource);
         } catch (\Exception $exception) {
             $fileExists = false;
@@ -121,7 +119,6 @@ class FileMoveService
 
         $this->ensureDirectoryExistence($fileObject);
 
-        $this->initializeApi($targetStorage);
 
         $fileIdentifier = $fileObject->getIdentifier();
         $publicId = $this->getCloudinaryPathService()
@@ -141,15 +138,10 @@ class FileMoveService
             : $this->getAbsolutePath($fileObject);
 
         // Upload the file
-        $resource = Uploader::upload(
+        $this->getUploadApi($targetStorage)->upload(
             $fileNameAndPath,
             $options
         );
-    }
-
-    protected function initializeApi(ResourceStorage $targetStorage)
-    {
-        CloudinaryApiUtility::initializeByConfiguration($targetStorage->getConfiguration());
     }
 
     protected function getQueryBuilder(): QueryBuilder
@@ -190,4 +182,15 @@ class FileMoveService
             $storage
             );
     }
+
+    protected function getUploadApi(ResourceStorage $storage): UploadApi
+    {
+        return CloudinaryApiUtility::getCloudinary($storage)->uploadApi();
+    }
+
+    protected function getAdminApi(ResourceStorage $storage): AdminApi
+    {
+        return CloudinaryApiUtility::getCloudinary($storage)->adminApi();
+    }
+
 }

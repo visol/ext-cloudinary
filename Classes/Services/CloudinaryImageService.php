@@ -9,12 +9,14 @@
 
 namespace Visol\Cloudinary\Services;
 
+use Cloudinary\Asset\Image;
+use Cloudinary\Transformation\ImageTransformation;
 use TYPO3\CMS\Core\Resource\StorageRepository;
-use Cloudinary\Uploader;
 use Doctrine\DBAL\Exception\UniqueConstraintViolationException;
 use TYPO3\CMS\Core\Resource\File;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
 use Visol\Cloudinary\Domain\Repository\ExplicitDataCacheRepository;
+use Visol\Cloudinary\Utility\CloudinaryApiUtility;
 
 class CloudinaryImageService extends AbstractCloudinaryMediaService
 {
@@ -41,9 +43,18 @@ class CloudinaryImageService extends AbstractCloudinaryMediaService
         $explicitData = $this->explicitDataCacheRepository->findByStorageAndPublicIdAndOptions($file->getStorage()->getUid(), $publicId, $options)['explicit_data'];
 
         if (!$explicitData) {
-            $this->initializeApi($file->getStorage());
-            $explicitData = Uploader::explicit($publicId, $options);
+
+            // With Cloudinary API 2, we need to modify the way in which "responsive_breakpoints.transformation" are transmitted.
+            $apiOptions = $options;
+            if (isset($options['responsive_breakpoints']['transformation'])) {
+                $apiOptions['responsive_breakpoints']['transformation'] = []; // reset the value
+                foreach ($options['responsive_breakpoints']['transformation'] as $transformationParams) {
+                    $apiOptions['responsive_breakpoints']['transformation'][] = ImageTransformation::fromParams($transformationParams);
+                }
+            }
+
             try {
+                $explicitData = (array)$this->getUploadApi($file->getStorage())->explicit($publicId, $apiOptions);
                 $this->explicitDataCacheRepository->save($file->getStorage()->getUid(), $publicId, $options, $explicitData);
             } catch (UniqueConstraintViolationException $e) {
                 // ignore
@@ -118,8 +129,10 @@ class CloudinaryImageService extends AbstractCloudinaryMediaService
 
         $publicId = $this->getPublicIdForFile($file);
 
-        $this->initializeApi($file->getStorage());
-        return \Cloudinary::cloudinary_url($publicId, $options);
+        $configuration = CloudinaryApiUtility::getConfiguration($file->getStorage());
+        return (string)Image::fromParams($publicId, $options)
+            ->configuration($configuration)
+            ->toUrl();
     }
 
     public function getImageObjects(array $breakpoints): array
@@ -206,4 +219,5 @@ class CloudinaryImageService extends AbstractCloudinaryMediaService
     {
         $this->storageRepository = $storageRepository;
     }
+
 }

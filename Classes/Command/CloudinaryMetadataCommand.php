@@ -9,6 +9,7 @@ namespace Visol\Cloudinary\Command;
  * LICENSE.md file that was distributed with this source code.
  */
 
+use Cloudinary\Api\Upload\UploadApi;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
@@ -91,10 +92,9 @@ class CloudinaryMetadataCommand extends AbstractCloudinaryCommand
         }
 
         // Initialize and configure the API
-        $this->initializeApi();
         foreach ($publicIdOptions as $publicId => $options) {
             $this->log('Updating tags and metadata for public id ' . $publicId);
-            \Cloudinary\Uploader::explicit(
+            $this->getUploadApi()->explicit(
                 $publicId,
                 [
                     'type' => 'upload',
@@ -114,9 +114,9 @@ class CloudinaryMetadataCommand extends AbstractCloudinaryCommand
         return array_values($sites)[0];
     }
 
-    protected function initializeApi(): void
+    protected function getUploadApi(): UploadApi
     {
-        CloudinaryApiUtility::initializeByConfiguration($this->storage->getConfiguration());
+        return CloudinaryApiUtility::getCloudinary($this->storage)->uploadApi();
     }
 
 }

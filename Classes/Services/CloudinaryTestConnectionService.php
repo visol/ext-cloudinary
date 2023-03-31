@@ -8,12 +8,12 @@ namespace Visol\Cloudinary\Services;
  * For the full copyright and license information, please read the
  * LICENSE.md file that was distributed with this source code.
  */
-use Cloudinary\Search;
+
+use Cloudinary\Api\Search\SearchApi;
 use TYPO3\CMS\Core\Messaging\FlashMessageQueue;
 use TYPO3\CMS\Core\Messaging\FlashMessage;
 use TYPO3\CMS\Core\Messaging\FlashMessageService;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
-use TYPO3\CMS\Extbase\Object\ObjectManager;
 use TYPO3\CMS\Extbase\Utility\LocalizationUtility;
 use Visol\Cloudinary\Utility\CloudinaryApiUtility;
 
@@ -51,10 +51,7 @@ class CloudinaryTestConnectionService
         $messageQueue = $this->getMessageQueue();
         $localizationPrefix = $this->languageFile . ':driverConfiguration.message.';
         try {
-            $this->initializeApi();
-
-            $search = new Search();
-            $search
+            $search = $this->getSearchApi()
                 ->expression('folder=/')
                 ->execute();
 
@@ -88,13 +85,9 @@ class CloudinaryTestConnectionService
         return $flashMessageService->getMessageQueueByIdentifier();
     }
 
-    /**
-     * @return void
-     */
-    protected function initializeApi()
+    protected function getSearchApi(): SearchApi
     {
-        CloudinaryApiUtility::initializeByConfiguration($this->configuration);
+        return CloudinaryApiUtility::getCloudinary($this->configuration)->searchApi();
     }
-
 
 }

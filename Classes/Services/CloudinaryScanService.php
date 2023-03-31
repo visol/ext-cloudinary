@@ -9,10 +9,10 @@ namespace Visol\Cloudinary\Services;
  * LICENSE.md file that was distributed with this source code.
  */
 
-use Cloudinary\Api;
+use Cloudinary\Api\Admin\AdminApi;
+use Cloudinary\Api\Search\SearchApi;
 use TYPO3\CMS\Core\Exception;
 use TYPO3\CMS\Core\Log\Logger;
-use Cloudinary\Search;
 use Symfony\Component\Console\Style\SymfonyStyle;
 use TYPO3\CMS\Core\Database\ConnectionPool;
 use TYPO3\CMS\Core\Database\Query\QueryBuilder;
@@ -65,7 +65,7 @@ class CloudinaryScanService
     public function scanOne(string $publicId): array|null
     {
         try {
-            $resource = (array)$this->getApi()->resource($publicId);
+            $resource = (array)$this->getAdminApi()->asset($publicId);
             $result = $this->getCloudinaryResourceService()->save($resource);
         } catch (Exception $exception) {
             $result = null;
@@ -76,9 +76,6 @@ class CloudinaryScanService
     public function scan(): array
     {
         $this->preScan();
-
-        // Before calling the Search API, make sure we are connected with the right cloudinary account
-        $this->initializeApi();
 
         $cloudinaryFolder = $this->getCloudinaryPathService()->computeCloudinaryFolderPath(DIRECTORY_SEPARATOR);
 
@@ -104,7 +101,7 @@ class CloudinaryScanService
                 : '';
 
             $this->info(
-                '[API][SEARCH] Cloudinary\Search() - fetch resources from folder "%s" %s',
+                '[API] SearchApi - fetch resources from folder "%s" %s',
                 [
                     $cloudinaryFolder,
                     $nextCursor ? 'and cursor ' . $nextCursor : '',
@@ -114,14 +111,11 @@ class CloudinaryScanService
                 ]
             );
 
-            /** @var Search $search */
-            $search = new Search();
-
-            $response = $search
+            $response = $this->getSearchApi()
                 ->expression(implode(' AND ', $expressions))
-                ->sort_by('public_id', 'asc')
-                ->max_results(500)
-                ->next_cursor($nextCursor)
+                ->sortBy('public_id', 'asc')
+                ->maxResults(500)
+                ->nextCursor($nextCursor)
                 ->execute();
 
             if (is_array($response['resources'])) {
@@ -218,11 +212,6 @@ class CloudinaryScanService
         return $connectionPool->getQueryBuilderForTable('sys_file');
     }
 
-    protected function initializeApi(): void
-    {
-        CloudinaryApiUtility::initializeByConfiguration($this->storage->getConfiguration());
-    }
-
     protected function getCloudinaryResourceService(): CloudinaryResourceService
     {
         return GeneralUtility::makeInstance(CloudinaryResourceService::class, $this->storage);
@@ -245,13 +234,14 @@ class CloudinaryScanService
         return $this->cloudinaryPathService;
     }
 
-    protected function getApi()
+    protected function getSearchApi(): SearchApi
     {
-        // Initialize and configure the API for each call
-        $this->initializeApi();
+        return CloudinaryApiUtility::getCloudinary($this->storage)->searchApi();
+    }
 
-        // create a new instance upon each API call to avoid driver confusion
-        return new Api();
+    protected function getAdminApi(): AdminApi
+    {
+        return CloudinaryApiUtility::getCloudinary($this->storage)->adminApi();
     }
 
     protected function info(string $message, array $arguments = [], array $data = []): void
