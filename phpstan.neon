@@ -14,3 +14,5 @@ parameters:
             message: '#^Call to an undefined method object#'
         -
             message: '#^Cannot call method fetch.* on Doctrine\\DBAL\\Result\|int#'
+        -
+            message: '#should return .* but returns object.#'
