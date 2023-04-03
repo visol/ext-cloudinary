@@ -100,7 +100,7 @@ class CloudinaryWebHookController extends ActionController
         self::getLogger()->debug($parsedBody);
 
         if ($this->shouldStopProcessing($payload)) {
-            return $this->sendResponse(['result' => 'ok', 'message' => 'Nothing to do...']);
+            return $this->sendResponse(['result' => true, 'message' => 'Nothing to do...']);
         }
 
 
@@ -122,7 +122,7 @@ class CloudinaryWebHookController extends ActionController
                     }
 
                     // early return
-                    return $this->sendResponse(['result' => 'ok', 'message' => $message]);
+                    return $this->sendResponse(['result' => true, 'message' => $message]);
 
                 } elseif ($requestType === self::NOTIFICATION_TYPE_RENAME) { // #. handle file rename
 
@@ -160,7 +160,7 @@ class CloudinaryWebHookController extends ActionController
             }
         } catch (\Exception $e) {
             return $this->sendResponse([
-                'result' => 'exception',
+                'result' => false,
                 'message' => $e->getMessage(),
             ]);
         }
@@ -168,7 +168,7 @@ class CloudinaryWebHookController extends ActionController
         $message = $clearCachePages
             ? 'Success! Cache flushed for pages ' . implode(',', $clearCachePages)
             : 'Success! Job done';
-        return $this->sendResponse(['result' => 'ok', 'message' => $message]);
+        return $this->sendResponse(['result' => true, 'message' => $message]);
     }
 
     protected function flushCloudinaryCdn(string $publicId): void
