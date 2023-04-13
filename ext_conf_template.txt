@@ -1,5 +1,5 @@
 # cat=cloudinary; type=int; label=Default cloudinary storage where to upload "local" file (files usually stored on storage = 0)
 default_cloudinary_storage = 0
 
-# cat=cloudinary; type=string; label=CSV values of storage to be displayed in file references fields in TCForm. If empty all cloudinary file storages will be displayed.
-tceform_cludinary_storage =
+# cat=cloudinary; type=int; label=Cloudinary storage to be displayed in file references fields in TCForm.
+tceform_cludinary_storage = 0

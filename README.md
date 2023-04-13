@@ -4,7 +4,7 @@ A TYPO3 extension that connect TYPO3 with [Cloudinary](cloudinary.com) services
 by the means of a **Cloudinary Driver for FAL**.
 The extension also provides various View Helpers to render images on the Frontend.
 Cloudinary is a service provider dealing with images and videos. 
-It offers various services among other:
+It offers various services among others:
 
 * CDN for fast images and videos delivering
 * Manipulation of images and videos such as cropping, resizing and much more...
@@ -57,6 +57,52 @@ The environment variable should be surrounded by %. Example `%BUCKET_NAME%`
 
 ![](Documentation/driver-configuration-01.png)
 
+Cloudinary integration as file picker
+-------------------------------------
+
+The extension is providing an integration with Cloudinary so that the editor can directly interact with the cloudinary library in the backend.
+When clicking on a button, a modal window will open up displaying the Cloudinary files directly. 
+From there, the files can be inserted directly as file references. 
+
+![](Documentation/backend-cloudinary-integration-01.png)
+
+To enable this button, we should first configure the extension settings to display the
+desired button and storage.
+
+![](Documentation/extension-configuration-01.png)
+
+
+We can even take it a step further by enabling auto-login.
+A new field called authenticationEmail has been added to the storage configuration.
+By providing a configured email in Cloudinary, we can automatically log
+in when clicking on the button. Magic!
+
+![](Documentation/driver-configuration-03.png)
+
+
+Configuration TCEFORM
+---------------------
+
+We can configure the form in the backend to hide the default TYPO3 button,
+thus limiting backend user interaction with the Cloudinary library. 
+Here is an example of such a configuration:
+
+```
+TCEFORM {
+    pages {
+        media {
+            config {
+                appearance {
+                    fileUploadAllowed = 0
+                    fileByUrlAllowed = 0
+                    elementBrowserEnabled = 0
+                }
+            }
+        }
+    }
+}
+```
+
 Logging
 -------
 
@@ -69,7 +115,7 @@ tail -f public/typo3temp/var/logs/cloudinary.log
 
 To decide: we now have log level INFO. We might consider "increasing" the level to "DEBUG".
 
-Caveats and trouble shooting
+Caveats and troubleshooting
 ----------------------------
 
 * **Free** Cloudinary account allows 500 API request per day 
@@ -156,7 +202,7 @@ many resources at once.
 cld sync --push localFolder remoteFolder
 ```
 
-The extension provides also a tool to copy a bunch of files (restricted to images) from one storage to an another. 
+The extension provides also a tool to copy a bunch of files (restricted to images) from one storage to another. 
 This can be achieved with this command:
 
 ```shell script
@@ -164,7 +210,7 @@ This can be achieved with this command:
 # where 1 is the source storage (local)
 # and 2 is the target storage (cloudinary)
  
-# Ouptut:
+# Output:
 Copying 64 files from storage "fileadmin/ (auto-created)" (1) to "Cloudinary Storage (fabidule)" (2)
 Copying /introduction/images/typo3-book-backend-login.png
 Copying /introduction/images/content/content-quote.png
@@ -200,13 +246,13 @@ Web Hook
 
 
 Whenever uploading or editing a file in the cloudinary library, you can configure in the cloudinary settings a URL to 
-be called as a web hook. This is recommended to keep the data consistent between Cloudinary and TYPO3. When overridding 
+be called as a web hook. This is recommended to keep the data consistent between Cloudinary and TYPO3. When overriding 
 or moving a file across folders, cloudinary will inform TYPO3 that something has changed.
 
 It will basically:
 
 * invalidate the processed files
-* invalidate the page cache where the the file is involved.
+* invalidate the page cache where the file is involved.
 
 
 ```shell script
@@ -222,6 +268,6 @@ Eventually you will end up having as many config as you have cloudinary storage.
 Source of inspiration
 ---------------------
 
-Adapter for theleague php flysystem for Cloudinary
+Adapter for php flysystem for Cloudinary
 
 https://github.com/flownative/flow-google-cloudstorage
