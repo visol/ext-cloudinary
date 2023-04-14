@@ -18,8 +18,8 @@ use Visol\Cloudinary\Services\ConfigurationService;
 class InlineCloudinaryControlContainer extends InlineControlContainer
 {
 
-    public function render() {
-
+    public function render()
+    {
         // We load here the cloudinary library
         /** @var AssetCollector $assetCollector */
         $assetCollector = GeneralUtility::makeInstance(AssetCollector::class);
@@ -32,11 +32,7 @@ class InlineCloudinaryControlContainer extends InlineControlContainer
         return parent::render();
     }
 
-    /**
-     * @param array $inlineConfiguration
-     * @return string
-     */
-    protected function renderPossibleRecordsSelectorTypeGroupDB(array $inlineConfiguration)
+    protected function renderPossibleRecordsSelectorTypeGroupDB(array $inlineConfiguration): string
     {
         $typo3Buttons = parent::renderPossibleRecordsSelectorTypeGroupDB($inlineConfiguration);
 
