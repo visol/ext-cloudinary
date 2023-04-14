@@ -37,7 +37,8 @@ define([
 
   // Detect if the "toggle" irre is ready
   function isEditIrreElementReady(element) {
-    // Detect if the element is ready to be used
+
+    // Detect if the element is ready to be initialized
     const childElement = $(element).parents('div[data-object-uid]').find('.panel-collapse .tab-content')
     if (childElement.length) {
       clearTimeout(irreToggleTimout)
@@ -48,13 +49,16 @@ define([
   }
 
   function initializeCloudinaryButtons () {
+
     $('.btn-cloudinary-media-library[data-is-initialized="0"]').map((index, element) => {
+
       const cloudinaryCredentials = Array.isArray($(element).data('cloudinaryCredentials'))
         ? $(element).data('cloudinaryCredentials')
         : []
 
       cloudinaryCredentials.map((credential) => {
-        // Render the "select image or video" button
+
+        // Render the cloudinary button
         const mediaLibrary = cloudinary.createMediaLibrary(
           {
             cloud_name: credential.cloudName,
@@ -75,9 +79,7 @@ define([
             // search: { expression: 'resource_type:image' }, // todo we could have video, how to filter _processed_file
           },
           {
-            // showHandler: function () {},
             insertHandler: function (data) {
-              console.log(NProgress)
               NProgress.start();
 
               const me = this;
@@ -130,7 +132,7 @@ define([
 
       // We update the "initialized" flag so that we don't have many buttons initialized
       $(element).attr('data-is-initialized', "1")
-      console.log('Cloudinary button initialized!')
+      console.log('Cloudinary button initialized for field id #' + $(element).attr('id'))
     })
   }
 
