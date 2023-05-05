@@ -41,14 +41,12 @@ class CloudinaryPathService
      */
     public function computeFileIdentifier(array $cloudinaryResource): string
     {
-        $fileParts = PathUtility::pathinfo($cloudinaryResource['public_id']);
-
-        $extension = isset($fileParts['extension'])
-            ? '' // We don't need the extension since it is already included in the public_id (resource_type => "raw")
-            : '.' . $cloudinaryResource['format'];
+        $fileIdentifier = $cloudinaryResource['resource_type'] === 'raw'
+            ? $cloudinaryResource['public_id']
+            : $cloudinaryResource['public_id'] . '.' . $cloudinaryResource['format'];
 
         return self::stripBasePathFromIdentifier(
-            DIRECTORY_SEPARATOR . $cloudinaryResource['public_id'] . $extension,
+            DIRECTORY_SEPARATOR . $fileIdentifier,
             $this->getBasePath()
         );
     }
