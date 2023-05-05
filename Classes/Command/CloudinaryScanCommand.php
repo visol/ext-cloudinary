@@ -59,8 +59,8 @@ class CloudinaryScanCommand extends AbstractCloudinaryCommand
 
         $numberOfFiles = $result['created'] + $result['updated'] - $result['deleted'];
         if ($numberOfFiles !== $result['total']) {
-            $this->error(
-                'Something went wrong. There is a problem with the number of files counted. %s !== %s. It should be fixed in the next scan',
+            $this->warning(
+                'There is a problem with the number of files counted. %s !== %s. It should be fixed in the next scan',
                 [$numberOfFiles, $result['total']],
             );
         }
