@@ -35,7 +35,7 @@ class CloudinaryScanService
 
     protected ResourceStorage $storage;
 
-    protected CloudinaryPathService $cloudinaryPathService;
+    protected ?CloudinaryPathService $cloudinaryPathService = null;
 
     protected string $processedFolder = '_processed_';
 
