@@ -111,7 +111,7 @@ typo3 cloudinary:api [0-9] --expression=\'resource_type:image AND tags=kitten AN
         /** @var CloudinaryPathService $cloudinaryPathService */
         $cloudinaryPathService = GeneralUtility::makeInstance(
             CloudinaryPathService::class,
-            $file->getStorage()->getConfiguration(),
+            $file->getStorage(),
         );
         return $cloudinaryPathService->computeCloudinaryPublicId($file->getIdentifier());
     }

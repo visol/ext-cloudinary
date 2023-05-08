@@ -25,7 +25,7 @@ class CloudinaryScanCommand extends AbstractCloudinaryCommand
 {
     protected ResourceStorage $storage;
 
-    protected function initialize(InputInterface $input, OutputInterface $output)
+    protected function initialize(InputInterface $input, OutputInterface $output): void
     {
         $this->io = new SymfonyStyle($input, $output);
 
@@ -34,11 +34,18 @@ class CloudinaryScanCommand extends AbstractCloudinaryCommand
         $this->storage = $resourceFactory->getStorageObject($input->getArgument('storage'));
     }
 
-    protected function configure()
+    protected function configure(): void
     {
         $message = 'Scan and warm up a cloudinary storage.';
         $this->setDescription($message)
             ->addOption('silent', 's', InputOption::VALUE_OPTIONAL, 'Mute output as much as possible', false)
+            ->addOption(
+                'expression',
+                '',
+                InputOption::VALUE_OPTIONAL,
+                'Expression used by the cloudinary search api (e.g --expression="folder=fileadmin/* AND NOT folder=fileadmin/_processed_/*',
+                false
+            )
             ->addArgument('storage', InputArgument::REQUIRED, 'Storage identifier')
             ->setHelp('Usage: ./vendor/bin/typo3 cloudinary:scan [0-9]');
     }
@@ -55,7 +62,11 @@ class CloudinaryScanCommand extends AbstractCloudinaryCommand
         $this->log('tail -f ' . $logFile);
         $this->log();
 
-        $result = $this->getCloudinaryScanService()->scan();
+        $expression = $input->getOption('expression');
+
+        $result = $this->getCloudinaryScanService()
+            ->setAdditionalExpression($expression)
+            ->scan();
 
         $numberOfFiles = $result['created'] + $result['updated'] - $result['deleted'];
         if ($numberOfFiles !== $result['total']) {

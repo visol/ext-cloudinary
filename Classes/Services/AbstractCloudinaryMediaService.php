@@ -91,7 +91,7 @@ abstract class AbstractCloudinaryMediaService
     {
         return GeneralUtility::makeInstance(
             CloudinaryPathService::class,
-            $storage->getConfiguration()
+            $storage
         );
     }
 

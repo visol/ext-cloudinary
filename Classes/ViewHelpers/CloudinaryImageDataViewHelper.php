@@ -178,7 +178,7 @@ class CloudinaryImageDataViewHelper extends AbstractViewHelper
     {
         return GeneralUtility::makeInstance(
             CloudinaryPathService::class,
-            $storage->getConfiguration()
+            $storage
         );
     }
 

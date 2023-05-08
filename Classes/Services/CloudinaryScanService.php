@@ -127,7 +127,7 @@ class CloudinaryScanService
                 foreach ($response['resources'] as $resource) {
                     $fileIdentifier = $this->getCloudinaryPathService()->computeFileIdentifier($resource);
                     try {
-                        $this->console($fileIdentifier);
+                        $this->console('Scanning ' . $fileIdentifier);
 
                         // Save mirrored file
                         $result = $this->getCloudinaryResourceService()->save($resource);
@@ -135,7 +135,7 @@ class CloudinaryScanService
                         // Find if the file exists in sys_file already
                         if (!$this->fileExistsInStorage($fileIdentifier)) {
 
-                            $this->console('Indexing new file: ' . $fileIdentifier, true);
+                            $this->console('New file needs to be indexed by typo3 ' . $fileIdentifier, true);
 
                             // This will trigger a file indexation
                             $this->storage->getFile($fileIdentifier);
@@ -221,7 +221,7 @@ class CloudinaryScanService
         if (!$this->cloudinaryPathService) {
             $this->cloudinaryPathService = GeneralUtility::makeInstance(
                 CloudinaryPathService::class,
-                $this->storage->getConfiguration()
+                $this->storage
             );
         }
 
