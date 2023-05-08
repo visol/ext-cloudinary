@@ -39,6 +39,10 @@ class CloudinaryScanService
 
     protected string $processedFolder = '_processed_';
 
+    protected string $additionalExpression = '';
+
+    protected array $knownRawFormats = ['youtube', 'vimeo',];
+
     protected array $statistics = [
         self::CREATED => 0,
         self::UPDATED => 0,
@@ -58,12 +62,6 @@ class CloudinaryScanService
         }
         $this->storage = $storage;
         $this->io = $io;
-    }
-
-    public function deleteAll(): void
-    {
-        $this->getCloudinaryResourceService()->deleteAll();
-        $this->getCloudinaryFolderService()->deleteAll();
     }
 
     public function scanOne(string $publicId): array|null
@@ -86,13 +84,18 @@ class CloudinaryScanService
 
         $cloudinaryFolder = $this->getCloudinaryPathService()->computeCloudinaryFolderPath(DIRECTORY_SEPARATOR);
 
+        // We initialize the array.
+        $expressions = [];
+
         // Add a filter if the root directory contains a base path segment
         // + remove _processed_ folder from the search
         if ($cloudinaryFolder) {
             $expressions[] = sprintf('folder=%s/*', $cloudinaryFolder);
             $expressions[] = sprintf('NOT folder=%s/%s/*', $cloudinaryFolder, $this->processedFolder);
-        } else {
-            $expressions[] = sprintf('NOT folder=%s/*', $this->processedFolder);
+        }
+
+        if ($this->additionalExpression) {
+            $expressions[] = $this->additionalExpression;
         }
 
         $this->console('Mirroring...', true);
@@ -126,16 +129,32 @@ class CloudinaryScanService
             if (is_array($response['resources'])) {
                 foreach ($response['resources'] as $resource) {
                     $fileIdentifier = $this->getCloudinaryPathService()->computeFileIdentifier($resource);
+
+                    // Skip files in the processed folder is detected.
+                    if (str_contains($fileIdentifier, $this->processedFolder)) {
+                        $this->console('Skipped processed file ' . $fileIdentifier);
+                        continue;
+                    } elseif ($resource['resource_type'] === 'raw'
+                        && !in_array($resource['format'], $this->knownRawFormats, true)) {
+                        // Skip as well if the resource is of type raw
+                        // We might have problem when indexing video such as .youtube and .vimeo
+                        // which are not well-supported between cloudinary and typo3
+                        $this->console('Skipped unknown raw file ' . $fileIdentifier);
+                        continue;
+                    }
+
                     try {
-                        $this->console('Scanning ' . $fileIdentifier);
 
                         // Save mirrored file
                         $result = $this->getCloudinaryResourceService()->save($resource);
 
+                        $isCreated = isset($result['created']) ? '(new)' : '';
+                        $this->console('Scanned ' . $fileIdentifier . ' ' . $isCreated);
+
                         // Find if the file exists in sys_file already
                         if (!$this->fileExistsInStorage($fileIdentifier)) {
 
-                            $this->console('New file needs to be indexed by typo3 ' . $fileIdentifier, true);
+                            $this->console('New file will be indexed in typo3 ' . $fileIdentifier, true);
 
                             // This will trigger a file indexation
                             $this->storage->getFile($fileIdentifier);
@@ -256,5 +275,11 @@ class CloudinaryScanService
                 $this->io->writeln('');
             }
         }
+    }
+
+    public function setAdditionalExpression(string $additionalExpression): CloudinaryScanService
+    {
+        $this->additionalExpression = $additionalExpression;
+        return $this;
     }
 }
