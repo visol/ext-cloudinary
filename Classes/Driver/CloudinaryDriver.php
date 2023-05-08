@@ -103,10 +103,7 @@ class CloudinaryDriver extends AbstractHierarchicalFilesystemDriver
         $this->charsetConversion = GeneralUtility::makeInstance(CharsetConverter::class);
     }
 
-    /**
-     * @return void
-     */
-    public function processConfiguration()
+    public function processConfiguration(): void
     {
     }
 
@@ -163,30 +160,18 @@ class CloudinaryDriver extends AbstractHierarchicalFilesystemDriver
      *
      * @param string $fileIdentifier
      * @param string $hashAlgorithm
-     *
-     * @return string
      */
-    public function hash($fileIdentifier, $hashAlgorithm)
+    public function hash($fileIdentifier, $hashAlgorithm): string
     {
         return $this->hashIdentifier($fileIdentifier);
     }
 
-    /**
-     * Returns the identifier of the default folder new files should be put into.
-     *
-     * @return string
-     */
-    public function getDefaultFolder()
+    public function getDefaultFolder(): string
     {
         return $this->getRootLevelFolder();
     }
 
-    /**
-     * Returns the identifier of the root level folder of the storage.
-     *
-     * @return string
-     */
-    public function getRootLevelFolder()
+    public function getRootLevelFolder(): string
     {
         return DIRECTORY_SEPARATOR;
     }
@@ -258,17 +243,17 @@ class CloudinaryDriver extends AbstractHierarchicalFilesystemDriver
     }
 
     /**
-     * Checks if a file exists
-     *
      * @param string $fileIdentifier
-     *
-     * @return bool
      */
-    public function fileExists($fileIdentifier)
+    public function fileExists($fileIdentifier): bool
     {
-        $cloudinaryResource = $this->getCloudinaryResourceService()->getResource(
-            $this->getCloudinaryPathService()->computeCloudinaryPublicId($fileIdentifier),
-        );
+        try {
+            $cloudinaryResource = $this->getCloudinaryResourceService()->getResource(
+                $this->getCloudinaryPathService()->computeCloudinaryPublicId($fileIdentifier),
+            );
+        } catch (\Exception $e) {
+            return false;
+        }
 
         return !empty($cloudinaryResource);
     }
@@ -544,10 +529,8 @@ class CloudinaryDriver extends AbstractHierarchicalFilesystemDriver
     /**
      * @param string $fileIdentifier
      * @param bool $writable
-     *
-     * @return string
      */
-    public function getFileForLocalProcessing($fileIdentifier, $writable = true)
+    public function getFileForLocalProcessing($fileIdentifier, $writable = true): string
     {
         $temporaryPath = $this->getTemporaryPathForFile($fileIdentifier);
 
