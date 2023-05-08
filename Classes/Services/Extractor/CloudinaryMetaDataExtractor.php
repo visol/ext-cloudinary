@@ -71,7 +71,7 @@ class CloudinaryMetaDataExtractor implements ExtractorInterface
 
         $cloudinaryPathService = GeneralUtility::makeInstance(
             CloudinaryPathService::class,
-            $file->getStorage()->getConfiguration(),
+            $file->getStorage(),
         );
         $publicId = $cloudinaryPathService->computeCloudinaryPublicId($file->getIdentifier());
         $resource = $cloudinaryResourceService->getResource($publicId);

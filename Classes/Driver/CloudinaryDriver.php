@@ -1251,9 +1251,15 @@ class CloudinaryDriver extends AbstractHierarchicalFilesystemDriver
     protected function getCloudinaryPathService()
     {
         if (!$this->cloudinaryPathService) {
+            if ($this->storageUid) {
+                $resourceFactory = GeneralUtility::makeInstance(ResourceFactory::class);
+                $storage = $resourceFactory->getStorageObject($this->storageUid);
+            }
             $this->cloudinaryPathService = GeneralUtility::makeInstance(
                 CloudinaryPathService::class,
-                $this->configuration,
+                $this->storageUid
+                    ? $storage
+                    : $this->configuration,
             );
         }
 

@@ -31,7 +31,7 @@ class CloudinaryMetadataCommand extends AbstractCloudinaryCommand
 
     protected CloudinaryPathService $cloudinaryPathService;
 
-    protected function initialize(InputInterface $input, OutputInterface $output)
+    protected function initialize(InputInterface $input, OutputInterface $output): void
     {
         $this->io = new SymfonyStyle($input, $output);
 
@@ -41,11 +41,11 @@ class CloudinaryMetadataCommand extends AbstractCloudinaryCommand
 
         $this->cloudinaryPathService = GeneralUtility::makeInstance(
             CloudinaryPathService::class,
-            $this->storage->getConfiguration(),
+            $this->storage,
         );
     }
 
-    protected function configure()
+    protected function configure(): void
     {
         $message = 'Set metadata on cloudinary resources such as file reference and file usage.';
         $this->setDescription($message)

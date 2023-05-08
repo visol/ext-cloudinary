@@ -83,7 +83,7 @@ class CloudinaryWebHookController extends ActionController
 
         $this->cloudinaryPathService = GeneralUtility::makeInstance(
             CloudinaryPathService::class,
-            $storage->getConfiguration()
+            $storage
         );
 
         $this->storage = $storage;
