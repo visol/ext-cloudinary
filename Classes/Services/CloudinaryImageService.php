@@ -12,29 +12,15 @@ namespace Visol\Cloudinary\Services;
 use TYPO3\CMS\Core\Resource\StorageRepository;
 use Cloudinary\Uploader;
 use Doctrine\DBAL\Exception\UniqueConstraintViolationException;
-use TYPO3\CMS\Core\Log\LogLevel;
-use TYPO3\CMS\Core\Log\LogManager;
 use TYPO3\CMS\Core\Resource\File;
-use TYPO3\CMS\Core\Resource\ResourceStorage;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
 use Visol\Cloudinary\Domain\Repository\ExplicitDataCacheRepository;
-use Visol\Cloudinary\Driver\CloudinaryDriver;
-use Visol\Cloudinary\Utility\CloudinaryApiUtility;
 
-/**
- * Class CloudinaryImageService
- */
 class CloudinaryImageService extends AbstractCloudinaryMediaService
 {
-    /**
-     * @var ExplicitDataCacheRepository
-     */
-    protected $explicitDataCacheRepository;
+    protected ExplicitDataCacheRepository $explicitDataCacheRepository;
 
-    /**
-     * @var StorageRepository
-     */
-    protected $storageRepository;
+    protected ?StorageRepository $storageRepository = null;
 
     protected array $defaultOptions = [
         'type' => 'upload',
@@ -43,21 +29,11 @@ class CloudinaryImageService extends AbstractCloudinaryMediaService
         'quality' => 'auto',
     ];
 
-    /**
-     *
-     */
     public function __construct()
     {
         $this->explicitDataCacheRepository = GeneralUtility::makeInstance(ExplicitDataCacheRepository::class);
     }
 
-
-    /**
-     * @param File $file
-     * @param array $options
-     *
-     * @return array
-     */
     public function getExplicitData(File $file, array $options): array
     {
         $publicId = $this->getPublicIdForFile($file);
@@ -77,12 +53,6 @@ class CloudinaryImageService extends AbstractCloudinaryMediaService
         return $explicitData;
     }
 
-    /**
-     * @param File $file
-     * @param array $options
-     *
-     * @return array
-     */
     public function getResponsiveBreakpointData(File $file, array $options): array
     {
         $explicitData = $this->getExplicitData($file, $options);
@@ -90,21 +60,11 @@ class CloudinaryImageService extends AbstractCloudinaryMediaService
         return $explicitData['responsive_breakpoints'][0]['breakpoints'];
     }
 
-    /**
-     * @param array $breakpoints
-     *
-     * @return string
-     */
     public function getSrcsetAttribute(array $breakpoints): string
     {
         return implode(',' . PHP_EOL, $this->getSrcset($breakpoints));
     }
 
-    /**
-     * @param array $breakpoints
-     *
-     * @return array
-     */
     public function getSrcset(array $breakpoints): array
     {
         $imageObjects = $this->getImageObjects($breakpoints);
@@ -116,11 +76,6 @@ class CloudinaryImageService extends AbstractCloudinaryMediaService
         return $srcset;
     }
 
-    /**
-     * @param array $breakpoints
-     *
-     * @return string
-     */
     public function getSizesAttribute(array $breakpoints): string
     {
         $maxImageObject = $this->getImage($breakpoints, 'max');
@@ -128,9 +83,6 @@ class CloudinaryImageService extends AbstractCloudinaryMediaService
     }
 
     /**
-     * @param array $breakpoints
-     * @param string $functionName
-     *
      * @return mixed
      */
     public function getImage(array $breakpoints, string $functionName)
@@ -170,11 +122,6 @@ class CloudinaryImageService extends AbstractCloudinaryMediaService
         return \Cloudinary::cloudinary_url($publicId, $options);
     }
 
-    /**
-     * @param array $breakpoints
-     *
-     * @return array
-     */
     public function getImageObjects(array $breakpoints): array
     {
         $widthMap = [];
@@ -185,12 +132,6 @@ class CloudinaryImageService extends AbstractCloudinaryMediaService
         return $widthMap;
     }
 
-    /**
-     * @param array $settings
-     * @param bool $enableResponsiveBreakpoints
-     *
-     * @return array
-     */
     public function generateOptionsFromSettings(array $settings, bool $enableResponsiveBreakpoints = true): array
     {
         $transformations = [];
