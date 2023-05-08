@@ -31,7 +31,7 @@ class FileProcessingSlot
             return;
         }
 
-        if (strpos($processedFile->getIdentifier() ?? '', 'PROCESSEDFILE' ) === 0) {
+        if (str_starts_with($processedFile->getIdentifier() ?? '', 'PROCESSEDFILE')) {
             return;
         }
 
