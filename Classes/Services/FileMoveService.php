@@ -22,7 +22,7 @@ use Visol\Cloudinary\Utility\CloudinaryApiUtility;
 class FileMoveService
 {
 
-    protected $tableName = 'sys_file';
+    protected string $tableName = 'sys_file';
 
     protected ?CloudinaryPathService $cloudinaryPathService = null;
 
@@ -75,7 +75,7 @@ class FileMoveService
     #    return $isUpdated && $isDeletedFromSourceStorage;
     #}
 
-    public function changeStorage(File $fileObject, ResourceStorage $targetStorage, $removeFile = true): bool
+    public function changeStorage(File $fileObject, ResourceStorage $targetStorage, bool $removeFile = true): bool
     {
         // Update the storage uid
         $isMigrated = (bool)$this->updateFile(
@@ -178,7 +178,7 @@ class FileMoveService
         );
     }
 
-    protected function getCloudinaryPathService()
+    protected function getCloudinaryPathService(): CloudinaryPathService
     {
         return $this->cloudinaryPathService;
     }

@@ -62,6 +62,7 @@ class CloudinaryScanCommand extends AbstractCloudinaryCommand
         $this->log('tail -f ' . $logFile);
         $this->log();
 
+        /** @var string $expression */
         $expression = $input->getOption('expression');
 
         $result = $this->getCloudinaryScanService()

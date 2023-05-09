@@ -33,7 +33,7 @@ final class BeforeFileProcessingEventHandler
             return;
         }
 
-        if (str_starts_with($processedFile->getIdentifier() ?? '', 'PROCESSEDFILE')) {
+        if (str_starts_with($processedFile->getIdentifier(), 'PROCESSEDFILE')) {
             return;
         }
 
@@ -56,15 +56,15 @@ final class BeforeFileProcessingEventHandler
         $url = $explicitData['eager'][0]['secure_url'];
 
         $parts = parse_url($url);
+        $path = $parts['path'] ?? '';
         $processedFile->setName(basename($url));
-        $processedFile->setIdentifier('PROCESSEDFILE' . $parts['path']);
+        $processedFile->setIdentifier('PROCESSEDFILE' . $path);
 
         $processedFile->updateProperties([
             'width' => $explicitData['eager'][0]['width'],
             'height' => $explicitData['eager'][0]['height'],
         ]);
 
-        /** @var $processedFileRepository ProcessedFileRepository */
         $processedFileRepository = GeneralUtility::makeInstance(ProcessedFileRepository::class);
         $processedFileRepository->add($processedFile);
     }

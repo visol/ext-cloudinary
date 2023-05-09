@@ -270,7 +270,7 @@ class CloudinaryDriver extends AbstractHierarchicalFilesystemDriver
      * @param bool $removeOriginal if set the original file will be removed
      *                                after successful operation
      */
-    public function addFile($localFilePath, $targetFolderIdentifier, $newFileName = '', $removeOriginal = true): bool
+    public function addFile($localFilePath, $targetFolderIdentifier, $newFileName = '', $removeOriginal = true): string
     {
         $fileName = $this->sanitizeFileName($newFileName !== '' ? $newFileName : PathUtility::basename($localFilePath));
 
