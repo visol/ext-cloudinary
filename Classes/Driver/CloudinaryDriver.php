@@ -225,6 +225,11 @@ class CloudinaryDriver extends AbstractHierarchicalFilesystemDriver
      */
     public function folderExists($folderIdentifier): bool
     {
+        // Early return in case we have a processed file.
+        if ($this->isProcessedFolder($folderIdentifier)) {
+            return true;
+        }
+
         if ($folderIdentifier === self::ROOT_FOLDER_IDENTIFIER) {
             return true;
         }
@@ -1053,7 +1058,20 @@ class CloudinaryDriver extends AbstractHierarchicalFilesystemDriver
         return (bool)preg_match($this->getProcessedFilePattern(), $identifier);
     }
 
-    protected function getProcessedPath(string $identifier): string|null
+    protected function isProcessedFolder(string $identifier): bool
+    {
+        $storageRecord = $this->getStorageObject()->getStorageRecord();
+
+        // Example value for $storageRecord['processingfolder'] is "2:/_processed_"
+        // we want to remove the "2:" from the expression
+        $processedStorageFolderName = $storageRecord['processingfolder'] ?? '_processed_';
+        $folderPath = preg_replace('/^[0-9]+:/', '', $processedStorageFolderName);
+
+        // We detect if the identifier start with the value from $folderPath
+        return str_starts_with($identifier, $folderPath);
+    }
+
+    protected function computeProcessedPath(string $identifier): string|null
     {
         $cloudinaryPath = null;
         if (preg_match($this->getProcessedFilePattern(), $identifier, $matches)) {
