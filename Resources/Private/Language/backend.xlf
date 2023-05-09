@@ -34,9 +34,6 @@
             <trans-unit id="driverConfiguration.message.connectionTestSuccessful.message">
                 <source>Congratulations! Cloudinary is successfully connected to TYPO3.</source>
             </trans-unit>
-            <trans-unit id="tt_content.tx_cloudinary_resources">
-                <source>Cloudinary resources</source>
-            </trans-unit>
         </body>
     </file>
 </xliff>
