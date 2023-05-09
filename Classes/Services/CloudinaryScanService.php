@@ -41,8 +41,6 @@ class CloudinaryScanService
 
     protected string $additionalExpression = '';
 
-    protected array $knownRawFormats = ['youtube', 'vimeo',];
-
     protected array $statistics = [
         self::CREATED => 0,
         self::UPDATED => 0,
@@ -135,7 +133,7 @@ class CloudinaryScanService
                         $this->console('Skipped processed file ' . $fileIdentifier);
                         continue;
                     } elseif ($resource['resource_type'] === 'raw'
-                        && !in_array($resource['format'], $this->knownRawFormats, true)) {
+                        && !in_array($resource['format'], CloudinaryDriver::$knownRawFormats, true)) {
                         // Skip as well if the resource is of type raw
                         // We might have problem when indexing video such as .youtube and .vimeo
                         // which are not well-supported between cloudinary and typo3
