@@ -1,6 +1,6 @@
 <?php
 
-namespace Visol\Cloudinary\Slots;
+namespace Visol\Cloudinary\EventHandlers;
 
 /*
  * This file is part of the Visol/Cloudinary project under GPLv2 or later.
@@ -8,21 +8,23 @@ namespace Visol\Cloudinary\Slots;
  * For the full copyright and license information, please read the
  * LICENSE.md file that was distributed with this source code.
  */
-use TYPO3\CMS\Core\Resource\Service\FileProcessingService;
-use TYPO3\CMS\Core\Resource\Driver\DriverInterface;
+
+use TYPO3\CMS\Core\Resource\Event\BeforeFileProcessingEvent;
 use TYPO3\CMS\Core\Resource\File;
-use TYPO3\CMS\Core\Resource\ProcessedFile;
 use TYPO3\CMS\Core\Resource\ProcessedFileRepository;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
 use Visol\Cloudinary\Driver\CloudinaryDriver;
 use Visol\Cloudinary\Services\CloudinaryImageService;
 
-class FileProcessingSlot
+final class BeforeFileProcessingEventHandler
 {
-
-    // We want to remove all processed files
-    public function preFileProcess(FileProcessingService $fileProcessingService, DriverInterface $driver, ProcessedFile $processedFile, File $file, $taskType, array $configuration)
+    public function __invoke(BeforeFileProcessingEvent $event): void
     {
+        $driver = $event->getDriver();
+        $processedFile = $event->getProcessedFile();
+        /** @var File $file */
+        $file = $event->getFile();
+
         if (!$driver instanceof CloudinaryDriver) {
             return;
         }
@@ -35,21 +37,22 @@ class FileProcessingSlot
             return;
         }
 
-        $options = [
-            'type' => 'upload',
-            'eager' => [
-                [
-                    //'format' => 'jpg', // `Invalid transformation component - auto`
-                    'fetch_format' => 'auto',
-                    'quality' => 'auto:eco',
-                    'width' => 64,
-                    'height' => 64,
-                    'crop' => 'fit',
+        $explicitData = $this->getCloudinaryImageService()->getExplicitData(
+            $file,
+            [
+                'type' => 'upload',
+                'eager' => [
+                    [
+                        //'format' => 'jpg', // `Invalid transformation component - auto`
+                        'fetch_format' => 'auto',
+                        'quality' => 'auto:eco',
+                        'width' => 64,
+                        'height' => 64,
+                        'crop' => 'fit',
+                    ]
                 ]
             ]
-        ];
-
-        $explicitData = $this->getCloudinaryImageService()->getExplicitData($file, $options);
+        );
         $url = $explicitData['eager'][0]['secure_url'];
 
         $parts = parse_url($url);
@@ -66,12 +69,8 @@ class FileProcessingSlot
         $processedFileRepository->add($processedFile);
     }
 
-    /**
-     * @return object|CloudinaryImageService
-     */
-    public function getCloudinaryImageService()
+    public function getCloudinaryImageService(): CloudinaryImageService
     {
         return GeneralUtility::makeInstance(CloudinaryImageService::class);
     }
-
 }
