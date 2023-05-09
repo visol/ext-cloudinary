@@ -25,7 +25,7 @@ class CloudinaryFixJpegCommand extends AbstractCloudinaryCommand
 
     protected string $tableName = 'sys_file';
 
-    protected function initialize(InputInterface $input, OutputInterface $output)
+    protected function initialize(InputInterface $input, OutputInterface $output): void
     {
         $this->io = new SymfonyStyle($input, $output);
 
@@ -39,7 +39,7 @@ class CloudinaryFixJpegCommand extends AbstractCloudinaryCommand
     /**
      * Configure the command by defining the name, options and arguments
      */
-    protected function configure()
+    protected function configure(): void
     {
         $message = 'After "moving" files you should fix the jpeg extension. Consult README.md for more info.';
         $this->setDescription($message)

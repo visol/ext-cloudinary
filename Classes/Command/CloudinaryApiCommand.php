@@ -44,7 +44,7 @@ typo3 cloudinary:api [0-9] --expression=\'public_id:foo-bar\'
 typo3 cloudinary:api [0-9] --expression=\'resource_type:image AND tags=kitten AND uploaded_at>1d\'
     ' ;
 
-    protected function initialize(InputInterface $input, OutputInterface $output)
+    protected function initialize(InputInterface $input, OutputInterface $output): void
     {
         $this->io = new SymfonyStyle($input, $output);
 
@@ -53,7 +53,7 @@ typo3 cloudinary:api [0-9] --expression=\'resource_type:image AND tags=kitten AN
         $this->storage = $resourceFactory->getStorageObject($input->getArgument('storage'));
     }
 
-    protected function configure()
+    protected function configure(): void
     {
         $message = 'Interact with cloudinary API';
         $this->setDescription($message)
