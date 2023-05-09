@@ -26,7 +26,7 @@ class CloudinaryQueryCommand extends AbstractCloudinaryCommand
 {
     protected ResourceStorage $storage;
 
-    protected function initialize(InputInterface $input, OutputInterface $output)
+    protected function initialize(InputInterface $input, OutputInterface $output): void
     {
         $this->io = new SymfonyStyle($input, $output);
 
@@ -60,7 +60,7 @@ typo3 cloudinary:query [0-9] --folder
     /**
      * Configure the command by defining the name, options and arguments
      */
-    protected function configure()
+    protected function configure(): void
     {
         $message = 'Query a given storage such a list, count files or folders';
         $this->setDescription($message)

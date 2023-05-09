@@ -38,7 +38,7 @@ class CloudinaryMoveCommand extends AbstractCloudinaryCommand
     /**
      * Configure the command by defining the name, options and arguments
      */
-    protected function configure()
+    protected function configure(): void
     {
         $message = 'Move bunch of images to a cloudinary storage. Consult the README.md for more info.';
         $this->setDescription($message)
@@ -54,7 +54,7 @@ class CloudinaryMoveCommand extends AbstractCloudinaryCommand
             ->setHelp('Usage: ./vendor/bin/typo3 cloudinary:move 1 2');
     }
 
-    protected function initialize(InputInterface $input, OutputInterface $output)
+    protected function initialize(InputInterface $input, OutputInterface $output): void
     {
         $this->io = new SymfonyStyle($input, $output);
 

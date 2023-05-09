@@ -48,7 +48,7 @@ class CloudinaryAcceptanceTestCommand extends AbstractCloudinaryCommand
     /**
      * Configure the command by defining the name, options and arguments
      */
-    protected function configure()
+    protected function configure(): void
     {
         $message = 'Run a suite of Acceptance Tests';
         $this
@@ -65,7 +65,7 @@ class CloudinaryAcceptanceTestCommand extends AbstractCloudinaryCommand
             );
     }
 
-    protected function initialize(InputInterface $input, OutputInterface $output)
+    protected function initialize(InputInterface $input, OutputInterface $output): void
     {
         $this->io = new SymfonyStyle($input, $output);
     }

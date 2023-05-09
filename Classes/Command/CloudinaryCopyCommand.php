@@ -29,7 +29,7 @@ class CloudinaryCopyCommand extends AbstractCloudinaryCommand
 
     protected ResourceStorage $targetStorage;
 
-    protected function initialize(InputInterface $input, OutputInterface $output)
+    protected function initialize(InputInterface $input, OutputInterface $output): void
     {
         $this->io = new SymfonyStyle($input, $output);
 
@@ -44,7 +44,7 @@ class CloudinaryCopyCommand extends AbstractCloudinaryCommand
     /**
      * Configure the command by defining the name, options and arguments
      */
-    protected function configure()
+    protected function configure(): void
     {
         $this->setDescription('Copy bunch of images from a local storage to a cloudinary storage')
             ->addOption('silent', 's', InputOption::VALUE_OPTIONAL, 'Mute output as much as possible', false)
