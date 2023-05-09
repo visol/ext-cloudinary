@@ -62,3 +62,9 @@ services:
         command: 'cloudinary:query'
         schedulable: false
         description: Query a given storage such a list, count files or folders.
+
+  Visol\Cloudinary\EventHandlers\BeforeFileProcessingEventHandler:
+    tags:
+      - name: event.listener
+        identifier: 'cloudinary-before-file-processing-event-handler'
+        event: TYPO3\CMS\Core\Resource\Event\BeforeFileProcessingEvent
