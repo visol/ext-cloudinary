@@ -59,8 +59,6 @@ class CloudinaryDriver extends AbstractHierarchicalFilesystemDriver
 
     protected ConfigurationService $configurationService;
 
-    protected ?ResourceStorage $storage = null;
-
     protected CharsetConverter $charsetConversion;
 
     protected ?CloudinaryPathService $cloudinaryPathService = null;
@@ -106,7 +104,7 @@ class CloudinaryDriver extends AbstractHierarchicalFilesystemDriver
      */
     public function getPublicUrl($identifier): string
     {
-        if ($processedPath = $this->getProcessedPath($identifier)) {
+        if ($processedPath = $this->computeProcessedPath($identifier)) {
             return 'https://res.cloudinary.com/' . $processedPath;
         }
 
@@ -1103,14 +1101,10 @@ class CloudinaryDriver extends AbstractHierarchicalFilesystemDriver
     protected function getCloudinaryPathService(): CloudinaryPathService
     {
         if (!$this->cloudinaryPathService) {
-            if ($this->storageUid) {
-                $resourceFactory = GeneralUtility::makeInstance(ResourceFactory::class);
-                $storage = $resourceFactory->getStorageObject($this->storageUid);
-            }
             $this->cloudinaryPathService = GeneralUtility::makeInstance(
                 CloudinaryPathService::class,
                 $this->storageUid
-                    ? $storage
+                    ? $this->getStorageObject()
                     : $this->configuration,
             );
         }
@@ -1118,15 +1112,20 @@ class CloudinaryDriver extends AbstractHierarchicalFilesystemDriver
         return $this->cloudinaryPathService;
     }
 
+    protected function getStorageObject(): ResourceStorage
+    {
+        /** @var ResourceFactory $resourceFactory */
+        $resourceFactory = GeneralUtility::makeInstance(ResourceFactory::class);
+        return $resourceFactory->getStorageObject($this->storageUid);
+    }
+
     protected function getCloudinaryResourceService(): CloudinaryResourceService
     {
         if (!$this->cloudinaryResourceService) {
-            /** @var ResourceFactory $resourceFactory */
-            $resourceFactory = GeneralUtility::makeInstance(ResourceFactory::class);
 
             $this->cloudinaryResourceService = GeneralUtility::makeInstance(
                 CloudinaryResourceService::class,
-                $resourceFactory->getStorageObject($this->storageUid),
+                $this->getStorageObject()
             );
         }
 
