@@ -106,11 +106,8 @@ class CloudinaryDriver extends AbstractHierarchicalFilesystemDriver
      */
     public function getPublicUrl($identifier): string
     {
-        // for processed file
-        $pattern = sprintf('/^PROCESSEDFILE\/(%s\/.*)/', $this->configurationService->get('cloudName'));
-        $matches = [];
-        if (preg_match($pattern, $identifier, $matches)) {
-            return 'https://res.cloudinary.com/' . $matches[1];
+        if ($processedPath = $this->getProcessedPath($identifier)) {
+            return 'https://res.cloudinary.com/' . $processedPath;
         }
 
         $cloudinaryResource = $this->getCloudinaryResourceService()->getResource(
@@ -155,6 +152,9 @@ class CloudinaryDriver extends AbstractHierarchicalFilesystemDriver
      */
     public function getFileInfoByIdentifier($fileIdentifier, array $propertiesToExtract = []): array
     {
+        if ($this->isProcessedFile($fileIdentifier)) {
+            return [];
+        }
         $publicId = $this->getCloudinaryPathService()->computeCloudinaryPublicId($fileIdentifier);
         $cloudinaryResource = $this->getCloudinaryResourceService()->getResource($publicId);
         // We have a problem Hudson!
@@ -208,14 +208,14 @@ class CloudinaryDriver extends AbstractHierarchicalFilesystemDriver
      */
     public function fileExists($fileIdentifier): bool
     {
-        try {
-            $cloudinaryResource = $this->getCloudinaryResourceService()->getResource(
-                $this->getCloudinaryPathService()->computeCloudinaryPublicId($fileIdentifier),
-            );
-        } catch (\Exception $e) {
-            $fileIdentifier;
-            return false;
+        // Early return in case we have a processed file.
+        if ($this->isProcessedFile($fileIdentifier)) {
+            return true;
         }
+
+        $cloudinaryResource = $this->getCloudinaryResourceService()->getResource(
+            $this->getCloudinaryPathService()->computeCloudinaryPublicId($fileIdentifier),
+        );
 
         return !empty($cloudinaryResource);
     }
@@ -1041,6 +1041,25 @@ class CloudinaryDriver extends AbstractHierarchicalFilesystemDriver
     public function getExplicitDataCacheRepository(): ExplicitDataCacheRepository
     {
         return GeneralUtility::makeInstance(ExplicitDataCacheRepository::class);
+    }
+
+    protected function getProcessedFilePattern(): string
+    {
+        return sprintf('/^PROCESSEDFILE\/(%s\/.*)/', $this->configurationService->get('cloudName'));
+    }
+
+    protected function isProcessedFile(string $identifier): bool
+    {
+        return (bool)preg_match($this->getProcessedFilePattern(), $identifier);
+    }
+
+    protected function getProcessedPath(string $identifier): string|null
+    {
+        $cloudinaryPath = null;
+        if (preg_match($this->getProcessedFilePattern(), $identifier, $matches)) {
+            [, $cloudinaryPath] = $matches;
+        }
+        return $cloudinaryPath;
     }
 
     protected function isFileIdentifier(string $newFileIdentifier): bool
