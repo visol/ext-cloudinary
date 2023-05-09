@@ -54,10 +54,11 @@ class CloudinaryResourceService
 
     public function getResources(
         string $folder,
-        array $orderings = [],
-        array $pagination = [],
-        bool $recursive = false
-    ): array {
+        array  $orderings = [],
+        array  $pagination = [],
+        bool   $recursive = false
+    ): array
+    {
         $query = $this->getQueryBuilder();
         $query
             ->select('*')
@@ -74,9 +75,9 @@ class CloudinaryResourceService
             $query->orderBy($orderings['fieldName'], $orderings['direction']);
         }
 
-        if ($pagination && (int) $pagination['maxResult'] > 0) {
-            $query->setMaxResults((int) $pagination['maxResult']);
-            $query->setFirstResult((int) $pagination['firstResult']);
+        if ($pagination && (int)$pagination['maxResult'] > 0) {
+            $query->setMaxResults((int)$pagination['maxResult']);
+            $query->setFirstResult((int)$pagination['firstResult']);
         }
         return $query->execute()->fetchAllAssociative();
     }
@@ -95,7 +96,7 @@ class CloudinaryResourceService
             : $query->expr()->eq('folder', $query->expr()->literal($folder));
         $query->andWhere($expresion);
 
-        return (int) $query->execute()->fetchOne(0);
+        return (int)$query->execute()->fetchOne(0);
     }
 
     public function delete(string $publicId): int
@@ -121,9 +122,17 @@ class CloudinaryResourceService
             $this->getCloudinaryFolderService()->save($folder);
         }
 
-        return $this->exists($publicIdHash)
-            ? ['updated' => $this->update($cloudinaryResource, $publicIdHash), 'publicIdHash' => $publicIdHash]
-            : ['created' => $this->add($cloudinaryResource), 'publicIdHash' => $publicIdHash];
+        $result = $this->exists($publicIdHash)
+            ? ['updated' => $this->update($cloudinaryResource, $publicIdHash),]
+            : ['created' => $this->add($cloudinaryResource),];
+
+        return array_merge(
+            $result,
+            [
+                'publicIdHash' => $publicIdHash,
+                'resource' => $cloudinaryResource,
+            ]
+        );
     }
 
     protected function add(array $cloudinaryResource): int
@@ -150,7 +159,7 @@ class CloudinaryResourceService
                 $query->expr()->eq('public_id_hash', $query->expr()->literal($publicIdHash)),
             );
 
-        return (int) $query->execute()->fetchOne(0);
+        return (int)$query->execute()->fetchOne(0);
     }
 
     protected function getValues(array $cloudinaryResource): array
@@ -163,16 +172,16 @@ class CloudinaryResourceService
             'folder' => $this->getFolder($cloudinaryResource),
             'filename' => $this->getFileName($cloudinaryResource),
             'format' => $this->getValue('format', $cloudinaryResource),
-            'version' => (int) $this->getValue('version', $cloudinaryResource),
+            'version' => (int)$this->getValue('version', $cloudinaryResource),
             'resource_type' => $this->getValue('resource_type', $cloudinaryResource),
             'type' => $this->getValue('type', $cloudinaryResource),
             'created_at' => $this->getCreatedAt($cloudinaryResource),
             'uploaded_at' => $this->getUpdatedAt($cloudinaryResource),
-            'bytes' => (int) $this->getValue('bytes', $cloudinaryResource),
-            'width' => (int) $this->getValue('width', $cloudinaryResource),
-            'height' => (int) $this->getValue('height', $cloudinaryResource),
-            'aspect_ratio' => (float) $this->getValue('aspect_ratio', $cloudinaryResource),
-            'pixels' => (int) $this->getValue('pixels', $cloudinaryResource),
+            'bytes' => (int)$this->getValue('bytes', $cloudinaryResource),
+            'width' => (int)$this->getValue('width', $cloudinaryResource),
+            'height' => (int)$this->getValue('height', $cloudinaryResource),
+            'aspect_ratio' => (float)$this->getValue('aspect_ratio', $cloudinaryResource),
+            'pixels' => (int)$this->getValue('pixels', $cloudinaryResource),
             'url' => $this->getValue('url', $cloudinaryResource),
             'secure_url' => $this->getValue('secure_url', $cloudinaryResource),
             'status' => $this->getValue('status', $cloudinaryResource),
@@ -188,7 +197,7 @@ class CloudinaryResourceService
 
     protected function getValue(string $key, array $cloudinaryResource): string
     {
-        return isset($cloudinaryResource[$key]) ? (string) $cloudinaryResource[$key] : '';
+        return isset($cloudinaryResource[$key]) ? (string)$cloudinaryResource[$key] : '';
     }
 
     protected function getFileName(array $cloudinaryResource): string
