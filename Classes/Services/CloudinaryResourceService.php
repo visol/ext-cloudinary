@@ -20,7 +20,7 @@ use TYPO3\CMS\Core\Utility\GeneralUtility;
  */
 class CloudinaryResourceService
 {
-    protected string $tableName = 'tx_cloudinary_resource';
+    protected string $tableName = 'tx_cloudinary_cache_resources';
 
     protected ResourceStorage $storage;
 
