@@ -38,8 +38,12 @@ use Visol\Cloudinary\Utility\CloudinaryFileUtility;
 class CloudinaryDriver extends AbstractHierarchicalFilesystemDriver
 {
     public const DRIVER_TYPE = 'VisolCloudinary';
+
     protected const ROOT_FOLDER_IDENTIFIER = '/';
+
     protected const UNSAFE_FILENAME_CHARACTER_EXPRESSION = '\\x00-\\x2C\\/\\x3A-\\x3F\\x5B-\\x60\\x7B-\\xBF';
+
+    static public array $knownRawFormats = ['youtube', 'vimeo'];
 
     /**
      * The base URL that points to this driver's storage. As long is this is not set, it is assumed that this folder
@@ -209,6 +213,7 @@ class CloudinaryDriver extends AbstractHierarchicalFilesystemDriver
                 $this->getCloudinaryPathService()->computeCloudinaryPublicId($fileIdentifier),
             );
         } catch (\Exception $e) {
+            $fileIdentifier;
             return false;
         }
 
@@ -488,7 +493,7 @@ class CloudinaryDriver extends AbstractHierarchicalFilesystemDriver
             $parentFolderIdentifier,
             $newFolderName,
         );
-        $cloudinaryFolder = $this->getCloudinaryPathService()->normalizeCloudinaryPath($canonicalFolderPath);
+        $cloudinaryFolder = $this->getCloudinaryPathService()->normalizeCloudinaryPublicId($canonicalFolderPath);
 
         $this->log('[API][CREATE] Cloudinary\Api::createFolder() - folder "%s"', [$cloudinaryFolder], ['createFolder']);
         $response = $this->getApi()->create_folder($cloudinaryFolder);
@@ -716,7 +721,7 @@ class CloudinaryDriver extends AbstractHierarchicalFilesystemDriver
         return [
             'identifier' => $canonicalFolderIdentifier,
             'name' => PathUtility::basename(
-                $this->getCloudinaryPathService()->normalizeCloudinaryPath($canonicalFolderIdentifier),
+                $this->getCloudinaryPathService()->normalizeCloudinaryPublicId($canonicalFolderIdentifier),
             ),
             'storage' => $this->storageUid,
         ];
