@@ -159,8 +159,8 @@ class CloudinaryPathService
 
     protected function getFileExtension(string $filename): string
     {
-        $pathParts = PathUtility::pathinfo($filename);
-        return $pathParts['extension'];
+        $pathInfo = PathUtility::pathinfo($filename);
+        return $pathInfo['extension'] ?? '';
     }
 
     public static function stripBasePathFromIdentifier(string $identifierWithBasePath, string $basePath): string
