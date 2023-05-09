@@ -25,6 +25,25 @@ class CloudinaryScanCommand extends AbstractCloudinaryCommand
 {
     protected ResourceStorage $storage;
 
+    protected string $help = '
+Usage: ./vendor/bin/typo3 cloudinary:scan [0-9]
+
+Examples:
+
+# Query by public id
+typo3 cloudinary:scan
+
+# Query with an additional expression
+typo3 cloudinary:scan --expression="folder=fileadmin/* AND NOT folder:fileadmin/_processed_/*"
+
+Notice:
+
+You can search for an exact folder path with "folder=fileadmin/*"
+or you can search for a folder prefix with "folder:fileadmin/*"
+@see https://cloudinary.com/documentation/search_api
+    ' ;
+
+
     protected function initialize(InputInterface $input, OutputInterface $output): void
     {
         $this->io = new SymfonyStyle($input, $output);
@@ -47,7 +66,7 @@ class CloudinaryScanCommand extends AbstractCloudinaryCommand
                 false
             )
             ->addArgument('storage', InputArgument::REQUIRED, 'Storage identifier')
-            ->setHelp('Usage: ./vendor/bin/typo3 cloudinary:scan [0-9]');
+            ->setHelp($this->help);
     }
 
     protected function execute(InputInterface $input, OutputInterface $output): int
