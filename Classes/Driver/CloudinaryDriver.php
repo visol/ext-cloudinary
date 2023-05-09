@@ -283,7 +283,7 @@ class CloudinaryDriver extends AbstractHierarchicalFilesystemDriver
         $cloudinaryPublicId = $this->getCloudinaryPathService()->computeCloudinaryPublicId($fileIdentifier);
 
         $this->log(
-            '[API][UPLOAD] Cloudinary\Uploader::upload() - add resource "%s"',
+            '[API] Cloudinary\Uploader::upload() - add resource "%s"',
             [$cloudinaryPublicId],
             ['addFile()'],
         );
@@ -388,7 +388,7 @@ class CloudinaryDriver extends AbstractHierarchicalFilesystemDriver
     {
         $cloudinaryPublicId = $this->getCloudinaryPathService()->computeCloudinaryPublicId($fileIdentifier);
         $this->log(
-            '[API][DELETE] Cloudinary\Api::delete_resources - delete resource "%s"',
+            '[API] Cloudinary\Api::delete_resources - delete resource "%s"',
             [$cloudinaryPublicId],
             ['deleteFile'],
         );
@@ -418,7 +418,7 @@ class CloudinaryDriver extends AbstractHierarchicalFilesystemDriver
 
         if ($deleteRecursively) {
             $this->log(
-                '[API][DELETE] Cloudinary\Api::delete_resources_by_prefix() - folder "%s"',
+                '[API] Cloudinary\Api::delete_resources_by_prefix() - folder "%s"',
                 [$cloudinaryFolder],
                 ['deleteFolder'],
             );
@@ -434,7 +434,7 @@ class CloudinaryDriver extends AbstractHierarchicalFilesystemDriver
         // We make sure the folder exists first. It will also delete sub-folder if those ones are empty.
         if ($this->folderExists($folderIdentifier)) {
             $this->log(
-                '[API][DELETE] Cloudinary\Api::delete_folder() - folder "%s"',
+                '[API] Cloudinary\Api::delete_folder() - folder "%s"',
                 [$cloudinaryFolder],
                 ['deleteFolder'],
             );
@@ -495,7 +495,7 @@ class CloudinaryDriver extends AbstractHierarchicalFilesystemDriver
         );
         $cloudinaryFolder = $this->getCloudinaryPathService()->normalizeCloudinaryPublicId($canonicalFolderPath);
 
-        $this->log('[API][CREATE] Cloudinary\Api::createFolder() - folder "%s"', [$cloudinaryFolder], ['createFolder']);
+        $this->log('[API] Cloudinary\Api::createFolder() - folder "%s"', [$cloudinaryFolder], ['createFolder']);
         $response = $this->getApi()->create_folder($cloudinaryFolder);
 
         if (!$response['success']) {
