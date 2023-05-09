@@ -12,6 +12,7 @@ namespace Visol\Cloudinary\Services;
 use TYPO3\CMS\Core\Resource\ResourceStorage;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
 use TYPO3\CMS\Core\Utility\PathUtility;
+use Visol\Cloudinary\Driver\CloudinaryDriver;
 
 class CloudinaryPathService
 {
@@ -65,18 +66,22 @@ class CloudinaryPathService
 
     public function computeCloudinaryPublicId(string $fileIdentifier): string
     {
-        $cloudinaryResource = $this->getCloudinaryResource($fileIdentifier);
-        return $this->normalizeCloudinaryPath($cloudinaryResource['public_id']);
+        $fileExtension = $this->getFileExtension($fileIdentifier);
+        $publicId = in_array($fileExtension, CloudinaryDriver::$knownRawFormats)
+            ? $fileIdentifier
+            : $this->stripFileExtension($fileIdentifier);
+
+        return $this->normalizeCloudinaryPublicId($publicId);
     }
 
     public function computeCloudinaryFolderPath(string $folderIdentifier): string
     {
-        return $this->normalizeCloudinaryPath($folderIdentifier);
+        return $this->normalizeCloudinaryPublicId($folderIdentifier);
     }
 
-    public function normalizeCloudinaryPath(string $cloudinaryPath): string
+    public function normalizeCloudinaryPublicId(string $cloudinaryPublicId): string
     {
-        $normalizedCloudinaryPath = trim($cloudinaryPath, DIRECTORY_SEPARATOR);
+        $normalizedCloudinaryPath = trim($cloudinaryPublicId, DIRECTORY_SEPARATOR);
         $basePath = $this->getBasePath();
         return $basePath
             ? trim($basePath . DIRECTORY_SEPARATOR . $normalizedCloudinaryPath, DIRECTORY_SEPARATOR)
@@ -111,7 +116,7 @@ class CloudinaryPathService
 
     protected function getCloudinaryResource(string $fileIdentifier): array
     {
-        $possiblePublicId = $this->stripExtension($fileIdentifier);
+        $possiblePublicId = $this->stripFileExtension($fileIdentifier);
 
         // We cache the resource for performance reasons.
         if (!isset($this->cachedCloudinaryResources[$possiblePublicId])) {
@@ -130,7 +135,7 @@ class CloudinaryPathService
                 $cloudinaryResource = $cloudinaryResourceService->getResource($fileIdentifier);
             }
 
-            // Houston, we have a real problem. The public id does not exist
+            // Houston, we have a problem. The public id does not exist, meaning the file does not exist.
             if (!$cloudinaryResource) {
                 throw new \RuntimeException('Cloudinary resource not found for ' . $fileIdentifier, 1623157880);
             }
@@ -141,12 +146,7 @@ class CloudinaryPathService
         return $this->cachedCloudinaryResources[$possiblePublicId];
     }
 
-    /**
-     * @param $filename
-     *
-     * @return string
-     */
-    protected function stripExtension(string $filename): string
+    protected function stripFileExtension(string $filename): string
     {
         $pathParts = PathUtility::pathinfo($filename);
 
@@ -155,6 +155,12 @@ class CloudinaryPathService
         }
 
         return $pathParts['dirname'] . DIRECTORY_SEPARATOR . $pathParts['filename'];
+    }
+
+    protected function getFileExtension(string $filename): string
+    {
+        $pathParts = PathUtility::pathinfo($filename);
+        return $pathParts['extension'];
     }
 
     public static function stripBasePathFromIdentifier(string $identifierWithBasePath, string $basePath): string
