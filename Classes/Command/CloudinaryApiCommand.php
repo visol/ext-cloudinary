@@ -10,6 +10,7 @@ namespace Visol\Cloudinary\Command;
  */
 
 use Cloudinary\Api;
+use Cloudinary\Search;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
@@ -20,6 +21,7 @@ use TYPO3\CMS\Core\Resource\File;
 use TYPO3\CMS\Core\Resource\ResourceFactory;
 use TYPO3\CMS\Core\Resource\ResourceStorage;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
+use Visol\Cloudinary\Driver\CloudinaryDriver;
 use Visol\Cloudinary\Services\CloudinaryPathService;
 use Visol\Cloudinary\Utility\CloudinaryApiUtility;
 
@@ -30,18 +32,24 @@ class CloudinaryApiCommand extends AbstractCloudinaryCommand
     protected string $help = '
 Usage: ./vendor/bin/typo3 cloudinary:api [storage-uid]
 
-Examples
+Examples:
 
 # Query by public id
-typo3 cloudinary:api [0-9] --publicId=\'foo-bar\'
+typo3 cloudinary:api [0-9] --publicId="foo-bar"
 
-# Query by file uid
-typo3 cloudinary:api --fileUid=\'[0-9]\'
+# Query by file uid (will retrieve the public id from the file)
+typo3 cloudinary:api --fileUid="[0-9]"
 
 # Query with an expression
 # @see https://cloudinary.com/documentation/search_api
-typo3 cloudinary:api [0-9] --expression=\'public_id:foo-bar\'
-typo3 cloudinary:api [0-9] --expression=\'resource_type:image AND tags=kitten AND uploaded_at>1d\'
+typo3 cloudinary:api [0-9] --expression="public_id:foo-bar"
+typo3 cloudinary:api [0-9] --expression="resource_type:image AND tags=kitten AND uploaded_at>1d"
+
+# List the resources instead of the whole resource
+typo3 cloudinary:api [0-9] --expression="folder=fileadmin/_processed_/*" --list
+
+# Delete the resources according to the expression
+typo3 cloudinary:api [0-9] --expression="folder=fileadmin/_processed_/*" --delete
     ' ;
 
     protected function initialize(InputInterface $input, OutputInterface $output): void
@@ -60,7 +68,9 @@ typo3 cloudinary:api [0-9] --expression=\'resource_type:image AND tags=kitten AN
             ->addOption('silent', 's', InputOption::VALUE_OPTIONAL, 'Mute output as much as possible', false)
             ->addOption('fileUid', '', InputOption::VALUE_OPTIONAL, 'File uid', '')
             ->addOption('publicId', '', InputOption::VALUE_OPTIONAL, 'Cloudinary public id', '')
-            ->addOption('expression', '', InputOption::VALUE_OPTIONAL, 'Cloudinary search expression', '')
+            ->addOption('expression', '', InputOption::VALUE_OPTIONAL, 'Cloudinary search expression e.g --expression="folder=fileadmin/*"', '')
+            ->addOption('list', '', InputOption::VALUE_OPTIONAL, 'List instead of the whole resource --expression="folder=fileadmin/_processed_/*" --list', false)
+            ->addOption('delete', '', InputOption::VALUE_OPTIONAL, 'Delete the resources --expression="folder=fileadmin/*" --delete', false)
             ->addArgument('storage', InputArgument::OPTIONAL, 'Storage identifier')
             ->setHelp($this->help);
     }
@@ -74,9 +84,20 @@ typo3 cloudinary:api [0-9] --expression=\'resource_type:image AND tags=kitten AN
 
         $publicId = $input->getOption('publicId');
         $expression = $input->getOption('expression');
+        $list = $input->getOption('list') === null;
+        $delete = $input->getOption('delete') === null;
 
-        // @phpstan-ignore-next-line
-        $fileUid = (int)$input->getOption('fileUid');
+        if ($delete) {
+            // ask the user whether it should continue
+            $continue = $this->io->confirm('Are you sure you want to delete the resources?');
+            if (!$continue) {
+                $this->log('Aborting...');
+                return Command::SUCCESS;
+            }
+        }
+
+        /** @var int $fileUid */
+        $fileUid = $input->getOption('fileUid');
         if ($fileUid) {
             /** @var ResourceFactory $resourceFactory */
             $resourceFactory = GeneralUtility::makeInstance(ResourceFactory::class);
@@ -92,10 +113,44 @@ typo3 cloudinary:api [0-9] --expression=\'resource_type:image AND tags=kitten AN
                 $resource = $this->getApi()->resource($publicId);
                 $this->log(var_export((array)$resource, true));
             } elseif ($expression) {
-                $search = new \Cloudinary\Search();
-                $search->expression($expression);
-                $response = $search->execute();
-                $this->log(var_export((array)$response, true));
+
+                $counter = 0;
+                do {
+                    $nextCursor = isset($response)
+                        ? $response['next_cursor']
+                        : '';
+
+                    /** @var Search $search */
+                    $search = new Search();
+
+                    $response = $search
+                        ->expression($expression)
+                        ->sort_by('public_id', 'asc')
+                        ->max_results(100)
+                        ->next_cursor($nextCursor)
+                        ->execute();
+
+                    if (is_array($response['resources'])) {
+                        $_resources = [];
+                        foreach ($response['resources'] as $resource) {
+                            if ($list || $delete) {
+                                $this->log($resource['public_id']);
+                            } else {
+                                $this->log(var_export((array)$resource, true));
+                            }
+
+                            // collect resources in case of deletion.
+                            $_resources[] = $resource['public_id'];
+                        }
+                        // delete the resource if told
+                        if ($delete) {
+                            $counter++;
+                            $this->log("\nDeleting batch #$counter...\n");
+                            $this->getApi()->delete_resources($_resources);
+                        }
+                    }
+                } while (!empty($response) && isset($response['next_cursor']));
+
             } else {
                 $this->log('Nothing to do...');
             }
