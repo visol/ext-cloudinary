@@ -99,21 +99,6 @@ class CloudinaryPathService
         return $cloudinaryResource['resource_type'] ?? 'unknown';
     }
 
-    public function guessMimeType(array $cloudinaryResource): string
-    {
-        $mimeType = '';
-        if ($cloudinaryResource['format'] === 'pdf') {
-            $mimeType = 'application/pdf';
-        } elseif ($cloudinaryResource['format'] === 'jpg') {
-            $mimeType = 'image/jpeg';
-        } elseif ($cloudinaryResource['format'] === 'png') {
-            $mimeType = 'image/png';
-        } elseif ($cloudinaryResource['format'] === 'mp4') {
-            $mimeType = 'video/mp4';
-        }
-        return $mimeType;
-    }
-
     protected function getCloudinaryResource(string $fileIdentifier): array
     {
         $possiblePublicId = $this->stripFileExtension($fileIdentifier);
