@@ -34,6 +34,7 @@ use Visol\Cloudinary\Services\CloudinaryPathService;
 use Visol\Cloudinary\Services\CloudinaryTestConnectionService;
 use Visol\Cloudinary\Services\ConfigurationService;
 use Visol\Cloudinary\Utility\CloudinaryFileUtility;
+use Visol\Cloudinary\Utility\MimeTypeUtility;
 
 class CloudinaryDriver extends AbstractHierarchicalFilesystemDriver
 {
@@ -163,29 +164,12 @@ class CloudinaryDriver extends AbstractHierarchicalFilesystemDriver
             );
         }
 
-        $mimeType = $this->getCloudinaryPathService()->guessMimeType($cloudinaryResource);
-        if (!$mimeType) {
-            $this->log(
-                'Just a notice! Time consuming action ahead. I am going to download a file "%s"',
-                [$fileIdentifier],
-                ['getFileInfoByIdentifier'],
-            );
-
-            // We are force to download the file in order to correctly find the mime type.
-            $localFile = $this->getFileForLocalProcessing($fileIdentifier);
-
-            /** @var FileInfo $fileInfo */
-            $fileInfo = GeneralUtility::makeInstance(FileInfo::class, $localFile);
-
-            $mimeType = $fileInfo->getMimeType();
-        }
-
         return [
             'identifier_hash' => $this->hashIdentifier($fileIdentifier),
             'folder_hash' => sha1($this->canonicalizeAndCheckFolderIdentifier(PathUtility::dirname($fileIdentifier))),
             'creation_date' => strtotime($cloudinaryResource['created_at']),
             'modification_date' => strtotime($cloudinaryResource['created_at']),
-            'mime_type' => $mimeType,
+            'mime_type' => MimeTypeUtility::guessMimeType($cloudinaryResource['format']),
             'extension' => $this->getResourceInfo($cloudinaryResource, 'format'),
             'size' => $this->getResourceInfo($cloudinaryResource, 'bytes'),
             'width' => $this->getResourceInfo($cloudinaryResource, 'width'),
