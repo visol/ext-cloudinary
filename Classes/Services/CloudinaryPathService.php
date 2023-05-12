@@ -13,6 +13,7 @@ use TYPO3\CMS\Core\Resource\ResourceStorage;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
 use TYPO3\CMS\Core\Utility\PathUtility;
 use Visol\Cloudinary\Driver\CloudinaryDriver;
+use Visol\Cloudinary\Utility\MimeTypeUtility;
 
 class CloudinaryPathService
 {
@@ -95,7 +96,24 @@ class CloudinaryPathService
 
     public function getResourceType(string $fileIdentifier): string
     {
-        $cloudinaryResource = $this->getCloudinaryResource($fileIdentifier);
+        try {
+            // Find the resource type from the cloudinary resource.
+            $cloudinaryResource = $this->getCloudinaryResource($fileIdentifier);
+        } catch (\RuntimeException $e) {
+            $fileExtension = $this->getFileExtension($fileIdentifier);
+            $mimeType = MimeTypeUtility::guessMimeType($fileExtension);
+
+            // Get the primary resource type from the mime type such as image, video, audio, raw
+            $type = explode('/', $mimeType)[0];
+
+            // Equivalence table.
+            if ($type === 'application') {
+                $type = 'image';
+            } elseif ($type === 'text') {
+                $type = 'raw';
+            }
+            return $type;
+        }
         return $cloudinaryResource['resource_type'] ?? 'unknown';
     }
 
