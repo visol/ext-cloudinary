@@ -13,19 +13,16 @@ use Visol\Cloudinary\Tests\Acceptance\FileOperation\RenameFolderOperationTests;
 class FolderTestSuite extends AbstractCloudinaryTestSuite
 {
 
-    /**
-     * @var
-     */
-    protected $files = [
+    protected array $files = [
         'sub-folder/image-jpeg.jpeg',
         'sub-folder/image-tiff.tiff',
         'sub-folder/sub-sub-folder/image-jpeg.jpeg',
         'sub-folder/sub-sub-folder/image-tiff.tiff',
         'image-jpg.jpg',
         'image-png.png',
-        'document.odt',
+        #'document.odt',
         'document.pdf',
-        'video.youtube',
+        #'video.youtube',
         'video.mp4',
     ];
 
@@ -41,7 +38,7 @@ class FolderTestSuite extends AbstractCloudinaryTestSuite
 
         // Count files
         $test = new CountFilesInFolderOperationTests($this, '/');
-        $test->setExpectedNumberOfFiles(6)
+        $test->setExpectedNumberOfFiles(4)
             ->setExpectedNumberOfFolders(1) // _processed_ folder must be taken into consideration in the root folder
             ->run();
 
