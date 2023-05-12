@@ -61,7 +61,7 @@ class CloudinaryAcceptanceTestCommand extends AbstractCloudinaryCommand
                 'The API configuration'
             )
             ->setHelp(
-                'Usage: ./vendor/bin/typo3 cloudinary:tests'
+                'Usage: ./vendor/bin/typo3 cloudinary:tests bucket-name:my-api-key:my-api-secret'
             );
     }
 
@@ -76,12 +76,7 @@ class CloudinaryAcceptanceTestCommand extends AbstractCloudinaryCommand
         [$couldName, $apiKey, $apiSecret] = GeneralUtility::trimExplode(':', $input->getArgument('api-configuration'));
         if (!$couldName || !$apiKey || !$apiSecret) {
             // Everything must be defined!
-            $message = 'API configuration is incomplete. Format should be "cld-name:1234:abcd".' . LF . LF;
-            $message .= '"cld-name" is the name of the cloudinary bucket' . LF;
-            $message .= '"12345" is the API key' . LF;
-            $message .= '"abcd" is the API secret' . LF . LF;
-            $message .= 'https://cloudinary.com/console' . LF;
-            $message .= 'Strong advice! Take a free account to run the test suite';
+            $message = 'API configuration is incomplete. Format should be "bucket-name:my-api-key:my-api-secret".';
             $this->error($message);
             return Command::INVALID;
         }
@@ -98,7 +93,7 @@ class CloudinaryAcceptanceTestCommand extends AbstractCloudinaryCommand
             return Command::FAILURE;
         }
 
-        // Test case for video file
+        // Test case for files
         $testSuite = new FileTestSuite($storageId, $this->io);
         $testSuite->runTests();
 
@@ -184,7 +179,7 @@ class CloudinaryAcceptanceTestCommand extends AbstractCloudinaryCommand
         );
 
         // Remove all cache
-        $db->truncate('cf_cloudinary');
-        $db->truncate('cf_cloudinary_tags');
+//        $db->truncate('cf_cloudinary');
+//        $db->truncate('cf_cloudinary_tags');
     }
 }

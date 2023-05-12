@@ -15,6 +15,7 @@ class AddFileOperationTest extends AbstractCloudinaryFileOperationTest
     public function run()
     {
         $fixtureFile = $this->getFilePath($this->resourceName);
+
         $file = $this->getStorage()->addFile(
             $fixtureFile,
             $this->getContainingFolder($this->resourceName),

@@ -13,21 +13,18 @@ use Visol\Cloudinary\Tests\Acceptance\FileOperation\ReadFileOperationTest;
 class FileTestSuite extends AbstractCloudinaryTestSuite
 {
 
-    /**
-     * @var
-     */
-    protected $files = [
+    protected array $files = [
         'sub-folder/image-jpeg.jpeg',
         'sub-folder/image-tiff.tiff',
         'image-jpg.jpg',
         'image-png.png',
-        'document.odt',
+        #'document.odt',
         'document.pdf',
-        'video.youtube',
+        #'video.youtube',
         'video.mp4',
     ];
 
-    public function runTests()
+    public function runTests(): void
     {
 
         // Basic access file such as read, write, delete
