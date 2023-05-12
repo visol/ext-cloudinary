@@ -36,9 +36,6 @@ class CloudinaryFixJpegCommand extends AbstractCloudinaryCommand
         $this->targetStorage = $resourceFactory->getStorageObject($input->getArgument('target'));
     }
 
-    /**
-     * Configure the command by defining the name, options and arguments
-     */
     protected function configure(): void
     {
         $message = 'After "moving" files you should fix the jpeg extension. Consult README.md for more info.';
@@ -46,12 +43,9 @@ class CloudinaryFixJpegCommand extends AbstractCloudinaryCommand
             ->addOption('silent', 's', InputOption::VALUE_OPTIONAL, 'Mute output as much as possible', false)
             ->addOption('yes', 'y', InputOption::VALUE_OPTIONAL, 'Accept everything by default', false)
             ->addArgument('target', InputArgument::REQUIRED, 'Target storage identifier')
-            ->setHelp('Usage: ./vendor/bin/typo3 cloudinary:fix [0-9]');
+            ->setHelp('Usage: ./vendor/bin/typo3 cloudinary:fix:image:after-move [0-9]');
     }
 
-    /**
-     * Move file
-     */
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
         if (!$this->checkDriverType($this->targetStorage)) {
