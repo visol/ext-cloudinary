@@ -274,12 +274,14 @@ class CloudinaryDriver extends AbstractHierarchicalFilesystemDriver
         );
 
         // Upload the file
-        $cloudinaryResource = (array)$this->getUploadApi()->upload($localFilePath, [
-            'public_id' => PathUtility::basename($cloudinaryPublicId),
-            'folder' => $this->getCloudinaryPathService()->computeCloudinaryFolderPath($targetFolderIdentifier),
-            'resource_type' => $this->getCloudinaryPathService()->getResourceType($fileIdentifier),
-            'overwrite' => true,
-        ]);
+        $cloudinaryResource = (array)$this->getUploadApi()->upload(
+            $localFilePath, [
+                'public_id' => PathUtility::basename($cloudinaryPublicId),
+                'folder' => $this->getCloudinaryPathService()->computeCloudinaryFolderPath($targetFolderIdentifier),
+                'resource_type' => $this->getCloudinaryPathService()->getResourceType($fileIdentifier),
+                'overwrite' => true,
+            ]
+        );
 
         $this->checkCloudinaryUploadStatus($cloudinaryResource, $fileIdentifier);
 
