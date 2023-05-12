@@ -739,17 +739,16 @@ class CloudinaryDriver extends AbstractHierarchicalFilesystemDriver
 
         // Set default orderings
         $parameters = (array)GeneralUtility::_GP('SET');
-        if ($parameters['sort'] === 'file') {
-            $parameters['sort'] = 'filename';
-        } elseif ($parameters['sort'] === 'tstamp') {
-            $parameters['sort'] = 'created_at';
-        } else {
-            $parameters['sort'] = 'filename';
-            $parameters['reverse'] = 'ASC';
+
+        $orderField = $parameters['sort'] ?? 'filename';
+        if ($orderField === 'file') {
+            $orderField = 'filename';
+        } elseif ($orderField === 'tstamp') {
+            $orderField = 'created_at';
         }
 
         $orderings = [
-            'fieldName' => $parameters['sort'],
+            'fieldName' => $orderField,
             'direction' => isset($parameters['reverse']) && (int)$parameters['reverse'] ? 'DESC' : 'ASC',
         ];
 
