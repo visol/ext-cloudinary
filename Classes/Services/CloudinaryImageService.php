@@ -12,7 +12,6 @@ namespace Visol\Cloudinary\Services;
 use Cloudinary\Asset\Image;
 use Cloudinary\Transformation\ImageTransformation;
 use TYPO3\CMS\Core\Resource\StorageRepository;
-use Doctrine\DBAL\Exception\UniqueConstraintViolationException;
 use TYPO3\CMS\Core\Resource\File;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
 use Visol\Cloudinary\Domain\Repository\ExplicitDataCacheRepository;
@@ -56,7 +55,8 @@ class CloudinaryImageService extends AbstractCloudinaryMediaService
             try {
                 $explicitData = (array)$this->getUploadApi($file->getStorage())->explicit($publicId, $apiOptions);
                 $this->explicitDataCacheRepository->save($file->getStorage()->getUid(), $publicId, $options, $explicitData);
-            } catch (UniqueConstraintViolationException $e) {
+            } catch (\Exception $e) {
+                $explicitData = [];
                 // ignore
             }
         }
