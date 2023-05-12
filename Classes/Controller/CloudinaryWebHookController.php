@@ -40,7 +40,9 @@ class CloudinaryWebHookController extends ActionController
 {
 
     protected const NOTIFICATION_TYPE_UPLOAD = 'upload';
+
     protected const NOTIFICATION_TYPE_RENAME = 'rename';
+
     protected const NOTIFICATION_TYPE_DELETE = 'delete';
 
     protected CloudinaryResourceService $cloudinaryResourceService;
