@@ -35,10 +35,16 @@ services:
         schedulable: false
         description: Run a suite of Acceptance Tests.
 
+  Visol\Cloudinary\Command\CloudinaryFixImageDimensionCommand:
+    tags:
+      - name: 'console.command'
+        command: 'cloudinary:fix:image:dimension'
+        description: Fix missing width and height of image.
+
   Visol\Cloudinary\Command\CloudinaryFixJpegCommand:
     tags:
       - name: 'console.command'
-        command: 'cloudinary:fix'
+        command: 'cloudinary:fix:image:after-move'
         schedulable: false
         description: After "moving" files you should fix the jpeg extension. Consult README.md for more info.
 
