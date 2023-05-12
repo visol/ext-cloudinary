@@ -44,9 +44,6 @@ For a new "file storage" record, then:
 * Pick the **Cloudinary** driver in the driver dropdown menu.
 * Fill in the requested fields. Password and secrets can be found from the [Cloudinary Console](https://cloudinary.com/console).
 
-
-![](Documentation/driver-configuration-02.png)
-
 Once the record is saved, you should see a message telling the connection could be successfully established. 
 You can now head to the File module list. 
 Notice the first time you click on a folder in the File list module, 
