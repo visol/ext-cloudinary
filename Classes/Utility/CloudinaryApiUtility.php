@@ -29,16 +29,20 @@ class CloudinaryApiUtility
 
     public static function getConfiguration(ResourceStorage|array $storage): Configuration
     {
-        if ($storage->getDriverType() !== CloudinaryDriver::DRIVER_TYPE) {
-            // Check the file is stored on the right storage
-            // If not we should trigger an exception
-            $message = sprintf(
-                'Wrong storage! Can not initialize with storage type "%s".',
-                $storage->getDriverType()
-            );
-            throw new \Exception($message, 1590401459);
+        if (is_array($storage)) {
+            $storageConfiguration = $storage;
+        } else {
+            if ($storage->getDriverType() !== CloudinaryDriver::DRIVER_TYPE) {
+                // Check the file is stored on the right storage
+                // If not we should trigger an exception
+                $message = sprintf(
+                    'Wrong storage! Can not initialize with storage type "%s".',
+                    $storage->getDriverType()
+                );
+                throw new \Exception($message, 1590401459);
+            }
+            $storageConfiguration = $storage->getConfiguration();
         }
-        $storageConfiguration = $storage->getConfiguration();
 
         /** @var ConfigurationService $configurationService */
         $configurationService = GeneralUtility::makeInstance(
