@@ -21,7 +21,6 @@ use TYPO3\CMS\Core\Resource\File;
 use TYPO3\CMS\Core\Resource\ResourceFactory;
 use TYPO3\CMS\Core\Resource\ResourceStorage;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
-use Visol\Cloudinary\Driver\CloudinaryDriver;
 use Visol\Cloudinary\Services\CloudinaryPathService;
 use Visol\Cloudinary\Utility\CloudinaryApiUtility;
 
@@ -50,7 +49,7 @@ typo3 cloudinary:api [0-9] --expression="folder=fileadmin/_processed_/*" --list
 
 # Delete the resources according to the expression
 typo3 cloudinary:api [0-9] --expression="folder=fileadmin/_processed_/*" --delete
-    ' ;
+    ';
 
     protected function initialize(InputInterface $input, OutputInterface $output): void
     {
@@ -109,7 +108,16 @@ typo3 cloudinary:api [0-9] --expression="folder=fileadmin/_processed_/*" --delet
 
         try {
             if ($publicId) {
-                $resource = $this->getAdminApi()->asset($publicId);
+                try {
+                    $resource = $this->getAdminApi()->asset($publicId);
+                } catch (\Exception $e) {
+                    // More attempts if we have a video or raw file
+                    try {
+                        $resource = $this->getAdminApi()->asset($publicId, ['resource_type' => 'video']);
+                    } catch (\Exception $e) {
+                        $resource = $this->getAdminApi()->asset($publicId, ['resource_type' => 'raw']);
+                    }
+                }
                 $this->log(var_export((array)$resource, true));
             } elseif ($expression) {
 
