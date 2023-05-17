@@ -35,6 +35,7 @@ Examples:
 
 # Query by public id
 typo3 cloudinary:api [0-9] --publicId="foo-bar"
+typo3 cloudinary:api [0-9] --publicId="foo-bar" --type="video"
 
 # Query by file uid (will retrieve the public id from the file)
 typo3 cloudinary:api --fileUid="[0-9]"
@@ -67,6 +68,7 @@ typo3 cloudinary:api [0-9] --expression="folder=fileadmin/_processed_/*" --delet
             ->addOption('silent', 's', InputOption::VALUE_OPTIONAL, 'Mute output as much as possible', false)
             ->addOption('fileUid', '', InputOption::VALUE_OPTIONAL, 'File uid', '')
             ->addOption('publicId', '', InputOption::VALUE_OPTIONAL, 'Cloudinary public id', '')
+            ->addOption('type', '', InputOption::VALUE_OPTIONAL, 'In combination with publicId, overrides the type. Possible value iamge, video or raw', 'image')
             ->addOption('expression', '', InputOption::VALUE_OPTIONAL, 'Cloudinary search expression e.g --expression="folder=fileadmin/*"', '')
             ->addOption('list', '', InputOption::VALUE_OPTIONAL, 'List instead of the whole resource --expression="folder=fileadmin/_processed_/*" --list', false)
             ->addOption('delete', '', InputOption::VALUE_OPTIONAL, 'Delete the resources --expression="folder=fileadmin/*" --delete', false)
@@ -108,16 +110,7 @@ typo3 cloudinary:api [0-9] --expression="folder=fileadmin/_processed_/*" --delet
 
         try {
             if ($publicId) {
-                try {
-                    $resource = $this->getAdminApi()->asset($publicId);
-                } catch (\Exception $e) {
-                    // More attempts if we have a video or raw file
-                    try {
-                        $resource = $this->getAdminApi()->asset($publicId, ['resource_type' => 'video']);
-                    } catch (\Exception $e) {
-                        $resource = $this->getAdminApi()->asset($publicId, ['resource_type' => 'raw']);
-                    }
-                }
+                $resource = $this->getAdminApi()->asset($publicId, ['resource_type' => $input->getOption('type')]);
                 $this->log(var_export((array)$resource, true));
             } elseif ($expression) {
 
