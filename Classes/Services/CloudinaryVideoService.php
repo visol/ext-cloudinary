@@ -8,7 +8,7 @@ use Visol\Cloudinary\Utility\CloudinaryApiUtility;
 
 class CloudinaryVideoService extends AbstractCloudinaryMediaService
 {
-    protected $defaultOptions = [
+    protected array $defaultOptions = [
         'type' => 'upload',
         'resource_type' => 'video',
         'fetch_format' => 'auto',
@@ -22,7 +22,8 @@ class CloudinaryVideoService extends AbstractCloudinaryMediaService
         $publicId = $this->getPublicIdForFile($file);
 
         $configuration = CloudinaryApiUtility::getConfiguration($file->getStorage());
-        return Video::fromParams($publicId)
+
+        return Video::fromParams($publicId, $options)
             ->configuration($configuration)
             ->toUrl();
     }
