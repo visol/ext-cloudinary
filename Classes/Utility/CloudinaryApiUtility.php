@@ -55,7 +55,9 @@ class CloudinaryApiUtility
                 'api_key' => $configurationService->get('apiKey'),
                 'api_secret' => $configurationService->get('apiSecret'),
                 'timeout' => $configurationService->get('timeout'),
-                'secure' => true
+                'secure' => true,
+                'private_cdn' => $configurationService->get('cname') !== '',
+                'secure_distribution' => $configurationService->get('cname'),
             ]
         );
 

@@ -14,10 +14,13 @@
                 <source>Cloudinary API Secret</source>
             </trans-unit>
             <trans-unit id="driverConfiguration.basePath">
-                <source>A possible base path to store files in a parent directory. Example `production/`</source>
+                <source>A possible base path for storing files in a parent directory on cloudianry. Example `production/`</source>
+            </trans-unit>
+            <trans-unit id="driverConfiguration.cname">
+                <source>A possible CNAME to serve your assets from, instead of the default res.cloudinary.com domain name.</source>
             </trans-unit>
             <trans-unit id="driverConfiguration.authenticationEmail">
-                <source>Email used for authentication (auto-login) in file reference fields in TCEForm.</source>
+                <source>Email address used for authentication (auto-login) in file reference fields within TCEForm.</source>
             </trans-unit>
             <trans-unit id="driverConfiguration.timeout">
                 <source>Cloudinary API timeout</source>

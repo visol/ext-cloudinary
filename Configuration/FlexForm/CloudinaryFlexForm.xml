@@ -46,6 +46,14 @@
                     </config>
                 </TCEforms>
             </basePath>
+            <cname>
+                <TCEforms>
+                    <label>LLL:EXT:cloudinary/Resources/Private/Language/backend.xlf:driverConfiguration.cname</label>
+                    <config>
+                        <type>input</type>
+                    </config>
+                </TCEforms>
+            </cname>
             <timeout>
                 <TCEforms>
                     <label>LLL:EXT:cloudinary/Resources/Private/Language/backend.xlf:driverConfiguration.timeout</label>

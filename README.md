@@ -50,7 +50,7 @@ Notice the first time you click on a folder in the File list module,
 it will take some time since the images must be fetched and put into the cloudinary cache.
 
 Notice you can also use environment variable to configure the storage.
-The environment variable should be surrounded by %. Example `%BUCKET_NAME%`
+The environment variable should be surrounded by %. Example `%env(BUCKET_NAME%)`
 
 ![](Documentation/driver-configuration-01.png)
 
