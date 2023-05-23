@@ -10,15 +10,9 @@ namespace Visol\Cloudinary\Services;
  */
 
 
-/**
- * Class ConfigurationService
- */
 class ConfigurationService
 {
-    /**
-     * @var array
-     */
-    protected $configuration = [];
+    protected array $configuration = [];
 
     /**
      * ConfigurationService constructor.
@@ -33,8 +27,8 @@ class ConfigurationService
      */
     public function get(string $key): string
     {
-        $value = (string)$this->configuration[$key];
-        if (preg_match('/^%(.*)%$/', $value, $matches)) {
+        $value = trim((string)$this->configuration[$key]);
+        if (preg_match('/^%\w+\((.*)\)%$/', $value, $matches) || preg_match('/^%(.*)%$/', $value, $matches)) {
             $value = getenv($matches[1]);
 
             if ($value === false) {
