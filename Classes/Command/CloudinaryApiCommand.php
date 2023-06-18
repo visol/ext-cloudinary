@@ -50,6 +50,7 @@ typo3 cloudinary:api [0-9] --expression="folder=fileadmin/_processed_/*" --list
 
 # Delete the resources according to the expression
 typo3 cloudinary:api [0-9] --expression="folder=fileadmin/_processed_/*" --delete
+typo3 cloudinary:api [0-9] --expression="folder=fileadmin/_processed_/*" --delete --force
     ';
 
     protected function initialize(InputInterface $input, OutputInterface $output): void
@@ -66,6 +67,7 @@ typo3 cloudinary:api [0-9] --expression="folder=fileadmin/_processed_/*" --delet
         $message = 'Interact with cloudinary API';
         $this->setDescription($message)
             ->addOption('silent', 's', InputOption::VALUE_OPTIONAL, 'Mute output as much as possible', false)
+            ->addOption('force', 'f', InputOption::VALUE_OPTIONAL, 'Force the given action without further confirmation', false)
             ->addOption('fileUid', '', InputOption::VALUE_OPTIONAL, 'File uid', '')
             ->addOption('publicId', '', InputOption::VALUE_OPTIONAL, 'Cloudinary public id', '')
             ->addOption('type', '', InputOption::VALUE_OPTIONAL, 'In combination with publicId, overrides the type. Possible value iamge, video or raw', 'image')
@@ -87,8 +89,9 @@ typo3 cloudinary:api [0-9] --expression="folder=fileadmin/_processed_/*" --delet
         $expression = $input->getOption('expression');
         $list = $input->getOption('list') === null;
         $delete = $input->getOption('delete') === null;
+        $force = $input->getOption('force') === null;
 
-        if ($delete) {
+        if ($delete && !$force) {
             // ask the user whether it should continue
             $continue = $this->io->confirm('Are you sure you want to delete the resources?');
             if (!$continue) {
