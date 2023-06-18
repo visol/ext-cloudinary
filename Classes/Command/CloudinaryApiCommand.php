@@ -155,6 +155,11 @@ typo3 cloudinary:api [0-9] --expression="folder=fileadmin/_processed_/*" --delet
                 $this->log('Nothing to do...');
             }
         } catch (\Exception $exception) {
+            // Triggered when no resources are found when deleting files.
+            if ($exception->getMessage() === 'Missing required parameter - public_ids') {
+                $this->log("No resources found for expression '$expression'. Nothing to do...");
+                return Command::SUCCESS;
+            }
             $this->error($exception->getMessage());
         }
 
