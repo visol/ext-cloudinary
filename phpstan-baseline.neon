@@ -81,11 +81,6 @@ parameters:
 			path: Classes/Command/AbstractCloudinaryCommand.php
 
 		-
-			message: "#^Constant LF not found\\.$#"
-			count: 7
-			path: Classes/Command/CloudinaryAcceptanceTestCommand.php
-
-		-
 			message: "#^Method Visol\\\\Cloudinary\\\\Command\\\\CloudinaryAcceptanceTestCommand\\:\\:tearDown\\(\\) has no return type specified\\.$#"
 			count: 1
 			path: Classes/Command/CloudinaryAcceptanceTestCommand.php
@@ -96,42 +91,27 @@ parameters:
 			path: Classes/Command/CloudinaryAcceptanceTestCommand.php
 
 		-
-			message: "#^Call to method adminApi\\(\\) on an unknown class Cloudinary\\\\Cloudinary\\.$#"
-			count: 1
-			path: Classes/Command/CloudinaryApiCommand.php
-
-		-
-			message: "#^Call to method asset\\(\\) on an unknown class Cloudinary\\\\Api\\\\Admin\\\\AdminApi\\.$#"
-			count: 1
-			path: Classes/Command/CloudinaryApiCommand.php
-
-		-
-			message: "#^Call to method deleteAssets\\(\\) on an unknown class Cloudinary\\\\Api\\\\Admin\\\\AdminApi\\.$#"
-			count: 1
-			path: Classes/Command/CloudinaryApiCommand.php
-
-		-
-			message: "#^Call to method expression\\(\\) on an unknown class Cloudinary\\\\Api\\\\Search\\\\SearchApi\\.$#"
-			count: 1
-			path: Classes/Command/CloudinaryApiCommand.php
-
-		-
-			message: "#^Call to method searchApi\\(\\) on an unknown class Cloudinary\\\\Cloudinary\\.$#"
-			count: 1
-			path: Classes/Command/CloudinaryApiCommand.php
-
-		-
-			message: "#^Method Visol\\\\Cloudinary\\\\Command\\\\CloudinaryApiCommand\\:\\:getAdminApi\\(\\) has invalid return type Cloudinary\\\\Api\\\\Admin\\\\AdminApi\\.$#"
-			count: 1
-			path: Classes/Command/CloudinaryApiCommand.php
-
-		-
-			message: "#^Method Visol\\\\Cloudinary\\\\Command\\\\CloudinaryApiCommand\\:\\:getSearchApi\\(\\) has invalid return type Cloudinary\\\\Api\\\\Search\\\\SearchApi\\.$#"
+			message: "#^Parameter \\#1 \\$publicId of method Cloudinary\\\\Api\\\\Admin\\\\AdminApi\\:\\:asset\\(\\) expects string, mixed given\\.$#"
 			count: 1
 			path: Classes/Command/CloudinaryApiCommand.php
 
 		-
 			message: "#^Parameter \\#1 \\$uid of method TYPO3\\\\CMS\\\\Core\\\\Resource\\\\ResourceFactory\\:\\:getStorageObject\\(\\) expects int\\|null, mixed given\\.$#"
+			count: 1
+			path: Classes/Command/CloudinaryApiCommand.php
+
+		-
+			message: "#^Parameter \\#1 \\$value of method Cloudinary\\\\Api\\\\Search\\\\SearchApi\\:\\:nextCursor\\(\\) expects string, mixed given\\.$#"
+			count: 1
+			path: Classes/Command/CloudinaryApiCommand.php
+
+		-
+			message: "#^Part \\$expression \\(mixed\\) of encapsed string cannot be cast to string\\.$#"
+			count: 1
+			path: Classes/Command/CloudinaryApiCommand.php
+
+		-
+			message: "#^Variable \\$response in empty\\(\\) always exists and is not falsy\\.$#"
 			count: 1
 			path: Classes/Command/CloudinaryApiCommand.php
 
@@ -196,6 +176,16 @@ parameters:
 			path: Classes/Command/CloudinaryCopyCommand.php
 
 		-
+			message: "#^Parameter \\#1 \\$uid of method TYPO3\\\\CMS\\\\Core\\\\Resource\\\\ResourceFactory\\:\\:getStorageObject\\(\\) expects int\\|null, mixed given\\.$#"
+			count: 1
+			path: Classes/Command/CloudinaryFixImageDimensionCommand.php
+
+		-
+			message: "#^Property Visol\\\\Cloudinary\\\\Command\\\\AbstractCloudinaryCommand\\:\\:\\$isSilent \\(bool\\) does not accept mixed\\.$#"
+			count: 1
+			path: Classes/Command/CloudinaryFixImageDimensionCommand.php
+
+		-
 			message: "#^Method Doctrine\\\\DBAL\\\\Driver\\\\Connection\\:\\:query\\(\\) invoked with 1 parameter, 0 required\\.$#"
 			count: 1
 			path: Classes/Command/CloudinaryFixJpegCommand.php
@@ -209,21 +199,6 @@ parameters:
 			message: "#^Property Visol\\\\Cloudinary\\\\Command\\\\AbstractCloudinaryCommand\\:\\:\\$isSilent \\(bool\\) does not accept mixed\\.$#"
 			count: 1
 			path: Classes/Command/CloudinaryFixJpegCommand.php
-
-		-
-			message: "#^Call to method explicit\\(\\) on an unknown class Cloudinary\\\\Api\\\\Upload\\\\UploadApi\\.$#"
-			count: 1
-			path: Classes/Command/CloudinaryMetadataCommand.php
-
-		-
-			message: "#^Call to method uploadApi\\(\\) on an unknown class Cloudinary\\\\Cloudinary\\.$#"
-			count: 1
-			path: Classes/Command/CloudinaryMetadataCommand.php
-
-		-
-			message: "#^Method Visol\\\\Cloudinary\\\\Command\\\\CloudinaryMetadataCommand\\:\\:getUploadApi\\(\\) has invalid return type Cloudinary\\\\Api\\\\Upload\\\\UploadApi\\.$#"
-			count: 1
-			path: Classes/Command/CloudinaryMetadataCommand.php
 
 		-
 			message: "#^Parameter \\#1 \\$fileIdentifier of method Visol\\\\Cloudinary\\\\Services\\\\CloudinaryPathService\\:\\:computeCloudinaryPublicId\\(\\) expects string, mixed given\\.$#"
@@ -336,16 +311,6 @@ parameters:
 			path: Classes/Controller/CloudinaryAjaxController.php
 
 		-
-			message: "#^Call to method expression\\(\\) on an unknown class Cloudinary\\\\Api\\\\Search\\\\SearchApi\\.$#"
-			count: 1
-			path: Classes/Controller/CloudinaryAjaxController.php
-
-		-
-			message: "#^Call to method searchApi\\(\\) on an unknown class Cloudinary\\\\Cloudinary\\.$#"
-			count: 1
-			path: Classes/Controller/CloudinaryAjaxController.php
-
-		-
 			message: "#^Cannot access offset 'cloudinaryIds' on array\\|object\\|null\\.$#"
 			count: 1
 			path: Classes/Controller/CloudinaryAjaxController.php
@@ -356,7 +321,7 @@ parameters:
 			path: Classes/Controller/CloudinaryAjaxController.php
 
 		-
-			message: "#^Method Visol\\\\Cloudinary\\\\Controller\\\\CloudinaryAjaxController\\:\\:getSearchApi\\(\\) has invalid return type Cloudinary\\\\Api\\\\Search\\\\SearchApi\\.$#"
+			message: "#^Cannot access offset 0 on mixed\\.$#"
 			count: 1
 			path: Classes/Controller/CloudinaryAjaxController.php
 
@@ -369,21 +334,6 @@ parameters:
 			message: "#^PHPDoc tag @return with type string is incompatible with native type Psr\\\\Http\\\\Message\\\\ResponseInterface\\.$#"
 			count: 1
 			path: Classes/Controller/CloudinaryScanController.php
-
-		-
-			message: "#^Call to method explicit\\(\\) on an unknown class Cloudinary\\\\Api\\\\Upload\\\\UploadApi\\.$#"
-			count: 1
-			path: Classes/Controller/CloudinaryWebHookController.php
-
-		-
-			message: "#^Call to method uploadApi\\(\\) on an unknown class Cloudinary\\\\Cloudinary\\.$#"
-			count: 1
-			path: Classes/Controller/CloudinaryWebHookController.php
-
-		-
-			message: "#^Method Visol\\\\Cloudinary\\\\Controller\\\\CloudinaryWebHookController\\:\\:getUploadApi\\(\\) has invalid return type Cloudinary\\\\Api\\\\Upload\\\\UploadApi\\.$#"
-			count: 1
-			path: Classes/Controller/CloudinaryWebHookController.php
 
 		-
 			message: "#^PHPDoc tag @return with type object is not subtype of native type TYPO3\\\\CMS\\\\Core\\\\Database\\\\Connection\\.$#"
@@ -416,43 +366,8 @@ parameters:
 			path: Classes/Domain/Repository/ExplicitDataCacheRepository.php
 
 		-
-			message: "#^Call to method adminApi\\(\\) on an unknown class Cloudinary\\\\Cloudinary\\.$#"
-			count: 1
-			path: Classes/Driver/CloudinaryDriver.php
-
-		-
-			message: "#^Call to method createFolder\\(\\) on an unknown class Cloudinary\\\\Api\\\\Admin\\\\AdminApi\\.$#"
-			count: 1
-			path: Classes/Driver/CloudinaryDriver.php
-
-		-
-			message: "#^Call to method deleteAssets\\(\\) on an unknown class Cloudinary\\\\Api\\\\Admin\\\\AdminApi\\.$#"
-			count: 1
-			path: Classes/Driver/CloudinaryDriver.php
-
-		-
-			message: "#^Call to method deleteAssetsByPrefix\\(\\) on an unknown class Cloudinary\\\\Api\\\\Admin\\\\AdminApi\\.$#"
-			count: 1
-			path: Classes/Driver/CloudinaryDriver.php
-
-		-
-			message: "#^Call to method deleteFolder\\(\\) on an unknown class Cloudinary\\\\Api\\\\Admin\\\\AdminApi\\.$#"
-			count: 1
-			path: Classes/Driver/CloudinaryDriver.php
-
-		-
-			message: "#^Call to method rename\\(\\) on an unknown class Cloudinary\\\\Api\\\\Upload\\\\UploadApi\\.$#"
-			count: 1
-			path: Classes/Driver/CloudinaryDriver.php
-
-		-
-			message: "#^Call to method upload\\(\\) on an unknown class Cloudinary\\\\Api\\\\Upload\\\\UploadApi\\.$#"
+			message: "#^Argument of an invalid type mixed supplied for foreach, only iterables are supported\\.$#"
 			count: 3
-			path: Classes/Driver/CloudinaryDriver.php
-
-		-
-			message: "#^Call to method uploadApi\\(\\) on an unknown class Cloudinary\\\\Cloudinary\\.$#"
-			count: 1
 			path: Classes/Driver/CloudinaryDriver.php
 
 		-
@@ -471,17 +386,7 @@ parameters:
 			path: Classes/Driver/CloudinaryDriver.php
 
 		-
-			message: "#^Method Visol\\\\Cloudinary\\\\Driver\\\\CloudinaryDriver\\:\\:getAdminApi\\(\\) has invalid return type Cloudinary\\\\Api\\\\Admin\\\\AdminApi\\.$#"
-			count: 1
-			path: Classes/Driver/CloudinaryDriver.php
-
-		-
 			message: "#^Method Visol\\\\Cloudinary\\\\Driver\\\\CloudinaryDriver\\:\\:getFileContents\\(\\) should return string but returns string\\|false\\.$#"
-			count: 1
-			path: Classes/Driver/CloudinaryDriver.php
-
-		-
-			message: "#^Method Visol\\\\Cloudinary\\\\Driver\\\\CloudinaryDriver\\:\\:getUploadApi\\(\\) has invalid return type Cloudinary\\\\Api\\\\Upload\\\\UploadApi\\.$#"
 			count: 1
 			path: Classes/Driver/CloudinaryDriver.php
 
@@ -496,11 +401,6 @@ parameters:
 			path: Classes/Driver/CloudinaryDriver.php
 
 		-
-			message: "#^Offset 'extension' does not exist on array\\<string\\>\\|string\\.$#"
-			count: 1
-			path: Classes/Driver/CloudinaryDriver.php
-
-		-
 			message: "#^Offset 'filename' does not exist on array\\<string\\>\\|string\\.$#"
 			count: 1
 			path: Classes/Driver/CloudinaryDriver.php
@@ -508,6 +408,16 @@ parameters:
 		-
 			message: "#^Offset 'type' does not exist on array\\{\\}\\.$#"
 			count: 1
+			path: Classes/Driver/CloudinaryDriver.php
+
+		-
+			message: "#^Parameter \\#1 \\$folder of method Visol\\\\Cloudinary\\\\Services\\\\CloudinaryFolderService\\:\\:delete\\(\\) expects string, mixed given\\.$#"
+			count: 1
+			path: Classes/Driver/CloudinaryDriver.php
+
+		-
+			message: "#^Parameter \\#1 \\$publicId of method Visol\\\\Cloudinary\\\\Services\\\\CloudinaryResourceService\\:\\:delete\\(\\) expects string, mixed given\\.$#"
+			count: 2
 			path: Classes/Driver/CloudinaryDriver.php
 
 		-
@@ -541,21 +451,6 @@ parameters:
 			path: Classes/Services/AbstractCloudinaryMediaService.php
 
 		-
-			message: "#^Call to method explicit\\(\\) on an unknown class Cloudinary\\\\Api\\\\Upload\\\\UploadApi\\.$#"
-			count: 1
-			path: Classes/Services/AbstractCloudinaryMediaService.php
-
-		-
-			message: "#^Call to method uploadApi\\(\\) on an unknown class Cloudinary\\\\Cloudinary\\.$#"
-			count: 1
-			path: Classes/Services/AbstractCloudinaryMediaService.php
-
-		-
-			message: "#^Method Visol\\\\Cloudinary\\\\Services\\\\AbstractCloudinaryMediaService\\:\\:getUploadApi\\(\\) has invalid return type Cloudinary\\\\Api\\\\Upload\\\\UploadApi\\.$#"
-			count: 1
-			path: Classes/Services/AbstractCloudinaryMediaService.php
-
-		-
 			message: "#^Call to an undefined method Doctrine\\\\DBAL\\\\Driver\\\\Connection\\:\\:delete\\(\\)\\.$#"
 			count: 2
 			path: Classes/Services/CloudinaryFolderService.php
@@ -574,21 +469,6 @@ parameters:
 			message: "#^Cannot cast mixed to int\\.$#"
 			count: 2
 			path: Classes/Services/CloudinaryFolderService.php
-
-		-
-			message: "#^Call to method explicit\\(\\) on an unknown class Cloudinary\\\\Api\\\\Upload\\\\UploadApi\\.$#"
-			count: 1
-			path: Classes/Services/CloudinaryImageService.php
-
-		-
-			message: "#^Call to static method fromParams\\(\\) on an unknown class Cloudinary\\\\Asset\\\\Image\\.$#"
-			count: 1
-			path: Classes/Services/CloudinaryImageService.php
-
-		-
-			message: "#^Call to static method fromParams\\(\\) on an unknown class Cloudinary\\\\Transformation\\\\ImageTransformation\\.$#"
-			count: 1
-			path: Classes/Services/CloudinaryImageService.php
 
 		-
 			message: "#^Cannot access offset 'width' on mixed\\.$#"
@@ -671,54 +551,19 @@ parameters:
 			path: Classes/Services/CloudinaryResourceService.php
 
 		-
-			message: "#^Call to method adminApi\\(\\) on an unknown class Cloudinary\\\\Cloudinary\\.$#"
-			count: 1
-			path: Classes/Services/CloudinaryScanService.php
-
-		-
-			message: "#^Call to method asset\\(\\) on an unknown class Cloudinary\\\\Api\\\\Admin\\\\AdminApi\\.$#"
-			count: 1
-			path: Classes/Services/CloudinaryScanService.php
-
-		-
-			message: "#^Call to method expression\\(\\) on an unknown class Cloudinary\\\\Api\\\\Search\\\\SearchApi\\.$#"
-			count: 1
-			path: Classes/Services/CloudinaryScanService.php
-
-		-
-			message: "#^Call to method searchApi\\(\\) on an unknown class Cloudinary\\\\Cloudinary\\.$#"
-			count: 1
-			path: Classes/Services/CloudinaryScanService.php
-
-		-
 			message: "#^Method Visol\\\\Cloudinary\\\\Services\\\\CloudinaryScanService\\:\\:console\\(\\) has parameter \\$additionalBlankLine with no type specified\\.$#"
 			count: 1
 			path: Classes/Services/CloudinaryScanService.php
 
 		-
-			message: "#^Method Visol\\\\Cloudinary\\\\Services\\\\CloudinaryScanService\\:\\:getAdminApi\\(\\) has invalid return type Cloudinary\\\\Api\\\\Admin\\\\AdminApi\\.$#"
+			message: "#^Parameter \\#1 \\$value of method Cloudinary\\\\Api\\\\Search\\\\SearchApi\\:\\:nextCursor\\(\\) expects string, mixed given\\.$#"
 			count: 1
 			path: Classes/Services/CloudinaryScanService.php
 
 		-
-			message: "#^Method Visol\\\\Cloudinary\\\\Services\\\\CloudinaryScanService\\:\\:getSearchApi\\(\\) has invalid return type Cloudinary\\\\Api\\\\Search\\\\SearchApi\\.$#"
+			message: "#^Variable \\$response in empty\\(\\) always exists and is not falsy\\.$#"
 			count: 1
 			path: Classes/Services/CloudinaryScanService.php
-
-		-
-			message: "#^Call to method expression\\(\\) on an unknown class Cloudinary\\\\Api\\\\Search\\\\SearchApi\\.$#"
-			count: 1
-			path: Classes/Services/CloudinaryTestConnectionService.php
-
-		-
-			message: "#^Call to method searchApi\\(\\) on an unknown class Cloudinary\\\\Cloudinary\\.$#"
-			count: 1
-			path: Classes/Services/CloudinaryTestConnectionService.php
-
-		-
-			message: "#^Method Visol\\\\Cloudinary\\\\Services\\\\CloudinaryTestConnectionService\\:\\:getSearchApi\\(\\) has invalid return type Cloudinary\\\\Api\\\\Search\\\\SearchApi\\.$#"
-			count: 1
-			path: Classes/Services/CloudinaryTestConnectionService.php
 
 		-
 			message: "#^Method Visol\\\\Cloudinary\\\\Services\\\\CloudinaryTestConnectionService\\:\\:test\\(\\) has no return type specified\\.$#"
@@ -731,52 +576,7 @@ parameters:
 			path: Classes/Services/CloudinaryUploadService.php
 
 		-
-			message: "#^Call to static method fromParams\\(\\) on an unknown class Cloudinary\\\\Asset\\\\Video\\.$#"
-			count: 1
-			path: Classes/Services/CloudinaryVideoService.php
-
-		-
-			message: "#^Property Visol\\\\Cloudinary\\\\Services\\\\CloudinaryVideoService\\:\\:\\$defaultOptions has no type specified\\.$#"
-			count: 1
-			path: Classes/Services/CloudinaryVideoService.php
-
-		-
-			message: "#^Call to method adminApi\\(\\) on an unknown class Cloudinary\\\\Cloudinary\\.$#"
-			count: 1
-			path: Classes/Services/Extractor/CloudinaryMetaDataExtractor.php
-
-		-
-			message: "#^Call to method asset\\(\\) on an unknown class Cloudinary\\\\Api\\\\Admin\\\\AdminApi\\.$#"
-			count: 1
-			path: Classes/Services/Extractor/CloudinaryMetaDataExtractor.php
-
-		-
-			message: "#^Method Visol\\\\Cloudinary\\\\Services\\\\Extractor\\\\CloudinaryMetaDataExtractor\\:\\:getAdminApi\\(\\) has invalid return type Cloudinary\\\\Api\\\\Admin\\\\AdminApi\\.$#"
-			count: 1
-			path: Classes/Services/Extractor/CloudinaryMetaDataExtractor.php
-
-		-
 			message: "#^Call to an undefined method Doctrine\\\\DBAL\\\\Driver\\\\Connection\\:\\:update\\(\\)\\.$#"
-			count: 1
-			path: Classes/Services/FileMoveService.php
-
-		-
-			message: "#^Call to method adminApi\\(\\) on an unknown class Cloudinary\\\\Cloudinary\\.$#"
-			count: 1
-			path: Classes/Services/FileMoveService.php
-
-		-
-			message: "#^Call to method asset\\(\\) on an unknown class Cloudinary\\\\Api\\\\Admin\\\\AdminApi\\.$#"
-			count: 1
-			path: Classes/Services/FileMoveService.php
-
-		-
-			message: "#^Call to method upload\\(\\) on an unknown class Cloudinary\\\\Api\\\\Upload\\\\UploadApi\\.$#"
-			count: 1
-			path: Classes/Services/FileMoveService.php
-
-		-
-			message: "#^Call to method uploadApi\\(\\) on an unknown class Cloudinary\\\\Cloudinary\\.$#"
 			count: 1
 			path: Classes/Services/FileMoveService.php
 
@@ -786,17 +586,7 @@ parameters:
 			path: Classes/Services/FileMoveService.php
 
 		-
-			message: "#^Method Visol\\\\Cloudinary\\\\Services\\\\FileMoveService\\:\\:getAdminApi\\(\\) has invalid return type Cloudinary\\\\Api\\\\Admin\\\\AdminApi\\.$#"
-			count: 1
-			path: Classes/Services/FileMoveService.php
-
-		-
 			message: "#^Method Visol\\\\Cloudinary\\\\Services\\\\FileMoveService\\:\\:getCloudinaryPathService\\(\\) should return Visol\\\\Cloudinary\\\\Services\\\\CloudinaryPathService but returns Visol\\\\Cloudinary\\\\Services\\\\CloudinaryPathService\\|null\\.$#"
-			count: 1
-			path: Classes/Services/FileMoveService.php
-
-		-
-			message: "#^Method Visol\\\\Cloudinary\\\\Services\\\\FileMoveService\\:\\:getUploadApi\\(\\) has invalid return type Cloudinary\\\\Api\\\\Upload\\\\UploadApi\\.$#"
 			count: 1
 			path: Classes/Services/FileMoveService.php
 
@@ -806,34 +596,9 @@ parameters:
 			path: Classes/Services/FileMoveService.php
 
 		-
-			message: "#^Call to static method instance\\(\\) on an unknown class Cloudinary\\\\Configuration\\\\Configuration\\.$#"
+			message: "#^Variable \\$resource in empty\\(\\) always exists and is not falsy\\.$#"
 			count: 1
-			path: Classes/Utility/CloudinaryApiUtility.php
-
-		-
-			message: "#^Cannot call method getConfiguration\\(\\) on array\\|TYPO3\\\\CMS\\\\Core\\\\Resource\\\\ResourceStorage\\.$#"
-			count: 1
-			path: Classes/Utility/CloudinaryApiUtility.php
-
-		-
-			message: "#^Cannot call method getDriverType\\(\\) on array\\|TYPO3\\\\CMS\\\\Core\\\\Resource\\\\ResourceStorage\\.$#"
-			count: 2
-			path: Classes/Utility/CloudinaryApiUtility.php
-
-		-
-			message: "#^Instantiated class Cloudinary\\\\Cloudinary not found\\.$#"
-			count: 1
-			path: Classes/Utility/CloudinaryApiUtility.php
-
-		-
-			message: "#^Method Visol\\\\Cloudinary\\\\Utility\\\\CloudinaryApiUtility\\:\\:getCloudinary\\(\\) has invalid return type Cloudinary\\\\Cloudinary\\.$#"
-			count: 1
-			path: Classes/Utility/CloudinaryApiUtility.php
-
-		-
-			message: "#^Method Visol\\\\Cloudinary\\\\Utility\\\\CloudinaryApiUtility\\:\\:getConfiguration\\(\\) has invalid return type Cloudinary\\\\Configuration\\\\Configuration\\.$#"
-			count: 1
-			path: Classes/Utility/CloudinaryApiUtility.php
+			path: Classes/Services/FileMoveService.php
 
 		-
 			message: "#^Method Visol\\\\Cloudinary\\\\Utility\\\\CloudinaryFileUtility\\:\\:getTemporaryFile\\(\\) has parameter \\$storageUid with no type specified\\.$#"
