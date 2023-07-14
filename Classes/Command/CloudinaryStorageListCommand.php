@@ -63,8 +63,8 @@ typo3 cloudinary:storage:list
             $storage = $resourceFactory->getStorageObject($cloudinaryRecord['uid']);
 
             $this->log('---');
-            $this->log(sprintf('name: %s' , $storage->getName()));
             $this->log(sprintf('uid: %s', $storage->getUid()));
+            $this->log(sprintf('name: %s' , $storage->getName()));
             $configuration = CloudinaryApiUtility::getArrayConfiguration($storage);
             foreach ($configuration as $key => $value) {
                 if (is_bool($value)) {
