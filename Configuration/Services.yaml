@@ -55,6 +55,13 @@ services:
         schedulable: false
         description: Scan and warm up a cloudinary storage.
 
+  Visol\Cloudinary\Command\CloudinaryStorageListCommand:
+    tags:
+      - name: 'console.command'
+        command: 'cloudinary:storage:list'
+        schedulable: false
+        description: Will display all available storages configured for cloudinary
+
   Visol\Cloudinary\Command\CloudinaryMetadataCommand:
     tags:
       - name: 'console.command'

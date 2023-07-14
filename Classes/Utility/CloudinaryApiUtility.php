@@ -29,6 +29,11 @@ class CloudinaryApiUtility
 
     public static function getConfiguration(ResourceStorage|array $storage): Configuration
     {
+        return Configuration::instance(self::getArrayConfiguration($storage));
+    }
+
+    public static function getArrayConfiguration(ResourceStorage|array $storage): array
+    {
         if (is_array($storage)) {
             $storageConfiguration = $storage;
         } else {
@@ -50,16 +55,15 @@ class CloudinaryApiUtility
             $storageConfiguration
         );
 
-        return Configuration::instance([
-                'cloud_name' => $configurationService->get('cloudName'),
-                'api_key' => $configurationService->get('apiKey'),
-                'api_secret' => $configurationService->get('apiSecret'),
-                'timeout' => $configurationService->get('timeout'),
-                'secure' => true,
-                'private_cdn' => $configurationService->get('cname') !== '',
-                'secure_distribution' => $configurationService->get('cname'),
-            ]
-        );
-
+        return [
+            'cloud_name' => $configurationService->get('cloudName'),
+            'api_key' => $configurationService->get('apiKey'),
+            'api_secret' => $configurationService->get('apiSecret'),
+            'timeout' => $configurationService->get('timeout'),
+            'secure' => true,
+            'private_cdn' => $configurationService->get('cname') !== '',
+            'secure_distribution' => $configurationService->get('cname'),
+        ];
     }
+
 }
