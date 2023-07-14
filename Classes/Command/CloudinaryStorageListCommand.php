@@ -62,11 +62,19 @@ typo3 cloudinary:storage:list
             $resourceFactory = GeneralUtility::makeInstance(ResourceFactory::class);
             $storage = $resourceFactory->getStorageObject($cloudinaryRecord['uid']);
 
-            $this->log(chr(10) . '---');
+            $this->log('---');
             $this->log(sprintf('name: %s' , $storage->getName()));
             $this->log(sprintf('uid: %s', $storage->getUid()));
             $configuration = CloudinaryApiUtility::getArrayConfiguration($storage);
-            $this->log(sprintf('%s', var_export($configuration, true)));
+            foreach ($configuration as $key => $value) {
+                if (is_bool($value)) {
+                    $value = $value ? 'true' : 'false';
+                }
+                if ($key === 'secure_distribution') {
+                    $key .= ' (cname)';
+                }
+                $this->log(sprintf('%s: %s', $key, $value));
+            }
         }
 
 
