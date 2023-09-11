@@ -2,6 +2,8 @@
 
 namespace Visol\Cloudinary;
 
-class CloudinaryException extends \Exception
+use Exception;
+
+class CloudinaryException extends Exception
 {
 }

@@ -11,6 +11,7 @@ namespace Visol\Cloudinary\Utility;
 
 use Cloudinary\Cloudinary;
 use Cloudinary\Configuration\Configuration;
+use Exception;
 use TYPO3\CMS\Core\Resource\ResourceStorage;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
 use Visol\Cloudinary\Driver\CloudinaryDriver;
@@ -44,7 +45,7 @@ class CloudinaryApiUtility
                     'Wrong storage! Can not initialize with storage type "%s".',
                     $storage->getDriverType()
                 );
-                throw new \Exception($message, 1590401459);
+                throw new Exception($message, 1590401459);
             }
             $storageConfiguration = $storage->getConfiguration();
         }

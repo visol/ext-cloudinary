@@ -11,6 +11,7 @@ namespace Visol\Cloudinary\Command;
 
 use Cloudinary\Api\Admin\AdminApi;
 use Cloudinary\Api\Search\SearchApi;
+use Exception;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
@@ -154,7 +155,7 @@ typo3 cloudinary:api [0-9] --expression="folder=fileadmin/_processed_/*" --delet
             } else {
                 $this->log('Nothing to do...');
             }
-        } catch (\Exception $exception) {
+        } catch (Exception $exception) {
             // Triggered when no resources are found when deleting files.
             if ($exception->getMessage() === 'Missing required parameter - public_ids') {
                 $this->log("No resources found for expression '$expression'. Nothing to do...");

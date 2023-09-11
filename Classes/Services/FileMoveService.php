@@ -12,6 +12,7 @@ namespace Visol\Cloudinary\Services;
 use Cloudinary\Api\Admin\AdminApi;
 use Cloudinary\Api\Upload\UploadApi;
 use Doctrine\DBAL\Driver\Connection;
+use Exception;
 use TYPO3\CMS\Core\Database\ConnectionPool;
 use TYPO3\CMS\Core\Database\Query\QueryBuilder;
 use TYPO3\CMS\Core\Resource\File;
@@ -37,7 +38,7 @@ class FileMoveService
         try {
             $resource = $this->getAdminApi($targetStorage)->asset($publicId);
             $fileExists = !empty($resource);
-        } catch (\Exception $exception) {
+        } catch (Exception $exception) {
             $fileExists = false;
         }
 

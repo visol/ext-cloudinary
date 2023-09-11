@@ -8,10 +8,15 @@ namespace Visol\Cloudinary\ViewHelpers;
  * For the full copyright and license information, please read the
  * LICENSE.md file that was distributed with this source code.
  */
+
+use Exception;
+use InvalidArgumentException;
+use RuntimeException;
 use TYPO3\CMS\Extbase\Service\ImageService;
 use TYPO3\CMS\Core\Resource\ResourceStorage;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
 use TYPO3Fluid\Fluid\Core\ViewHelper\AbstractViewHelper;
+use UnexpectedValueException;
 use Visol\Cloudinary\Services\CloudinaryImageService;
 use Visol\Cloudinary\Services\CloudinaryPathService;
 use TYPO3\CMS\Core\Resource\Exception\ResourceDoesNotExistException;
@@ -134,7 +139,7 @@ class CloudinaryImageDataViewHelper extends AbstractViewHelper
                     'medianImage' => $this->getCloudinaryImageService()->getImage($breakpoints, 'median'),
                     'maxImage' => $this->getCloudinaryImageService()->getImage($breakpoints, 'max'),
                 ];
-            } catch (\Exception $e) {
+            } catch (Exception $e) {
                 $responsiveImageData = [
                     'images' => [
                         1 => [
@@ -151,11 +156,11 @@ class CloudinaryImageDataViewHelper extends AbstractViewHelper
             }
         } catch (ResourceDoesNotExistException $e) {
             // thrown if file does not exist
-        } catch (\UnexpectedValueException $e) {
+        } catch (UnexpectedValueException $e) {
             // thrown if a file has been replaced with a folder
-        } catch (\RuntimeException $e) {
+        } catch (RuntimeException $e) {
             // RuntimeException thrown if a file is outside of a storage
-        } catch (\InvalidArgumentException $e) {
+        } catch (InvalidArgumentException $e) {
             // thrown if file storage does not exist
         }
 

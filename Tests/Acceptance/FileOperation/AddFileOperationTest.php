@@ -2,6 +2,7 @@
 
 namespace Visol\Cloudinary\Tests\Acceptance\FileOperation;
 
+use Exception;
 use TYPO3\CMS\Core\Resource\DuplicationBehavior;
 use TYPO3\CMS\Core\Resource\File;
 
@@ -10,7 +11,7 @@ class AddFileOperationTest extends AbstractCloudinaryFileOperationTest
 
     /**
      * @return void
-     * @throws \Exception
+     * @throws Exception
      */
     public function run()
     {
