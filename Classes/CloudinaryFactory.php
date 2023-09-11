@@ -9,6 +9,7 @@
 
 namespace Visol\Cloudinary;
 
+use Exception;
 use TYPO3\CMS\Core\Configuration\ExtensionConfiguration;
 use TYPO3\CMS\Core\Resource\Folder;
 use TYPO3\CMS\Core\Resource\ResourceFactory;
@@ -18,7 +19,7 @@ use TYPO3\CMS\Core\Utility\GeneralUtility;
 /**
  * Class CloudinaryFactory
  */
-class CloudinaryFactory extends \Exception
+class CloudinaryFactory extends Exception
 {
     /**
      * @return ResourceStorage

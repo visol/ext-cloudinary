@@ -2,6 +2,8 @@
 
 namespace Visol\Cloudinary\Tests\Acceptance\FileOperation;
 
+use Exception;
+
 class CopyFileOperationTest extends AbstractCloudinaryFileOperationTest
 {
 
@@ -12,7 +14,7 @@ class CopyFileOperationTest extends AbstractCloudinaryFileOperationTest
 
     /**
      * @return void
-     * @throws \Exception
+     * @throws Exception
      */
     public function run()
     {

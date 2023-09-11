@@ -10,6 +10,8 @@ namespace Visol\Cloudinary\Services;
  */
 
 
+use RuntimeException;
+
 class ConfigurationService
 {
     protected array $configuration = [];
@@ -32,7 +34,7 @@ class ConfigurationService
             $value = getenv($matches[1]);
 
             if ($value === false) {
-                throw new \RuntimeException(sprintf('No value found for environment variable "%s"', $matches[1]), 1626948978);
+                throw new RuntimeException(sprintf('No value found for environment variable "%s"', $matches[1]), 1626948978);
             }
 
             $value = (string)$value;

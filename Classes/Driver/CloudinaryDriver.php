@@ -11,6 +11,7 @@ namespace Visol\Cloudinary\Driver;
 
 use Cloudinary\Api\Admin\AdminApi;
 use Cloudinary\Api\Upload\UploadApi;
+use Exception;
 use TYPO3\CMS\Core\Http\ApplicationType;
 use TYPO3\CMS\Core\Resource\Exception\InvalidFileNameException;
 use RuntimeException;
@@ -33,6 +34,7 @@ use Visol\Cloudinary\Services\ConfigurationService;
 use Visol\Cloudinary\Utility\CloudinaryApiUtility;
 use Visol\Cloudinary\Utility\CloudinaryFileUtility;
 use Visol\Cloudinary\Utility\MimeTypeUtility;
+use function str_starts_with;
 
 class CloudinaryDriver extends AbstractHierarchicalFilesystemDriver
 {
@@ -156,7 +158,7 @@ class CloudinaryDriver extends AbstractHierarchicalFilesystemDriver
         $cloudinaryResource = $this->getCloudinaryResourceService()->getResource($publicId);
         // We have a problem Hudson!
         if (!$cloudinaryResource) {
-            throw new \Exception(
+            throw new Exception(
                 'I could not find a corresponding cloudinary resource for file ' . $fileIdentifier,
                 1591775048,
             );
@@ -477,7 +479,7 @@ class CloudinaryDriver extends AbstractHierarchicalFilesystemDriver
         $response = $this->getAdminApi()->createFolder($cloudinaryFolder);
 
         if (!$response['success']) {
-            throw new \Exception('Folder creation failed: ' . $cloudinaryFolder, 1591775050);
+            throw new Exception('Folder creation failed: ' . $cloudinaryFolder, 1591775050);
         }
         $this->getCloudinaryFolderService()->save($cloudinaryFolder);
 
@@ -682,7 +684,7 @@ class CloudinaryDriver extends AbstractHierarchicalFilesystemDriver
             $folderIdentifier .= DIRECTORY_SEPARATOR;
         }
 
-        return \str_starts_with($fileIdentifier, $folderIdentifier);
+        return str_starts_with($fileIdentifier, $folderIdentifier);
     }
 
     /**
@@ -987,7 +989,7 @@ class CloudinaryDriver extends AbstractHierarchicalFilesystemDriver
                     return false;
                 }
                 if ($result === false) {
-                    throw new \RuntimeException(
+                    throw new RuntimeException(
                         'Could not apply file/folder name filter ' . $filter[0] . '::' . $filter[1],
                         1596795500,
                     );

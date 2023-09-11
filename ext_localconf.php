@@ -2,6 +2,8 @@
 
 use TYPO3\CMS\Core\Core\Environment;
 use TYPO3\CMS\Core\Log\LogLevel;
+use TYPO3\CMS\Core\Log\Writer\SyslogWriter;
+use TYPO3\CMS\Core\Resource\Index\ExtractorRegistry;
 use TYPO3\CMS\Extbase\Utility\ExtensionUtility;
 use Visol\Cloudinary\Backend\Form\Container\InlineCloudinaryControlContainer;
 use TYPO3\CMS\Core\Resource\Driver\DriverRegistry;
@@ -10,6 +12,7 @@ use Visol\Cloudinary\Controller\CloudinaryWebHookController;
 use Visol\Cloudinary\Driver\CloudinaryDriver;
 use TYPO3\CMS\Core\Log\Writer\FileWriter;
 use Visol\Cloudinary\Hook\FileUploadHook;
+use Visol\Cloudinary\Services\Extractor\CloudinaryMetaDataExtractor;
 
 defined('TYPO3') || die('Access denied.');
 call_user_func(callback: function () {
@@ -22,7 +25,7 @@ call_user_func(callback: function () {
     ];
 
     ExtensionUtility::configurePlugin(
-        \Cloudinary::class,
+        Cloudinary::class,
         'WebHook',
         [
             CloudinaryWebHookController::class => 'process',
@@ -38,13 +41,13 @@ call_user_func(callback: function () {
     $driverRegistry->registerDriverClass(
         CloudinaryDriver::class,
         CloudinaryDriver::DRIVER_TYPE,
-        \Cloudinary::class,
+        Cloudinary::class,
         'FILE:EXT:cloudinary/Configuration/FlexForm/CloudinaryFlexForm.xml',
     );
 
-    /* @var \TYPO3\CMS\Core\Resource\Index\ExtractorRegistry $metaDataExtractorRegistry */
-    $metaDataExtractorRegistry = \TYPO3\CMS\Core\Utility\GeneralUtility::makeInstance(\TYPO3\CMS\Core\Resource\Index\ExtractorRegistry::class);
-    $metaDataExtractorRegistry->registerExtractionService(\Visol\Cloudinary\Services\Extractor\CloudinaryMetaDataExtractor::class);
+    /* @var ExtractorRegistry $metaDataExtractorRegistry */
+    $metaDataExtractorRegistry = GeneralUtility::makeInstance(ExtractorRegistry::class);
+    $metaDataExtractorRegistry->registerExtractionService(CloudinaryMetaDataExtractor::class);
 
     // Log configuration for cloudinary web hook
     $GLOBALS['TYPO3_CONF_VARS']['LOG']['Visol']['Cloudinary']['Controller']['CloudinaryWebHookController']['writerConfiguration'] = [
@@ -57,7 +60,7 @@ call_user_func(callback: function () {
         // Configuration for WARNING severity, including all
         // levels with higher severity (ERROR, CRITICAL, EMERGENCY)
         LogLevel::WARNING => [
-            \TYPO3\CMS\Core\Log\Writer\SyslogWriter::class => [],
+            SyslogWriter::class => [],
         ],
     ];
 

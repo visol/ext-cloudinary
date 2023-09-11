@@ -9,6 +9,7 @@ namespace Visol\Cloudinary\Services;
  * LICENSE.md file that was distributed with this source code.
  */
 
+use RuntimeException;
 use TYPO3\CMS\Core\Resource\ResourceStorage;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
 use TYPO3\CMS\Core\Utility\PathUtility;
@@ -99,7 +100,7 @@ class CloudinaryPathService
         try {
             // Find the resource type from the cloudinary resource.
             $cloudinaryResource = $this->getCloudinaryResource($fileIdentifier);
-        } catch (\RuntimeException $e) {
+        } catch (RuntimeException $e) {
             $fileExtension = $this->getFileExtension($fileIdentifier);
             $mimeType = MimeTypeUtility::guessMimeType($fileExtension);
 
@@ -140,7 +141,7 @@ class CloudinaryPathService
 
             // Houston, we have a problem. The public id does not exist, meaning the file does not exist.
             if (!$cloudinaryResource) {
-                throw new \RuntimeException('Cloudinary resource not found for ' . $fileIdentifier, 1623157880);
+                throw new RuntimeException('Cloudinary resource not found for ' . $fileIdentifier, 1623157880);
             }
 
             $this->cachedCloudinaryResources[$possiblePublicId] = $cloudinaryResource;

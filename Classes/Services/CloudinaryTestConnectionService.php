@@ -10,6 +10,7 @@ namespace Visol\Cloudinary\Services;
  */
 
 use Cloudinary\Api\Search\SearchApi;
+use Exception;
 use TYPO3\CMS\Core\Messaging\FlashMessageQueue;
 use TYPO3\CMS\Core\Messaging\FlashMessage;
 use TYPO3\CMS\Core\Messaging\FlashMessageService;
@@ -63,7 +64,7 @@ class CloudinaryTestConnectionService
                 FlashMessage::OK
             );
             $messageQueue->addMessage($message);
-        } catch (\Exception $exception) {
+        } catch (Exception $exception) {
             /** @var FlashMessage $message */
             $message = GeneralUtility::makeInstance(
                 FlashMessage::class,

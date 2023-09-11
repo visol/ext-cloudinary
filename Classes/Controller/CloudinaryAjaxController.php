@@ -5,6 +5,7 @@ namespace Visol\Cloudinary\Controller;
 use Cloudinary\Api\Search\SearchApi;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
+use RuntimeException;
 use TYPO3\CMS\Core\Http\JsonResponse;
 use TYPO3\CMS\Core\Resource\ResourceFactory;
 use TYPO3\CMS\Core\Resource\ResourceStorage;
@@ -44,7 +45,7 @@ class CloudinaryAjaxController
                     ->execute();
 
                 if (empty($response['resources'])) {
-                    throw new \RuntimeException('Missing resources ' . $publicId, 1657125439);
+                    throw new RuntimeException('Missing resources ' . $publicId, 1657125439);
                 } else {
                     $resource = $response['resources'][0];
                 }
@@ -62,7 +63,7 @@ class CloudinaryAjaxController
                     $files[] = $storage->getFile($identifier)->getUid();
                 }
             }
-        } catch (\RuntimeException $e) {
+        } catch (RuntimeException $e) {
             $result = 'ko';
             $possibleError = $e->getMessage();
         }

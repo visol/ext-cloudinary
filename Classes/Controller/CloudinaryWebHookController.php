@@ -12,6 +12,7 @@ namespace Visol\Cloudinary\Controller;
 use Cloudinary\Api\Upload\UploadApi;
 use Psr\EventDispatcher\EventDispatcherInterface;
 use Psr\Http\Message\ResponseInterface;
+use RuntimeException;
 use TYPO3\CMS\Core\Cache\CacheManager;
 use TYPO3\CMS\Core\Database\ConnectionPool;
 use TYPO3\CMS\Core\Database\Query\QueryBuilder;
@@ -384,7 +385,7 @@ class CloudinaryWebHookController extends ActionController
     {
         $storageUid = $this->settings['storage'] ?? 0;
         if ($storageUid <= 0) {
-            throw new \RuntimeException('Check your configuration while calling the cloudinary web hook. I am missing a storage id', 1677583654);
+            throw new RuntimeException('Check your configuration while calling the cloudinary web hook. I am missing a storage id', 1677583654);
         }
     }
 

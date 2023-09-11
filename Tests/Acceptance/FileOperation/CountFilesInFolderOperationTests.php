@@ -2,6 +2,8 @@
 
 namespace Visol\Cloudinary\Tests\Acceptance\FileOperation;
 
+use Exception;
+
 class CountFilesInFolderOperationTests extends AbstractCloudinaryFileOperationTest
 {
 
@@ -17,7 +19,7 @@ class CountFilesInFolderOperationTests extends AbstractCloudinaryFileOperationTe
 
     /**
      * @return void
-     * @throws \Exception
+     * @throws Exception
      */
     public function run()
     {
