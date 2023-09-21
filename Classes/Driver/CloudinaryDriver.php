@@ -366,6 +366,15 @@ class CloudinaryDriver extends AbstractHierarchicalFilesystemDriver
      */
     public function deleteFile($fileIdentifier): bool
     {
+        if ($this->isProcessedFile($fileIdentifier)) {
+            /*
+             * Processed files do not really exist in the Cloudinary file system
+             * Just remove the cache entry and confirm the deletion.
+             */
+            $this->getCloudinaryResourceService()->delete($fileIdentifier);
+            return true;
+        }
+
         $cloudinaryPublicId = $this->getCloudinaryPathService()->computeCloudinaryPublicId($fileIdentifier);
         $this->log(
             '[API] Delete resource "%s"',
