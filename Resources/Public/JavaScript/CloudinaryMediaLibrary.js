@@ -6,6 +6,7 @@ define([
   'TYPO3/CMS/Backend/Utility/MessageUtility',
   'TYPO3/CMS/Backend/Modal',
   'TYPO3/CMS/Backend/Severity',
+  '//media-library.cloudinary.com/global/all.js',
 ], function ($, NProgress, MessageUtility, Modal, Severity) {
 
   let irreNewTimout;
