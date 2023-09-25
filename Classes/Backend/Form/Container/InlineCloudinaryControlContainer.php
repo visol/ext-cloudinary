@@ -20,11 +20,6 @@ class InlineCloudinaryControlContainer extends InlineControlContainer
 
     public function render()
     {
-        // We load here the cloudinary library
-        /** @var AssetCollector $assetCollector */
-        $assetCollector = GeneralUtility::makeInstance(AssetCollector::class);
-        $assetCollector->addJavaScript('media_library_cloudinary', 'https://media-library.cloudinary.com/global/all.js', []);
-
         /** @var PageRenderer $pageRenderer */
         $pageRenderer = GeneralUtility::makeInstance(PageRenderer::class);
         $pageRenderer->loadRequireJsModule('TYPO3/CMS/Cloudinary/CloudinaryMediaLibrary');
