@@ -9,6 +9,7 @@ namespace Visol\Cloudinary\Controller;
  * LICENSE.md file that was distributed with this source code.
  */
 
+use Cloudinary\Api\Admin\AdminApi;
 use Cloudinary\Api\Upload\UploadApi;
 use Psr\EventDispatcher\EventDispatcherInterface;
 use Psr\Http\Message\ResponseInterface;
@@ -27,6 +28,7 @@ use TYPO3\CMS\Core\Resource\ResourceStorage;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
 use TYPO3\CMS\Core\Utility\PathUtility;
 use TYPO3\CMS\Extbase\Mvc\Controller\ActionController;
+use Visol\Cloudinary\Domain\Repository\ExplicitDataCacheRepository;
 use Visol\Cloudinary\Events\ClearCachePageEvent;
 use Visol\Cloudinary\Exceptions\CloudinaryNotFoundException;
 use Visol\Cloudinary\Exceptions\PublicIdMissingException;
@@ -62,6 +64,11 @@ class CloudinaryWebHookController extends ActionController
      * @var EventDispatcherInterface
      */
     protected $eventDispatcher;
+
+    public function __construct(
+        protected ExplicitDataCacheRepository $explicitDataCacheRepository,
+    ) {
+    }
 
 
     protected function initializeAction(): void
@@ -115,8 +122,14 @@ class CloudinaryWebHookController extends ActionController
             self::getLogger()->debug(sprintf('Start flushing cache for file action "%s". ', $requestType));
 
             foreach ($publicIds as $publicId) {
+                if ($this->isRequestUploadOverwrite($payload)) {
+                    // Update caches
+                    $this->explicitDataCacheRepository->delete($this->storage->getUid(), $publicId);
 
-                if ($requestType === self::NOTIFICATION_TYPE_DELETE) {
+                    $cloudinaryResource = (array)$this->getAdminApi()->asset($publicId);
+                    $this->cloudinaryResourceService->save($cloudinaryResource);
+                }
+                elseif ($requestType === self::NOTIFICATION_TYPE_DELETE) {
                     if (str_contains($publicId, '_processed_')) {
                         $message = 'Processed file deleted. Nothing to do, stopping here...';
                     } else {
@@ -406,6 +419,11 @@ class CloudinaryWebHookController extends ActionController
             $logger = GeneralUtility::makeInstance(LogManager::class)->getLogger(__CLASS__);
         }
         return $logger;
+    }
+
+    protected function getAdminApi(): AdminApi
+    {
+        return CloudinaryApiUtility::getCloudinary($this->storage)->adminApi();
     }
 
     protected function getUploadApi(): UploadApi
