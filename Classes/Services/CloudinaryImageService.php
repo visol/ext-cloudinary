@@ -69,7 +69,7 @@ class CloudinaryImageService extends AbstractCloudinaryMediaService
     {
         $explicitData = $this->getExplicitData($file, $options);
 
-        return $explicitData['responsive_breakpoints'][0]['breakpoints'];
+        return $explicitData['responsive_breakpoints'][0]['breakpoints'] ?? [];
     }
 
     public function getSrcsetAttribute(array $breakpoints): string
