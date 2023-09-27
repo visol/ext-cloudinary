@@ -15,6 +15,11 @@ define([
       ? $(this).data('cloudinaryCredentials')
       : []
 
+    let button = $(this).children('button');
+
+    let buttonClasses = button.attr('class');
+    let buttonInnerHtml = button.prop("innerHTML");
+
     let objectGroup = $(this).data('objectGroup');
     let elementId = $(this).attr('id');
 
@@ -28,17 +33,8 @@ define([
           username: credential.username,
           timestamp: credential.timestamp,
           signature: credential.signature,
-          button_class:
-            'btn btn-default open-btn mx-1 btn-open-cloudinary btn-open-cloudinary-storage-' + credential.storageUid,
-          button_caption: `<span
-                class="t3js-icon icon icon-size-small icon-state-default">
-                <svg class="icon-color">
-                  <use
-                    xlink:href="/typo3/sysext/core/Resources/Public/Icons/T3Icons/sprites/actions.svg#actions-cloud"
-                  ></use>
-                </svg>
-              </span> Image or video from "${credential.storageName}"`, // todo translate me!
-          // search: { expression: 'resource_type:image' }, // todo we could have video, how to filter _processed_file
+          button_class: buttonClasses,
+          button_caption: buttonInnerHtml,
         },
         {
           insertHandler: function (data) {
@@ -95,6 +91,25 @@ define([
 
   function initializeCloudinaryButtons () {
     $('.btn-cloudinary-media-library[data-is-initialized="0"]').map((index, element) => {
+
+      let uid = String($(element).parent().parent().parent().data('uid'));
+      let localTable = $(element).parent().parent().parent().data('local-table');
+      let localField = $(element).parent().parent().parent().data('local-field');
+      let radioName = 'data[' + localTable + '][' + uid + '][l10n_state][' + localField + ']';
+
+      let formFieldValue = $('input[name="' + radioName + '"]:checked').val();
+
+      $('input[name="' + radioName + '"]').change(function() {
+        if ($(this).val() === 'parent') {
+          $(element).addClass('invisible');
+        } else if ($(this).val() === 'custom') {
+          $(element).removeClass('invisible');
+        }
+      });
+
+      if (formFieldValue === 'parent') {
+        $(element).addClass('invisible');
+      }
 
       const cloudinaryCredentials = Array.isArray($(element).data('cloudinaryCredentials'))
         ? $(element).data('cloudinaryCredentials')
