@@ -16,7 +16,6 @@ define([
       : []
 
     let button = $(this).children('button');
-
     let buttonClasses = button.attr('class');
     let buttonInnerHtml = button.prop("innerHTML");
 
@@ -24,70 +23,73 @@ define([
     let elementId = $(this).attr('id');
 
     cloudinaryCredentials.map((credential) => {
-
-      // Render the cloudinary button
-      const mediaLibrary = cloudinary.openMediaLibrary(
-        {
-          cloud_name: credential.cloudName,
-          api_key: credential.apiKey,
-          username: credential.username,
-          timestamp: credential.timestamp,
-          signature: credential.signature,
-          button_class: buttonClasses,
-          button_caption: buttonInnerHtml,
-        },
-        {
-          insertHandler: function (data) {
-            NProgress.start();
-
-            const me = this;
-            const cloudinaryIds = data.assets.map((asset) => {
-              return asset.public_id;
-            });
-
-            $.post(
-              TYPO3.settings.ajaxUrls['cloudinary_add_files'],
-              {
-                cloudinaryIds: cloudinaryIds,
-                storageUid: me.storageUid,
-              },
-              function (data) {
-                if (data.result === 'ok') {
-                  data.files.map((fileUid) => {
-                    MessageUtility.MessageUtility.send({
-                      actionName: 'typo3:foreignRelation:insert',
-                      objectGroup: me.objectGroup,
-                      table: 'sys_file',
-                      uid: fileUid,
-                    });
-                  });
-
-                  NProgress.done();
-                } else {
-                  // error!
-                  const $confirm = Modal.confirm('ERROR', data.error, Severity.error, [
-                    {
-                      text: 'OK', // TYPO3.lang['file_upload.button.ok']
-                      btnClass: 'btn-' + Severity.getCssClass(Severity.error),
-                      name: 'ok',
-                      active: true,
-                    },
-                  ]).on('confirm.button.ok', function () {
-                    $confirm.modal('hide');
-                  });
-                }
-
-                NProgress.done();
-              }
-            );
-          },
-        },
-        '#' + elementId
-      );
-      mediaLibrary.storageUid = credential.storageUid;
-      mediaLibrary.objectGroup = objectGroup;
+      openMediaLibrary(credential, objectGroup, elementId, buttonClasses, buttonInnerHtml);
     });
   });
+
+  function openMediaLibrary(credential, objectGroup, elementId, buttonClasses, buttonInnerHtml) {
+    // Render the cloudinary button
+    const mediaLibrary = cloudinary.openMediaLibrary(
+      {
+        cloud_name: credential.cloudName,
+        api_key: credential.apiKey,
+        username: credential.username,
+        timestamp: credential.timestamp,
+        signature: credential.signature,
+        button_class: buttonClasses,
+        button_caption: buttonInnerHtml,
+      },
+      {
+        insertHandler: function (data) {
+          NProgress.start();
+
+          const me = this;
+          const cloudinaryIds = data.assets.map((asset) => {
+            return asset.public_id;
+          });
+
+          $.post(
+            TYPO3.settings.ajaxUrls['cloudinary_add_files'],
+            {
+              cloudinaryIds: cloudinaryIds,
+              storageUid: me.storageUid,
+            },
+            function (data) {
+              if (data.result === 'ok') {
+                data.files.map((fileUid) => {
+                  MessageUtility.MessageUtility.send({
+                    actionName: 'typo3:foreignRelation:insert',
+                    objectGroup: me.objectGroup,
+                    table: 'sys_file',
+                    uid: fileUid,
+                  });
+                });
+
+                NProgress.done();
+              } else {
+                // error!
+                const $confirm = Modal.confirm('ERROR', data.error, Severity.error, [
+                  {
+                    text: 'OK', // TYPO3.lang['file_upload.button.ok']
+                    btnClass: 'btn-' + Severity.getCssClass(Severity.error),
+                    name: 'ok',
+                    active: true,
+                  },
+                ]).on('confirm.button.ok', function () {
+                  $confirm.modal('hide');
+                });
+              }
+
+              NProgress.done();
+            }
+          );
+        },
+      },
+      '#' + elementId
+    );
+    mediaLibrary.storageUid = credential.storageUid;
+    mediaLibrary.objectGroup = objectGroup;
+  }
 
   function initializeCloudinaryButtons () {
     $('.btn-cloudinary-media-library[data-is-initialized="0"]').map((index, element) => {
