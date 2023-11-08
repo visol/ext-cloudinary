@@ -14,7 +14,7 @@
                 <source>Cloudinary API Secret</source>
             </trans-unit>
             <trans-unit id="driverConfiguration.basePath">
-                <source>A possible base path for storing files in a parent directory on cloudianry. Example `production/`</source>
+                <source>A possible base path for storing files in a parent directory on cloudinary. Example `production/`</source>
             </trans-unit>
             <trans-unit id="driverConfiguration.cname">
                 <source>A possible CNAME to serve your assets from, instead of the default res.cloudinary.com domain name.</source>
