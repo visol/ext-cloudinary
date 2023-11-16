@@ -11,6 +11,7 @@ namespace Visol\Cloudinary\Services;
 
 use Cloudinary\Api\Admin\AdminApi;
 use Cloudinary\Api\Search\SearchApi;
+use ReflectionMethod;
 use TYPO3\CMS\Core\Exception;
 use TYPO3\CMS\Core\Log\Logger;
 use Symfony\Component\Console\Style\SymfonyStyle;
@@ -18,6 +19,7 @@ use TYPO3\CMS\Core\Database\ConnectionPool;
 use TYPO3\CMS\Core\Database\Query\QueryBuilder;
 use TYPO3\CMS\Core\Log\LogLevel;
 use TYPO3\CMS\Core\Log\LogManager;
+use TYPO3\CMS\Core\Resource\Driver\DriverInterface;
 use TYPO3\CMS\Core\Resource\ResourceStorage;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
 use Visol\Cloudinary\Driver\CloudinaryDriver;
@@ -34,6 +36,8 @@ class CloudinaryScanService
     private const FOLDER_DELETED = 'folder_deleted';
 
     protected ResourceStorage $storage;
+
+    protected DriverInterface $driver;
 
     protected ?CloudinaryPathService $cloudinaryPathService = null;
 
@@ -59,6 +63,7 @@ class CloudinaryScanService
             throw new \Exception('Storage is not of type "cloudinary"', 1594714337);
         }
         $this->storage = $storage;
+        $this->driver = $this->getDriverFromStorage($storage);
         $this->io = $io;
     }
 
@@ -193,8 +198,8 @@ class CloudinaryScanService
             ->from('sys_file')
             ->where(
                 $this->getQueryBuilder()->expr()->eq(
-                    'identifier',
-                    $query->expr()->literal($fileIdentifier)
+                    'identifier_hash',
+                    $query->expr()->literal($this->driver->hashIdentifier($fileIdentifier))
                 ),
                 $this->getQueryBuilder()->expr()->eq(
                     'storage',
@@ -269,5 +274,19 @@ class CloudinaryScanService
     {
         $this->additionalExpression = $additionalExpression;
         return $this;
+    }
+
+    /**
+     * Unfortunately there's no official API to fetch the driver used in a given Storage.
+     * This method uses Reflection to run the protected method `getDriver()` from the supplied `$storage`.
+     * We only need this to invoke the hashIdentifier() method
+     *
+     * @throws \ReflectionException
+     */
+    protected function getDriverFromStorage(ResourceStorage $storage): DriverInterface
+    {
+        $reflectionMethod = new ReflectionMethod($storage, 'getDriver');
+        $reflectionMethod->setAccessible(true);
+        return $reflectionMethod->invoke($storage);
     }
 }
