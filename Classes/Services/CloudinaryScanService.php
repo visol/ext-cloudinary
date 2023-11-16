@@ -8,6 +8,8 @@ namespace Visol\Cloudinary\Services;
  * For the full copyright and license information, please read the
  * LICENSE.md file that was distributed with this source code.
  */
+
+use ReflectionMethod;
 use TYPO3\CMS\Core\Log\Logger;
 use Cloudinary\Search;
 use Symfony\Component\Console\Style\SymfonyStyle;
@@ -15,6 +17,7 @@ use TYPO3\CMS\Core\Database\ConnectionPool;
 use TYPO3\CMS\Core\Database\Query\QueryBuilder;
 use TYPO3\CMS\Core\Log\LogLevel;
 use TYPO3\CMS\Core\Log\LogManager;
+use TYPO3\CMS\Core\Resource\Driver\DriverInterface;
 use TYPO3\CMS\Core\Resource\ResourceStorage;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
 use Visol\Cloudinary\Driver\CloudinaryDriver;
@@ -37,6 +40,11 @@ class CloudinaryScanService
      * @var ResourceStorage
      */
     protected $storage;
+
+    /**
+     * @var DriverInterface
+     */
+    protected $driver;
 
     /**
      * @var CloudinaryPathService
@@ -79,8 +87,10 @@ class CloudinaryScanService
         if ($storage->getDriverType() !== CloudinaryDriver::DRIVER_TYPE) {
             throw new \Exception('Storage is not of type "cloudinary"', 1594714337);
         }
+
         $this->storage = $storage;
         $this->io = $io;
+        $this->driver = $this->getDriverFromStorage($storage);
     }
 
     /**
@@ -221,8 +231,8 @@ class CloudinaryScanService
             ->from('sys_file')
             ->where(
                 $this->getQueryBuilder()->expr()->eq(
-                    'identifier',
-                    $query->expr()->literal($fileIdentifier)
+                    'identifier_hash',
+                    $query->expr()->literal($this->driver->hashIdentifier($fileIdentifier))
                 ),
                 $this->getQueryBuilder()->expr()->eq(
                     'storage',
@@ -296,5 +306,19 @@ class CloudinaryScanService
             vsprintf($message, $arguments),
             $data
         );
+    }
+
+    /**
+     * Unfortunately there's no official API to fetch the driver used in a given Storage.
+     * This method uses Reflection to run the protected method `getDriver()` from the supplied `$storage`.
+     * We only need this to invoke the hashIdentifier() method
+     *
+     * @throws \ReflectionException
+     */
+    protected function getDriverFromStorage(ResourceStorage $storage): DriverInterface
+    {
+        $reflectionMethod = new ReflectionMethod($storage, 'getDriver');
+        $reflectionMethod->setAccessible(true);
+        return $reflectionMethod->invoke($storage);
     }
 }
