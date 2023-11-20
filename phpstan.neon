@@ -6,6 +6,7 @@ parameters:
         - Classes
         - Configuration
     checkMissingIterableValueType: false
+    checkGenericClassInNonGenericObjectType: false
     reportUnmatchedIgnoredErrors: false
     ignoreErrors:
         -

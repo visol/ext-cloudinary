@@ -37,7 +37,10 @@ class CloudinaryScanService
 
     protected ResourceStorage $storage;
 
-    protected DriverInterface $driver;
+    /**
+     * @var DriverInterface
+     */
+    protected mixed $driver;
 
     protected ?CloudinaryPathService $cloudinaryPathService = null;
 
@@ -283,7 +286,7 @@ class CloudinaryScanService
      *
      * @throws \ReflectionException
      */
-    protected function getDriverFromStorage(ResourceStorage $storage): DriverInterface
+    protected function getDriverFromStorage(ResourceStorage $storage): mixed
     {
         $reflectionMethod = new ReflectionMethod($storage, 'getDriver');
         $reflectionMethod->setAccessible(true);
