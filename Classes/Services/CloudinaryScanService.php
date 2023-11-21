@@ -37,11 +37,6 @@ class CloudinaryScanService
 
     protected ResourceStorage $storage;
 
-    /**
-     * @var DriverInterface
-     */
-    protected mixed $driver;
-
     protected ?CloudinaryPathService $cloudinaryPathService = null;
 
     protected string $processedFolder = '_processed_';
@@ -66,7 +61,6 @@ class CloudinaryScanService
             throw new \Exception('Storage is not of type "cloudinary"', 1594714337);
         }
         $this->storage = $storage;
-        $this->driver = $this->getDriverFromStorage($storage);
         $this->io = $io;
     }
 
@@ -202,7 +196,7 @@ class CloudinaryScanService
             ->where(
                 $this->getQueryBuilder()->expr()->eq(
                     'identifier_hash',
-                    $query->expr()->literal($this->driver->hashIdentifier($fileIdentifier))
+                    $query->expr()->literal($this->storage->hashFileIdentifier($fileIdentifier)),
                 ),
                 $this->getQueryBuilder()->expr()->eq(
                     'storage',
@@ -277,19 +271,5 @@ class CloudinaryScanService
     {
         $this->additionalExpression = $additionalExpression;
         return $this;
-    }
-
-    /**
-     * Unfortunately there's no official API to fetch the driver used in a given Storage.
-     * This method uses Reflection to run the protected method `getDriver()` from the supplied `$storage`.
-     * We only need this to invoke the hashIdentifier() method
-     *
-     * @throws \ReflectionException
-     */
-    protected function getDriverFromStorage(ResourceStorage $storage): mixed
-    {
-        $reflectionMethod = new ReflectionMethod($storage, 'getDriver');
-        $reflectionMethod->setAccessible(true);
-        return $reflectionMethod->invoke($storage);
     }
 }
