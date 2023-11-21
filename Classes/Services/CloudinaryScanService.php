@@ -11,7 +11,6 @@ namespace Visol\Cloudinary\Services;
 
 use Cloudinary\Api\Admin\AdminApi;
 use Cloudinary\Api\Search\SearchApi;
-use ReflectionMethod;
 use TYPO3\CMS\Core\Exception;
 use TYPO3\CMS\Core\Log\Logger;
 use Symfony\Component\Console\Style\SymfonyStyle;
@@ -19,7 +18,6 @@ use TYPO3\CMS\Core\Database\ConnectionPool;
 use TYPO3\CMS\Core\Database\Query\QueryBuilder;
 use TYPO3\CMS\Core\Log\LogLevel;
 use TYPO3\CMS\Core\Log\LogManager;
-use TYPO3\CMS\Core\Resource\Driver\DriverInterface;
 use TYPO3\CMS\Core\Resource\ResourceStorage;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
 use Visol\Cloudinary\Driver\CloudinaryDriver;
