@@ -221,8 +221,8 @@ class CloudinaryScanService
             ->from('sys_file')
             ->where(
                 $this->getQueryBuilder()->expr()->eq(
-                    'identifier',
-                    $query->expr()->literal($fileIdentifier)
+                    'identifier_hash',
+                    $query->expr()->literal($this->storage->hashFileIdentifier($fileIdentifier)),
                 ),
                 $this->getQueryBuilder()->expr()->eq(
                     'storage',
