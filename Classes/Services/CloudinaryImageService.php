@@ -11,6 +11,7 @@ namespace Visol\Cloudinary\Services;
 
 use Cloudinary\Asset\Image;
 use Cloudinary\Transformation\ImageTransformation;
+use Cloudinary\Transformation\Scale;
 use Exception;
 use TYPO3\CMS\Core\Resource\StorageRepository;
 use TYPO3\CMS\Core\Resource\File;
@@ -20,6 +21,9 @@ use Visol\Cloudinary\Utility\CloudinaryApiUtility;
 
 class CloudinaryImageService extends AbstractCloudinaryMediaService
 {
+    // See "Max image megapixels" on https://cloudinary.com/pricing/compare-plans
+    const TRANSFORMATION_MAX_INPUT_PIXELS = 50_000_000;
+
     protected ExplicitDataCacheRepository $explicitDataCacheRepository;
 
     protected ?StorageRepository $storageRepository = null;
@@ -46,11 +50,13 @@ class CloudinaryImageService extends AbstractCloudinaryMediaService
 
             // With Cloudinary API 2, we need to modify the way in which "responsive_breakpoints.transformation" are transmitted.
             $apiOptions = $options;
-            if (isset($options['responsive_breakpoints']['transformation'])) {
-                $apiOptions['responsive_breakpoints']['transformation'] = []; // reset the value
-                foreach ($options['responsive_breakpoints']['transformation'] as $transformationParams) {
-                    $apiOptions['responsive_breakpoints']['transformation'][] = ImageTransformation::fromParams($transformationParams);
-                }
+            if (isset($apiOptions['responsive_breakpoints']['transformation'])) {
+                // Check if we need to scale the image down, before applying image transformations
+                $prescaleTransformation = $this->getPrescaleTransformation($file);
+                $apiOptions['responsive_breakpoints']['transformation'] = array_map(
+                    fn(array $parameters) => (new ImageTransformation($prescaleTransformation))->addActionFromQualifiers($parameters),
+                    $apiOptions['responsive_breakpoints']['transformation'],
+                );
             }
 
             try {
@@ -221,4 +227,22 @@ class CloudinaryImageService extends AbstractCloudinaryMediaService
         $this->storageRepository = $storageRepository;
     }
 
+    /**
+     * Check if cloudinary needs to scale down the image before applying
+     * transformations. This function will return the required scaling
+     * transformation or null if no scaling is required.
+     */
+    protected function getPrescaleTransformation(File $file): ?Scale
+    {
+        $width = $file->getProperty('width') ?? 0;
+        $height = $file->getProperty('height') ?? 0;
+
+        if ($width * $height <= self::TRANSFORMATION_MAX_INPUT_PIXELS) {
+            return null;
+        }
+
+        // Calculate a width that allows the image to be processed
+        $maxWidth = (int)floor(sqrt(self::TRANSFORMATION_MAX_INPUT_PIXELS / ($height / $width)));
+        return Scale::limitFit($maxWidth);
+    }
 }
