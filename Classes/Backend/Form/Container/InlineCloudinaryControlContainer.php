@@ -12,19 +12,14 @@ use TYPO3\CMS\Core\Resource\ResourceFactory;
 use TYPO3\CMS\Core\Resource\ResourceStorage;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
 use TYPO3\CMS\Fluid\View\StandaloneView;
-use Visol\Cloudinary\Driver\CloudinaryFastDriver;
+use Visol\Cloudinary\Driver\CloudinaryDriver;
 use Visol\Cloudinary\Services\ConfigurationService;
 
 class InlineCloudinaryControlContainer extends InlineControlContainer
 {
 
-    public function render() {
-
-        // We load here the cloudinary library
-        /** @var AssetCollector $assetCollector */
-        $assetCollector = GeneralUtility::makeInstance(AssetCollector::class);
-        $assetCollector->addJavaScript('media_library_cloudinary', 'https://media-library.cloudinary.com/global/all.js', []);
-
+    public function render()
+    {
         /** @var PageRenderer $pageRenderer */
         $pageRenderer = GeneralUtility::makeInstance(PageRenderer::class);
         $pageRenderer->loadRequireJsModule('TYPO3/CMS/Cloudinary/CloudinaryMediaLibrary');
@@ -32,30 +27,13 @@ class InlineCloudinaryControlContainer extends InlineControlContainer
         return parent::render();
     }
 
-    /**
-     * @param array $inlineConfiguration
-     * @return string
-     */
-    protected function renderPossibleRecordsSelectorTypeGroupDB(array $inlineConfiguration)
+    protected function renderPossibleRecordsSelectorTypeGroupDB(array $inlineConfiguration): ?string
     {
         $typo3Buttons = parent::renderPossibleRecordsSelectorTypeGroupDB($inlineConfiguration);
 
         // We could have multiple cloudinary buttons / storages
         $cloudinaryButtons = $this->renderCloudinaryButtons($inlineConfiguration);
-
-        // Inject button before help-block
-        if (strpos($typo3Buttons, '</div><div class="help-block">') > 0) {
-            $typo3Buttons = str_replace(
-                '</div><div class="help-block">',
-                $cloudinaryButtons . '</div><div class="help-block">',
-                $typo3Buttons,
-            );
-            // Try to inject it into the form-control container
-        } elseif (preg_match('/<\/div><\/div>$/i', $typo3Buttons)) {
-            $typo3Buttons = preg_replace('/<\/div><\/div>$/i', $cloudinaryButtons . '</div></div>', $typo3Buttons);
-        } else {
-            $typo3Buttons .= $cloudinaryButtons;
-        }
+        $typo3Buttons = $this->appendButtons($typo3Buttons, $cloudinaryButtons);
 
         return $typo3Buttons;
     }
@@ -72,7 +50,7 @@ class InlineCloudinaryControlContainer extends InlineControlContainer
         $view = $this->initializeStandaloneView('EXT:cloudinary/Resources/Private/Standalone/MediaLibrary/Show.html');
         $view->assignMultiple([
             'objectGroup' => $objectGroup,
-            'cloudinaryCredentials' => json_encode($this->computeCloudinaryCredentials($storages)),
+            'cloudinaryCredentials' => $this->computeCloudinaryCredentials($storages),
         ]);
 
         return $view->render();
@@ -107,7 +85,7 @@ class InlineCloudinaryControlContainer extends InlineControlContainer
             $storageItems = $query
                 ->select('*')
                 ->from('sys_file_storage')
-                ->where($query->expr()->eq('driver', $query->expr()->literal(CloudinaryFastDriver::DRIVER_TYPE)))
+                ->where($query->expr()->eq('driver', $query->expr()->literal(CloudinaryDriver::DRIVER_TYPE)))
                 ->execute()
                 ->fetchAllAssociativeIndexed();
 
@@ -158,5 +136,23 @@ class InlineCloudinaryControlContainer extends InlineControlContainer
         }
 
         return $cloudinaryCredentials;
+    }
+
+    protected function appendButtons(string $typo3Buttons, string $cloudinaryButtons): ?string
+    {
+        // Inject button before help-block
+        if (strpos($typo3Buttons, '</div><div class="help-block">') > 0) {
+            $typo3Buttons = str_replace(
+                '</div><div class="help-block">',
+                $cloudinaryButtons . '</div><div class="help-block">',
+                $typo3Buttons,
+            );
+            // Try to inject it into the form-control container
+        } elseif (preg_match('/<\/div><\/div>$/i', $typo3Buttons)) {
+            $typo3Buttons = preg_replace('/<\/div><\/div>$/i', $cloudinaryButtons . '</div></div>', $typo3Buttons);
+        } else {
+            $typo3Buttons .= $cloudinaryButtons;
+        }
+        return $typo3Buttons;
     }
 }

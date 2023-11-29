@@ -2,11 +2,13 @@
 
 namespace Visol\Cloudinary\Services;
 
+use Cloudinary\Asset\Video;
 use TYPO3\CMS\Core\Resource\File;
+use Visol\Cloudinary\Utility\CloudinaryApiUtility;
 
 class CloudinaryVideoService extends AbstractCloudinaryMediaService
 {
-    protected $defaultOptions = [
+    protected array $defaultOptions = [
         'type' => 'upload',
         'resource_type' => 'video',
         'fetch_format' => 'auto',
@@ -19,7 +21,10 @@ class CloudinaryVideoService extends AbstractCloudinaryMediaService
 
         $publicId = $this->getPublicIdForFile($file);
 
-        $this->initializeApi($file->getStorage());
-        return \Cloudinary::cloudinary_url($publicId, $options);
+        $configuration = CloudinaryApiUtility::getConfiguration($file->getStorage());
+
+        return Video::fromParams($publicId, $options)
+            ->configuration($configuration)
+            ->toUrl();
     }
 }

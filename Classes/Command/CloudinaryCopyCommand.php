@@ -9,6 +9,7 @@ namespace Visol\Cloudinary\Command;
  * LICENSE.md file that was distributed with this source code.
  */
 
+use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
@@ -20,31 +21,15 @@ use TYPO3\CMS\Core\Resource\ResourceFactory;
 use TYPO3\CMS\Core\Resource\ResourceStorage;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
 
-/**
- * Class CloudinaryCopyCommand
- */
 class CloudinaryCopyCommand extends AbstractCloudinaryCommand
 {
-    /**
-     * @var array
-     */
-    protected $missingFiles = [];
+    protected array $missingFiles = [];
 
-    /**
-     * @var ResourceStorage
-     */
-    protected $sourceStorage;
+    protected ResourceStorage $sourceStorage;
 
-    /**
-     * @var ResourceStorage
-     */
-    protected $targetStorage;
+    protected ResourceStorage $targetStorage;
 
-    /**
-     * @param InputInterface $input
-     * @param OutputInterface $output
-     */
-    protected function initialize(InputInterface $input, OutputInterface $output)
+    protected function initialize(InputInterface $input, OutputInterface $output): void
     {
         $this->io = new SymfonyStyle($input, $output);
 
@@ -59,7 +44,7 @@ class CloudinaryCopyCommand extends AbstractCloudinaryCommand
     /**
      * Configure the command by defining the name, options and arguments
      */
-    protected function configure()
+    protected function configure(): void
     {
         $this->setDescription('Copy bunch of images from a local storage to a cloudinary storage')
             ->addOption('silent', 's', InputOption::VALUE_OPTIONAL, 'Mute output as much as possible', false)
@@ -74,22 +59,18 @@ class CloudinaryCopyCommand extends AbstractCloudinaryCommand
             ->setHelp('Usage: ./vendor/bin/typo3 cloudinary:copy 1 2');
     }
 
-    /**
-     * @param InputInterface $input
-     * @param OutputInterface $output
-     */
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
         if (!$this->checkDriverType($this->targetStorage)) {
             $this->log('Look out! target storage is not of type "cloudinary"');
-            return 1;
+            return Command::INVALID;
         }
 
         $files = $this->getFiles($this->sourceStorage, $input);
 
         if (count($files) === 0) {
             $this->log('No files found, no work for me!');
-            return 0;
+            return Command::SUCCESS;
         }
 
         $this->log('Copying %s files from storage "%s" (%s) to "%s" (%s)', [
@@ -106,7 +87,7 @@ class CloudinaryCopyCommand extends AbstractCloudinaryCommand
 
             if (!$response) {
                 $this->log('Script aborted');
-                return 0;
+                return Command::SUCCESS;
             }
         }
 
@@ -148,28 +129,17 @@ class CloudinaryCopyCommand extends AbstractCloudinaryCommand
             print_r($this->missingFiles);
         }
 
-        return 0;
+        return Command::SUCCESS;
     }
 
-    /**
-     * @param File $fileObject
-     * @param string $url
-     *
-     * @return bool
-     */
     public function download(File $fileObject, string $url): bool
     {
         $this->ensureDirectoryExistence($fileObject);
 
         $contents = file_get_contents($url);
-        return $contents ? (bool) file_put_contents($this->getAbsolutePath($fileObject), $contents) : false;
+        return $contents ? (bool)file_put_contents($this->getAbsolutePath($fileObject), $contents) : false;
     }
 
-    /**
-     * @param File $fileObject
-     *
-     * @return string
-     */
     protected function getAbsolutePath(File $fileObject): string
     {
         // Compute the absolute file name of the file to move
@@ -178,9 +148,6 @@ class CloudinaryCopyCommand extends AbstractCloudinaryCommand
         return GeneralUtility::getFileAbsFileName($fileRelativePath);
     }
 
-    /**
-     * @param File $fileObject
-     */
     protected function ensureDirectoryExistence(File $fileObject)
     {
         // Make sure the directory exists

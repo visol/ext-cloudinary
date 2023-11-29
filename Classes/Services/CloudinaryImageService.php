@@ -9,32 +9,24 @@
 
 namespace Visol\Cloudinary\Services;
 
+use Cloudinary\Asset\Image;
+use Cloudinary\Transformation\ImageTransformation;
+use Cloudinary\Transformation\Scale;
+use Exception;
 use TYPO3\CMS\Core\Resource\StorageRepository;
-use Cloudinary\Uploader;
-use Doctrine\DBAL\Exception\UniqueConstraintViolationException;
-use TYPO3\CMS\Core\Log\LogLevel;
-use TYPO3\CMS\Core\Log\LogManager;
 use TYPO3\CMS\Core\Resource\File;
-use TYPO3\CMS\Core\Resource\ResourceStorage;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
 use Visol\Cloudinary\Domain\Repository\ExplicitDataCacheRepository;
-use Visol\Cloudinary\Driver\CloudinaryDriver;
 use Visol\Cloudinary\Utility\CloudinaryApiUtility;
 
-/**
- * Class CloudinaryImageService
- */
 class CloudinaryImageService extends AbstractCloudinaryMediaService
 {
-    /**
-     * @var ExplicitDataCacheRepository
-     */
-    protected $explicitDataCacheRepository;
+    // See "Max image megapixels" on https://cloudinary.com/pricing/compare-plans
+    const TRANSFORMATION_MAX_INPUT_PIXELS = 50_000_000;
 
-    /**
-     * @var StorageRepository
-     */
-    protected $storageRepository;
+    protected ExplicitDataCacheRepository $explicitDataCacheRepository;
+
+    protected ?StorageRepository $storageRepository = null;
 
     protected array $defaultOptions = [
         'type' => 'upload',
@@ -43,21 +35,11 @@ class CloudinaryImageService extends AbstractCloudinaryMediaService
         'quality' => 'auto',
     ];
 
-    /**
-     *
-     */
     public function __construct()
     {
         $this->explicitDataCacheRepository = GeneralUtility::makeInstance(ExplicitDataCacheRepository::class);
     }
 
-
-    /**
-     * @param File $file
-     * @param array $options
-     *
-     * @return array
-     */
     public function getExplicitData(File $file, array $options): array
     {
         $publicId = $this->getPublicIdForFile($file);
@@ -65,11 +47,23 @@ class CloudinaryImageService extends AbstractCloudinaryMediaService
         $explicitData = $this->explicitDataCacheRepository->findByStorageAndPublicIdAndOptions($file->getStorage()->getUid(), $publicId, $options)['explicit_data'];
 
         if (!$explicitData) {
-            $this->initializeApi($file->getStorage());
-            $explicitData = Uploader::explicit($publicId, $options);
+
+            // With Cloudinary API 2, we need to modify the way in which "responsive_breakpoints.transformation" are transmitted.
+            $apiOptions = $options;
+            if (isset($apiOptions['responsive_breakpoints']['transformation'])) {
+                // Check if we need to scale the image down, before applying image transformations
+                $prescaleTransformation = $this->getPrescaleTransformation($file);
+                $apiOptions['responsive_breakpoints']['transformation'] = array_map(
+                    fn(array $parameters) => (new ImageTransformation($prescaleTransformation))->addActionFromQualifiers($parameters),
+                    $apiOptions['responsive_breakpoints']['transformation'],
+                );
+            }
+
             try {
+                $explicitData = (array)$this->getUploadApi($file->getStorage())->explicit($publicId, $apiOptions);
                 $this->explicitDataCacheRepository->save($file->getStorage()->getUid(), $publicId, $options, $explicitData);
-            } catch (UniqueConstraintViolationException $e) {
+            } catch (Exception $e) {
+                $explicitData = [];
                 // ignore
             }
         }
@@ -77,34 +71,18 @@ class CloudinaryImageService extends AbstractCloudinaryMediaService
         return $explicitData;
     }
 
-    /**
-     * @param File $file
-     * @param array $options
-     *
-     * @return array
-     */
     public function getResponsiveBreakpointData(File $file, array $options): array
     {
         $explicitData = $this->getExplicitData($file, $options);
 
-        return $explicitData['responsive_breakpoints'][0]['breakpoints'];
+        return $explicitData['responsive_breakpoints'][0]['breakpoints'] ?? [];
     }
 
-    /**
-     * @param array $breakpoints
-     *
-     * @return string
-     */
     public function getSrcsetAttribute(array $breakpoints): string
     {
         return implode(',' . PHP_EOL, $this->getSrcset($breakpoints));
     }
 
-    /**
-     * @param array $breakpoints
-     *
-     * @return array
-     */
     public function getSrcset(array $breakpoints): array
     {
         $imageObjects = $this->getImageObjects($breakpoints);
@@ -116,11 +94,6 @@ class CloudinaryImageService extends AbstractCloudinaryMediaService
         return $srcset;
     }
 
-    /**
-     * @param array $breakpoints
-     *
-     * @return string
-     */
     public function getSizesAttribute(array $breakpoints): string
     {
         $maxImageObject = $this->getImage($breakpoints, 'max');
@@ -128,9 +101,6 @@ class CloudinaryImageService extends AbstractCloudinaryMediaService
     }
 
     /**
-     * @param array $breakpoints
-     * @param string $functionName
-     *
      * @return mixed
      */
     public function getImage(array $breakpoints, string $functionName)
@@ -166,15 +136,12 @@ class CloudinaryImageService extends AbstractCloudinaryMediaService
 
         $publicId = $this->getPublicIdForFile($file);
 
-        $this->initializeApi($file->getStorage());
-        return \Cloudinary::cloudinary_url($publicId, $options);
+        $configuration = CloudinaryApiUtility::getConfiguration($file->getStorage());
+        return (string)Image::fromParams($publicId, $options)
+            ->configuration($configuration)
+            ->toUrl();
     }
 
-    /**
-     * @param array $breakpoints
-     *
-     * @return array
-     */
     public function getImageObjects(array $breakpoints): array
     {
         $widthMap = [];
@@ -185,12 +152,6 @@ class CloudinaryImageService extends AbstractCloudinaryMediaService
         return $widthMap;
     }
 
-    /**
-     * @param array $settings
-     * @param bool $enableResponsiveBreakpoints
-     *
-     * @return array
-     */
     public function generateOptionsFromSettings(array $settings, bool $enableResponsiveBreakpoints = true): array
     {
         $transformations = [];
@@ -268,5 +229,24 @@ class CloudinaryImageService extends AbstractCloudinaryMediaService
     public function injectStorageRepository(StorageRepository $storageRepository): void
     {
         $this->storageRepository = $storageRepository;
+    }
+
+    /**
+     * Check if cloudinary needs to scale down the image before applying
+     * transformations. This function will return the required scaling
+     * transformation or null if no scaling is required.
+     */
+    protected function getPrescaleTransformation(File $file): ?Scale
+    {
+        $width = $file->getProperty('width') ?? 0;
+        $height = $file->getProperty('height') ?? 0;
+
+        if ($width * $height <= self::TRANSFORMATION_MAX_INPUT_PIXELS) {
+            return null;
+        }
+
+        // Calculate a width that allows the image to be processed
+        $maxWidth = (int)floor(sqrt(self::TRANSFORMATION_MAX_INPUT_PIXELS / ($height / $width)));
+        return Scale::limitFit($maxWidth);
     }
 }

@@ -1,8 +1,10 @@
 <?php
 
+use Visol\Cloudinary\Controller\CloudinaryAjaxController;
+
 return [
     'cloudinary_add_files' => [
         'path' => '/cloudinary/add-files',
-        'target' => \Visol\Cloudinary\Controller\CloudinaryAjaxController::class . '::addFilesAction',
+        'target' => CloudinaryAjaxController::class . '::addFilesAction',
     ],
 ];

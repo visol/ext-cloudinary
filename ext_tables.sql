@@ -16,9 +16,9 @@ CREATE TABLE tx_cloudinary_explicit_data_cache (
 );
 
 #
-# Table structure for table 'tx_cloudinary_resource'
+# Table structure for table 'tx_cloudinary_cache_resources'
 #
-CREATE TABLE tx_cloudinary_resource (
+CREATE TABLE tx_cloudinary_cache_resources (
   public_id text,
   public_id_hash char(40) DEFAULT '' NOT NULL,
   folder text,

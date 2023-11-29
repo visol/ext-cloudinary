@@ -9,7 +9,9 @@ namespace Visol\Cloudinary\Command;
  * LICENSE.md file that was distributed with this source code.
  */
 
+use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Style\SymfonyStyle;
+use TYPO3\CMS\Core\Core\Environment;
 use TYPO3\CMS\Core\Database\ConnectionPool;
 use Visol\Cloudinary\Driver\CloudinaryDriver;
 use Symfony\Component\Console\Input\InputArgument;
@@ -41,15 +43,12 @@ spl_autoload_register(
     }
 );
 
-/**
- * Class CloudinaryAcceptanceTestCommand
- */
 class CloudinaryAcceptanceTestCommand extends AbstractCloudinaryCommand
 {
     /**
      * Configure the command by defining the name, options and arguments
      */
-    protected function configure()
+    protected function configure(): void
     {
         $message = 'Run a suite of Acceptance Tests';
         $this
@@ -62,54 +61,39 @@ class CloudinaryAcceptanceTestCommand extends AbstractCloudinaryCommand
                 'The API configuration'
             )
             ->setHelp(
-                'Usage: ./vendor/bin/typo3 cloudinary:tests'
+                'Usage: ./vendor/bin/typo3 cloudinary:tests bucket-name:my-api-key:my-api-secret'
             );
     }
 
-    /**
-     * @param InputInterface $input
-     * @param OutputInterface $output
-     */
-    protected function initialize(InputInterface $input, OutputInterface $output)
+    protected function initialize(InputInterface $input, OutputInterface $output): void
     {
         $this->io = new SymfonyStyle($input, $output);
     }
 
-    /**
-     * @param InputInterface $input
-     * @param OutputInterface $output
-     *
-     * @return int
-     */
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
         // We should dynamically inject the configuration. For now use an existing driver
         [$couldName, $apiKey, $apiSecret] = GeneralUtility::trimExplode(':', $input->getArgument('api-configuration'));
         if (!$couldName || !$apiKey || !$apiSecret) {
             // Everything must be defined!
-            $message = 'API configuration is incomplete. Format should be "cld-name:1234:abcd".' . LF . LF;
-            $message .= '"cld-name" is the name of the cloudinary bucket' . LF;
-            $message .= '"12345" is the API key' . LF;
-            $message .= '"abcd" is the API secret' . LF . LF;
-            $message .= 'https://cloudinary.com/console' . LF;
-            $message .= 'Strong advice! Take a free account to run the test suite';
+            $message = 'API configuration is incomplete. Format should be "bucket-name:my-api-key:my-api-secret".';
             $this->error($message);
-            return 1;
+            return Command::INVALID;
         }
 
-        $this->log('Starting tests...');
+        $logFile = Environment::getVarPath() . '/log/cloudinary.log';
         $this->log('Hint! Look at the log to get more insight:');
-        $this->log('tail -f web/typo3temp/var/logs/cloudinary.log');
+        $this->log('tail -f ' . $logFile);
         $this->log();
 
         // Create a testing storage
         $storageId = $this->setUp($couldName, $apiKey, $apiSecret);
         if (!$storageId) {
             $this->error('Something went wrong. I could not create a testing storage');
-            return 2;
+            return Command::FAILURE;
         }
 
-        // Test case for video file
+        // Test case for files
         $testSuite = new FileTestSuite($storageId, $this->io);
         $testSuite->runTests();
 
@@ -118,16 +102,9 @@ class CloudinaryAcceptanceTestCommand extends AbstractCloudinaryCommand
 
         $this->tearDown($storageId);
 
-        return 0;
+        return Command::SUCCESS;
     }
 
-    /**
-     * @param string $cloudName
-     * @param string $apiKey
-     * @param string $apiSecret
-     *
-     * @return int
-     */
     protected function setUp(string $cloudName, string $apiKey, string $apiSecret): int
     {
         $values = [
@@ -178,9 +155,6 @@ class CloudinaryAcceptanceTestCommand extends AbstractCloudinaryCommand
         return (int)$db->lastInsertId();
     }
 
-    /**
-     * @param int $storageId
-     */
     protected function tearDown(int $storageId)
     {
         /** @var ConnectionPool $connectionPool */
@@ -205,7 +179,7 @@ class CloudinaryAcceptanceTestCommand extends AbstractCloudinaryCommand
         );
 
         // Remove all cache
-        $db->truncate('cf_cloudinary');
-        $db->truncate('cf_cloudinary_tags');
+//        $db->truncate('cf_cloudinary');
+//        $db->truncate('cf_cloudinary_tags');
     }
 }

@@ -2,6 +2,8 @@
 
 namespace Visol\Cloudinary\Tests\Acceptance\FileOperation;
 
+use Exception;
+use RuntimeException;
 use Symfony\Component\Console\Style\SymfonyStyle;
 use TYPO3\CMS\Core\Resource\Folder;
 use TYPO3\CMS\Core\Resource\ResourceStorage;
@@ -135,7 +137,7 @@ abstract class AbstractCloudinaryFileOperationTest
         $filePath = realpath($this->fixtureDirectory . DIRECTORY_SEPARATOR . $fileName);
 
         if (!$filePath) {
-            throw new \RuntimeException('Missing file ' . $fileName, 1591703650);
+            throw new RuntimeException('Missing file ' . $fileName, 1591703650);
         }
         return $filePath;
     }
@@ -210,14 +212,14 @@ abstract class AbstractCloudinaryFileOperationTest
      * @param bool $expression
      * @param string $message
      *
-     * @throws \Exception
+     * @throws Exception
      */
     protected function assertTrue(bool $expression, string $message)
     {
         if ($expression !== true) {
             $message .= chr(10) . chr(10) . 'Expected value: true';
             $message .= chr(10) . 'Actual value: ' . var_export($expression, true);
-            throw new \Exception('AssertTrue! ' . $message, 1590757845);
+            throw new Exception('AssertTrue! ' . $message, 1590757845);
         } else {
             $this->getIo()->success($message);
         }
@@ -227,14 +229,14 @@ abstract class AbstractCloudinaryFileOperationTest
      * @param bool $expression
      * @param string $message
      *
-     * @throws \Exception
+     * @throws Exception
      */
     protected function assertFalse(bool $expression, string $message)
     {
         if ($expression !== false) {
             $message .= chr(10) . chr(10) . 'Expected value: false';
             $message .= chr(10) . 'Actual value: ' . var_export($expression, true);
-            throw new \Exception('AssertFalse! ' . $message, 1590757846);
+            throw new Exception('AssertFalse! ' . $message, 1590757846);
         } else {
             $this->getIo()->success($message);
         }
@@ -245,14 +247,14 @@ abstract class AbstractCloudinaryFileOperationTest
      * @param $actual
      * @param string $message
      *
-     * @throws \Exception
+     * @throws Exception
      */
     protected function assert($expected, $actual, string $message)
     {
         if ($expected !== $actual) {
             $message .= chr(10) . chr(10) . 'Expected value: ' . $expected;
             $message .= chr(10) . 'Actual value:   ' . $actual;
-            throw new \Exception('Assert! ' . $message, 1590757847);
+            throw new Exception('Assert! ' . $message, 1590757847);
         } else {
             $this->getIo()->success($message);
         }

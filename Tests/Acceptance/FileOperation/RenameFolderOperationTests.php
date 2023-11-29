@@ -2,6 +2,8 @@
 
 namespace Visol\Cloudinary\Tests\Acceptance\FileOperation;
 
+use Exception;
+
 class RenameFolderOperationTests extends AbstractCloudinaryFileOperationTest
 {
 
@@ -12,7 +14,7 @@ class RenameFolderOperationTests extends AbstractCloudinaryFileOperationTest
 
     /**
      * @return void
-     * @throws \Exception
+     * @throws Exception
      */
     public function run()
     {

@@ -9,6 +9,7 @@ namespace Visol\Cloudinary\Command;
  * LICENSE.md file that was distributed with this source code.
  */
 
+use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
@@ -18,21 +19,13 @@ use TYPO3\CMS\Core\Resource\ResourceFactory;
 use TYPO3\CMS\Core\Resource\ResourceStorage;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
 
-/**
- * Class CloudinaryFixJpegCommand
- */
 class CloudinaryFixJpegCommand extends AbstractCloudinaryCommand
 {
-    /**
-     * @var ResourceStorage
-     */
-    protected $targetStorage;
+    protected ResourceStorage $targetStorage;
 
-    /**
-     * @param InputInterface $input
-     * @param OutputInterface $output
-     */
-    protected function initialize(InputInterface $input, OutputInterface $output)
+    protected string $tableName = 'sys_file';
+
+    protected function initialize(InputInterface $input, OutputInterface $output): void
     {
         $this->io = new SymfonyStyle($input, $output);
 
@@ -43,39 +36,28 @@ class CloudinaryFixJpegCommand extends AbstractCloudinaryCommand
         $this->targetStorage = $resourceFactory->getStorageObject($input->getArgument('target'));
     }
 
-    /**
-     * Configure the command by defining the name, options and arguments
-     */
-    protected function configure()
+    protected function configure(): void
     {
         $message = 'After "moving" files you should fix the jpeg extension. Consult README.md for more info.';
         $this->setDescription($message)
             ->addOption('silent', 's', InputOption::VALUE_OPTIONAL, 'Mute output as much as possible', false)
             ->addOption('yes', 'y', InputOption::VALUE_OPTIONAL, 'Accept everything by default', false)
             ->addArgument('target', InputArgument::REQUIRED, 'Target storage identifier')
-            ->setHelp('Usage: ./vendor/bin/typo3 cloudinary:fix [0-9]');
+            ->setHelp('Usage: ./vendor/bin/typo3 cloudinary:fix:image:after-move [0-9]');
     }
 
-    /**
-     * Move file
-     *
-     * @param InputInterface $input
-     * @param OutputInterface $output
-     *
-     * @return int
-     */
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
         if (!$this->checkDriverType($this->targetStorage)) {
             $this->log('Look out! target storage is not of type "cloudinary"');
-            return 1;
+            return Command::INVALID;
         }
 
         $files = $this->getJpegFiles();
 
         if (count($files) === 0) {
             $this->log('No files found, no work for me!');
-            return 0;
+            return Command::SUCCESS;
         }
 
         $this->log('I will update %s files by replacing "jpeg" to "jpg" in various fields in storage "%s" (%s)', [
@@ -90,7 +72,7 @@ class CloudinaryFixJpegCommand extends AbstractCloudinaryCommand
 
             if (!$response) {
                 $this->log('Script aborted');
-                return 0;
+                return Command::SUCCESS;
             }
         }
 
@@ -106,20 +88,18 @@ WHERE storage = " . $this->targetStorage->getUid();
 
         $connection->query($query)->execute();
 
-        return 0;
+
+        return Command::SUCCESS;
     }
 
-    /**
-     * @return array
-     */
     protected function getJpegFiles(): array
     {
-        $query = $this->getQueryBuilder();
+        $query = $this->getQueryBuilder($this->tableName);
         $query
             ->select('*')
             ->from($this->tableName)
             ->where($query->expr()->eq('storage', $this->targetStorage->getUid()), $query->expr()->eq('extension', $query->expr()->literal('jpeg')));
 
-        return $query->execute()->fetchAll();
+        return $query->execute()->fetchAllAssociative();
     }
 }
