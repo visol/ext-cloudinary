@@ -11,7 +11,6 @@ namespace Visol\Cloudinary\Services;
 
 use Cloudinary\Asset\Image;
 use Cloudinary\Transformation\ImageTransformation;
-use Cloudinary\Transformation\Scale;
 use Exception;
 use TYPO3\CMS\Core\Resource\StorageRepository;
 use TYPO3\CMS\Core\Resource\File;
@@ -53,10 +52,11 @@ class CloudinaryImageService extends AbstractCloudinaryMediaService
             if (isset($apiOptions['responsive_breakpoints']['transformation'])) {
                 // Check if we need to scale the image down, before applying image transformations
                 $prescaleTransformation = $this->getPrescaleTransformation($file);
-                $apiOptions['responsive_breakpoints']['transformation'] = array_map(
-                    fn(array $parameters) => (new ImageTransformation($prescaleTransformation))->addActionFromQualifiers($parameters),
-                    $apiOptions['responsive_breakpoints']['transformation'],
-                );
+                $transformation = new ImageTransformation($prescaleTransformation);
+                foreach($apiOptions['responsive_breakpoints']['transformation'] as $parameters) {
+                    $transformation->addActionFromQualifiers($parameters);
+                }
+                $apiOptions['responsive_breakpoints']['transformation'] = $transformation;
             }
 
             try {
@@ -165,10 +165,10 @@ class CloudinaryImageService extends AbstractCloudinaryMediaService
         ) {
             $transformations[] = [
                 'crop' => 'crop',
-                'width' => $settings['width'],
-                'height' => $settings['height'],
-                'x' => $settings['x'],
-                'y' => $settings['y'],
+                'width' => (int)$settings['width'],
+                'height' => (int)$settings['height'],
+                'x' => (int)$settings['x'],
+                'y' => (int)$settings['y'],
             ];
         }
 
