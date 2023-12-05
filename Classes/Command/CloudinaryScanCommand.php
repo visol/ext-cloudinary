@@ -9,31 +9,42 @@ namespace Visol\Cloudinary\Command;
  * LICENSE.md file that was distributed with this source code.
  */
 
+use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Style\SymfonyStyle;
+use TYPO3\CMS\Core\Core\Environment;
 use TYPO3\CMS\Core\Resource\ResourceFactory;
 use TYPO3\CMS\Core\Resource\ResourceStorage;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
 use Visol\Cloudinary\Services\CloudinaryScanService;
 
-/**
- * Class CloudinaryScanCommand
- */
 class CloudinaryScanCommand extends AbstractCloudinaryCommand
 {
-    /**
-     * @var ResourceStorage
-     */
     protected ResourceStorage $storage;
 
-    /**
-     * @param InputInterface $input
-     * @param OutputInterface $output
-     */
-    protected function initialize(InputInterface $input, OutputInterface $output)
+    protected string $help = '
+Usage: ./vendor/bin/typo3 cloudinary:scan [0-9]
+
+Examples:
+
+# Query by public id
+typo3 cloudinary:scan
+
+# Query with an additional expression
+typo3 cloudinary:scan --expression="folder=fileadmin/* AND NOT folder:fileadmin/_processed_/*"
+
+Notice:
+
+You can search for an exact folder path with "folder=fileadmin/*"
+or you can search for a folder prefix with "folder:fileadmin/*"
+@see https://cloudinary.com/documentation/search_api
+    ' ;
+
+
+    protected function initialize(InputInterface $input, OutputInterface $output): void
     {
         $this->io = new SymfonyStyle($input, $output);
 
@@ -42,48 +53,45 @@ class CloudinaryScanCommand extends AbstractCloudinaryCommand
         $this->storage = $resourceFactory->getStorageObject($input->getArgument('storage'));
     }
 
-    /**
-     * Configure the command by defining the name, options and arguments
-     */
-    protected function configure()
+    protected function configure(): void
     {
         $message = 'Scan and warm up a cloudinary storage.';
         $this->setDescription($message)
             ->addOption('silent', 's', InputOption::VALUE_OPTIONAL, 'Mute output as much as possible', false)
             ->addOption(
-                'empty',
-                'e',
+                'expression',
+                '',
                 InputOption::VALUE_OPTIONAL,
-                'Before scanning empty all resources for a given storage',
-                false,
+                'Expression used by the cloudinary search api (e.g --expression="folder=fileadmin/* AND NOT folder=fileadmin/_processed_/*',
+                false
             )
             ->addArgument('storage', InputArgument::REQUIRED, 'Storage identifier')
-            ->setHelp('Usage: ./vendor/bin/typo3 cloudinary:scan [0-9]');
+            ->setHelp($this->help);
     }
 
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
         if (!$this->checkDriverType($this->storage)) {
             $this->log('Look out! Storage is not of type "cloudinary"');
-            return 1;
+            return Command::INVALID;
         }
 
-        if ($input->getOption('empty') === null || $input->getOption('empty')) {
-            $this->log('Emptying all mirrored resources for storage "%s"', [$this->storage->getUid()]);
-            $this->log();
-            $this->getCloudinaryScanService()->empty();
-        }
-
+        $logFile = Environment::getVarPath() . '/log/cloudinary.log';
         $this->log('Hint! Look at the log to get more insight:');
-        $this->log('tail -f web/typo3temp/var/logs/cloudinary.log');
+        $this->log('tail -f ' . $logFile);
         $this->log();
 
-        $result = $this->getCloudinaryScanService()->scan();
+        /** @var string $expression */
+        $expression = $input->getOption('expression');
+
+        $result = $this->getCloudinaryScanService()
+            ->setAdditionalExpression($expression)
+            ->scan();
 
         $numberOfFiles = $result['created'] + $result['updated'] - $result['deleted'];
         if ($numberOfFiles !== $result['total']) {
-            $this->error(
-                'Something went wrong. There is a problem with the number of files counted. %s !== %s. It should be fixed in the next scan',
+            $this->warning(
+                'There is a problem with the number of files counted. %s !== %s. It should be fixed in the next scan',
                 [$numberOfFiles, $result['total']],
             );
         }
@@ -99,7 +107,7 @@ class CloudinaryScanCommand extends AbstractCloudinaryCommand
             $result['folder_deleted'],
         ]);
 
-        return 0;
+        return Command::SUCCESS;
     }
 
     protected function getCloudinaryScanService(): CloudinaryScanService

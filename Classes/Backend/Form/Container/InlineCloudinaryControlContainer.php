@@ -12,14 +12,14 @@ use TYPO3\CMS\Core\Resource\ResourceFactory;
 use TYPO3\CMS\Core\Resource\ResourceStorage;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
 use TYPO3\CMS\Fluid\View\StandaloneView;
-use Visol\Cloudinary\Driver\CloudinaryFastDriver;
+use Visol\Cloudinary\Driver\CloudinaryDriver;
 use Visol\Cloudinary\Services\ConfigurationService;
 
 class InlineCloudinaryControlContainer extends InlineControlContainer
 {
 
-    public function render() {
-
+    public function render()
+    {
         // We load here the cloudinary library
         /** @var AssetCollector $assetCollector */
         $assetCollector = GeneralUtility::makeInstance(AssetCollector::class);
@@ -32,11 +32,7 @@ class InlineCloudinaryControlContainer extends InlineControlContainer
         return parent::render();
     }
 
-    /**
-     * @param array $inlineConfiguration
-     * @return string
-     */
-    protected function renderPossibleRecordsSelectorTypeGroupDB(array $inlineConfiguration)
+    protected function renderPossibleRecordsSelectorTypeGroupDB(array $inlineConfiguration): string
     {
         $typo3Buttons = parent::renderPossibleRecordsSelectorTypeGroupDB($inlineConfiguration);
 
@@ -107,7 +103,7 @@ class InlineCloudinaryControlContainer extends InlineControlContainer
             $storageItems = $query
                 ->select('*')
                 ->from('sys_file_storage')
-                ->where($query->expr()->eq('driver', $query->expr()->literal(CloudinaryFastDriver::DRIVER_TYPE)))
+                ->where($query->expr()->eq('driver', $query->expr()->literal(CloudinaryDriver::DRIVER_TYPE)))
                 ->execute()
                 ->fetchAllAssociativeIndexed();
 

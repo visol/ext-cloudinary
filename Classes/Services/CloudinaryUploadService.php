@@ -14,40 +14,22 @@ use TYPO3\CMS\Core\Core\Environment;
 use TYPO3\CMS\Core\Log\LogLevel;
 use TYPO3\CMS\Core\Log\LogManager;
 use TYPO3\CMS\Core\Resource\File;
-use TYPO3\CMS\Core\Resource\FileInterface;
 use TYPO3\CMS\Core\Resource\ResourceStorage;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
 use Visol\Cloudinary\CloudinaryFactory;
 
-/**
- * Class CloudinaryUploadService
- */
 class CloudinaryUploadService
 {
-    /**
-     * @var string
-     */
-    protected $emergencyFileIdentifier = '/typo3conf/ext/cloudinary/Resources/Public/Images/emergency-placeholder-image.png';
+    protected string $emergencyFileIdentifier = '/typo3conf/ext/cloudinary/Resources/Public/Images/emergency-placeholder-image.png';
 
-    /**
-     * @var ResourceStorage
-     */
-    protected $storage;
+    protected ResourceStorage $storage;
 
-    /**
-     * @param ResourceStorage $storage
-     */
     public function __construct(ResourceStorage $storage = null)
     {
         $this->storage = $storage ?: CloudinaryFactory::getDefaultStorage();
     }
 
-    /**
-     * @param string $fileIdentifier
-     *
-     * @return File|FileInterface
-     */
-    public function uploadLocalFile(string $fileIdentifier)
+    public function uploadLocalFile(string $fileIdentifier): File
     {
         // Cleanup file identifier in case
         $fileIdentifier = $this->cleanUp($fileIdentifier);
@@ -68,19 +50,16 @@ class CloudinaryUploadService
             );
     }
 
-    /**
-     * @param string $fileIdentifier
-     */
-    protected function cleanUp(string $fileIdentifier)
+    public function getEmergencyFile(): File
+    {
+        return $this->uploadLocalFile($this->emergencyFileIdentifier);
+    }
+
+    protected function cleanUp(string $fileIdentifier): string
     {
         return DIRECTORY_SEPARATOR . ltrim($fileIdentifier, DIRECTORY_SEPARATOR);
     }
 
-    /**
-     * @param string $fileIdentifier
-     *
-     * @return bool
-     */
     protected function fileExists(string $fileIdentifier): bool
     {
         $fileNameAndPath =
@@ -88,12 +67,7 @@ class CloudinaryUploadService
         return is_file($fileNameAndPath);
     }
 
-    /**
-     * @param string $message
-     * @param array $arguments
-     * @param array $data
-     */
-    protected function error(string $message, array $arguments = [], array $data = [])
+    protected function error(string $message, array $arguments = [], array $data = []): void
     {
         /** @var Logger $logger */
         $logger = GeneralUtility::makeInstance(LogManager::class)->getLogger(__CLASS__);

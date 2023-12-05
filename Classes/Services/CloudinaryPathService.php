@@ -9,55 +9,41 @@ namespace Visol\Cloudinary\Services;
  * LICENSE.md file that was distributed with this source code.
  */
 
+use TYPO3\CMS\Core\Resource\ResourceStorage;
+use TYPO3\CMS\Core\Utility\GeneralUtility;
 use TYPO3\CMS\Core\Utility\PathUtility;
+use Visol\Cloudinary\Driver\CloudinaryDriver;
 
-/**
- * Class CloudinaryPathService
- */
 class CloudinaryPathService
 {
+    protected ?ResourceStorage $storage;
 
-    /**
-     * @var array
-     */
-    protected $storageConfiguration;
+    protected array $storageConfiguration;
 
-    /**
-     * CloudinaryPathService constructor.
-     *
-     * @param array $storageConfiguration
-     */
-    public function __construct(array $storageConfiguration)
+    protected array $cachedCloudinaryResources = [];
+
+    public function __construct(array|ResourceStorage $storageObjectOrConfiguration)
     {
-        $this->storageConfiguration = $storageConfiguration;
+        if ($storageObjectOrConfiguration instanceof ResourceStorage) {
+            $this->storage = $storageObjectOrConfiguration;
+            $this->storageConfiguration = $this->storage->getConfiguration();
+        } else {
+            $this->storageConfiguration = $storageObjectOrConfiguration;
+        }
     }
 
-    /**
-     * Cloudinary to FAL identifier
-     *
-     * @param array $cloudinaryResource
-     *
-     * @return string
-     */
     public function computeFileIdentifier(array $cloudinaryResource): string
     {
-        $fileParts = PathUtility::pathinfo($cloudinaryResource['public_id']);
-
-        $extension = isset($fileParts['extension'])
-            ? '' // We don't need the extension since it is already included in the public_id (resource_type => "raw")
-            : '.' . $cloudinaryResource['format'];
+        $fileIdentifier = $cloudinaryResource['resource_type'] === 'raw'
+            ? $cloudinaryResource['public_id']
+            : $cloudinaryResource['public_id'] . '.' . $cloudinaryResource['format'];
 
         return self::stripBasePathFromIdentifier(
-            DIRECTORY_SEPARATOR . $cloudinaryResource['public_id'] . $extension,
+            DIRECTORY_SEPARATOR . $fileIdentifier,
             $this->getBasePath()
         );
     }
 
-    /**
-     * @param string $cloudinaryFolder
-     *
-     * @return string
-     */
     public function computeFolderIdentifier(string $cloudinaryFolder): string
     {
         return self::stripBasePathFromIdentifier(
@@ -69,7 +55,6 @@ class CloudinaryPathService
     /**
      * Return the basePath.
      * The basePath never has a trailing slash
-     * @return string
      */
     protected function getBasePath(): string
     {
@@ -79,153 +64,74 @@ class CloudinaryPathService
             : '';
     }
 
-    /**
-     * FAL to Cloudinary identifier
-     *
-     * @param string $fileIdentifier
-     *
-     * @return string
-     */
     public function computeCloudinaryPublicId(string $fileIdentifier): string
     {
-        $normalizedFileIdentifier = $this->guessIsImage($fileIdentifier) || $this->guessIsVideo($fileIdentifier)
-            ? $this->stripExtension($fileIdentifier)
-            : $fileIdentifier;
+        $fileExtension = $this->getFileExtension($fileIdentifier);
+        $publicId = in_array($fileExtension, CloudinaryDriver::$knownRawFormats)
+            ? $fileIdentifier
+            : $this->stripFileExtension($fileIdentifier);
 
-        return $this->normalizeCloudinaryPath($normalizedFileIdentifier);
+        return $this->normalizeCloudinaryPublicId($publicId);
     }
 
-    /**
-     * FAL to Cloudinary identifier
-     *
-     * @param string $folderIdentifier
-     *
-     * @return string
-     */
     public function computeCloudinaryFolderPath(string $folderIdentifier): string
     {
-        return $this->normalizeCloudinaryPath($folderIdentifier);
+        return $this->normalizeCloudinaryPublicId($folderIdentifier);
     }
 
-    /**
-     * @param string $cloudinaryPath
-     *
-     * @return string
-     */
-    public function normalizeCloudinaryPath(string $cloudinaryPath): string
+    public function normalizeCloudinaryPublicId(string $cloudinaryPublicId): string
     {
-        $normalizedCloudinaryPath = trim($cloudinaryPath, DIRECTORY_SEPARATOR);
+        $normalizedCloudinaryPath = trim($cloudinaryPublicId, DIRECTORY_SEPARATOR);
         $basePath = $this->getBasePath();
         return $basePath
             ? trim($basePath . DIRECTORY_SEPARATOR . $normalizedCloudinaryPath, DIRECTORY_SEPARATOR)
             : $normalizedCloudinaryPath;
     }
 
-    /**
-     * @param array $fileInfo
-     *
-     * @return string
-     */
     public function getMimeType(array $fileInfo): string
     {
-        return isset($fileInfo['mime_type'])
-            ? $fileInfo['mime_type']
-            : '';
+        return $fileInfo['mime_type'] ?? '';
     }
 
-    /**
-     * @param string $fileIdentifier
-     *
-     * @return string
-     */
     public function getResourceType(string $fileIdentifier): string
     {
-        $resourceType = 'raw';
-        if ($this->guessIsImage($fileIdentifier)) {
-            $resourceType = 'image';
-        } elseif ($this->guessIsVideo($fileIdentifier)) {
-            $resourceType = 'video';
+        $cloudinaryResource = $this->getCloudinaryResource($fileIdentifier);
+        return $cloudinaryResource['resource_type'] ?? 'unknown';
+    }
+
+    protected function getCloudinaryResource(string $fileIdentifier): array
+    {
+        $possiblePublicId = $this->stripFileExtension($fileIdentifier);
+
+        // We cache the resource for performance reasons.
+        if (!isset($this->cachedCloudinaryResources[$possiblePublicId])) {
+
+            // We need to check whether the public id really exists.
+            $cloudinaryResourceService = GeneralUtility::makeInstance(
+                CloudinaryResourceService::class,
+                $this->storage
+            );
+
+            $cloudinaryResource = $cloudinaryResourceService->getResource($possiblePublicId);
+
+            // Try to retrieve the cloudinary with the file identifier.
+            // That will be the case for raw resources.
+            if (!$cloudinaryResource) {
+                $cloudinaryResource = $cloudinaryResourceService->getResource($fileIdentifier);
+            }
+
+            // Houston, we have a problem. The public id does not exist, meaning the file does not exist.
+            if (!$cloudinaryResource) {
+                throw new \RuntimeException('Cloudinary resource not found for ' . $fileIdentifier, 1623157880);
+            }
+
+            $this->cachedCloudinaryResources[$possiblePublicId] = $cloudinaryResource;
         }
 
-        return $resourceType;
+        return $this->cachedCloudinaryResources[$possiblePublicId];
     }
 
-    /**
-     * @param array $cloudinaryResource
-     *
-     * @return string
-     */
-    public function guessMimeType(array $cloudinaryResource): string
-    {
-        $mimeType = '';
-        if ($cloudinaryResource['format'] === 'pdf') {
-            $mimeType = 'application/pdf';
-        } elseif ($cloudinaryResource['format'] === 'jpg') {
-            $mimeType = 'image/jpeg';
-        } elseif ($cloudinaryResource['format'] === 'png') {
-            $mimeType = 'image/png';
-        } elseif ($cloudinaryResource['format'] === 'mp4') {
-            $mimeType = 'video/mp4';
-        }
-        return $mimeType;
-    }
-
-    /**
-     * @param string $fileIdentifier
-     *
-     * @return bool
-     */
-    protected function guessIsVideo(string $fileIdentifier)
-    {
-        $extension = strtolower(PathUtility::pathinfo($fileIdentifier, PATHINFO_EXTENSION));
-        $rawExtensions = [
-            'mp4',
-            'mov',
-
-            'mp3', // As documented @see https://cloudinary.com/documentation/image_upload_api_reference
-        ];
-
-        return in_array($extension, $rawExtensions, true);
-    }
-
-    /**
-     * See if that is OK like that. The alternatives requires to "heavy" processing
-     * like downloading the file to check the mime time or use the API SDK to fetch whether
-     * we are in presence of an image.
-     *
-     * @param string $fileIdentifier
-     *
-     * @return bool
-     */
-    protected function guessIsImage(string $fileIdentifier)
-    {
-        $extension = strtolower(PathUtility::pathinfo($fileIdentifier, PATHINFO_EXTENSION));
-        $imageExtensions = [
-            'png',
-            'jpe',
-            'jpeg',
-            'jpg',
-            'gif',
-            'bmp',
-            'ico',
-            'tiff',
-            'tif',
-            'svg',
-            'svgz',
-            'webp',
-
-            'pdf', // Cloudinary handles pdf as image
-        ];
-
-        return in_array($extension, $imageExtensions, true);
-    }
-
-    /**
-     * @param $filename
-     *
-     * @return string
-     */
-    protected function stripExtension(string $filename): string
+    protected function stripFileExtension(string $filename): string
     {
         $pathParts = PathUtility::pathinfo($filename);
 
@@ -234,6 +140,12 @@ class CloudinaryPathService
         }
 
         return $pathParts['dirname'] . DIRECTORY_SEPARATOR . $pathParts['filename'];
+    }
+
+    protected function getFileExtension(string $filename): string
+    {
+        $pathInfo = PathUtility::pathinfo($filename);
+        return $pathInfo['extension'] ?? '';
     }
 
     public static function stripBasePathFromIdentifier(string $identifierWithBasePath, string $basePath): string

@@ -12,7 +12,7 @@ use TYPO3\CMS\Core\Resource\Index\ExtractorInterface;
 use TYPO3\CMS\Core\Resource\ResourceStorage;
 use TYPO3\CMS\Core\Type\File\ImageInfo;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
-use Visol\Cloudinary\Driver\CloudinaryFastDriver;
+use Visol\Cloudinary\Driver\CloudinaryDriver;
 use Visol\Cloudinary\Services\CloudinaryPathService;
 use Visol\Cloudinary\Services\CloudinaryResourceService;
 use Visol\Cloudinary\Services\ConfigurationService;
@@ -38,7 +38,7 @@ class CloudinaryMetaDataExtractor implements ExtractorInterface
      */
     public function getDriverRestrictions(): array
     {
-        return [CloudinaryFastDriver::DRIVER_TYPE];
+        return [CloudinaryDriver::DRIVER_TYPE];
     }
 
     /**
@@ -71,7 +71,7 @@ class CloudinaryMetaDataExtractor implements ExtractorInterface
 
         $cloudinaryPathService = GeneralUtility::makeInstance(
             CloudinaryPathService::class,
-            $file->getStorage()->getConfiguration(),
+            $file->getStorage(),
         );
         $publicId = $cloudinaryPathService->computeCloudinaryPublicId($file->getIdentifier());
         $resource = $cloudinaryResourceService->getResource($publicId);

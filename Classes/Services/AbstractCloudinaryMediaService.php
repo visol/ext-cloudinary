@@ -33,12 +33,6 @@ abstract class AbstractCloudinaryMediaService
         CloudinaryApiUtility::initializeByConfiguration($storage->getConfiguration());
     }
 
-    /**
-     * @param File $file
-     * @param array $options
-     *
-     * @return array
-     */
     public function getExplicitData(File $file, array $options): array
     {
         $publicId = $this->getPublicIdForFile($file);
@@ -58,12 +52,7 @@ abstract class AbstractCloudinaryMediaService
         return $explicitData;
     }
 
-    /**
-     * @param string $message
-     * @param array $arguments
-     * @param array $data
-     */
-    protected function error(string $message, array $arguments = [], array $data = [])
+    protected function error(string $message, array $arguments = [], array $data = []): void
     {
         /** @var Logger $logger */
         $logger = GeneralUtility::makeInstance(LogManager::class)->getLogger(__CLASS__);
@@ -74,32 +63,21 @@ abstract class AbstractCloudinaryMediaService
         );
     }
 
-    /**
-     * @return File
-     */
     public function getEmergencyPlaceholderFile(): File
     {
         /** @var CloudinaryUploadService $cloudinaryUploadService */
         $cloudinaryUploadService = GeneralUtility::makeInstance(CloudinaryUploadService::class);
-        return $cloudinaryUploadService->uploadLocalFile('');
+        return $cloudinaryUploadService->getEmergencyFile();
     }
 
-    /**
-     * @return object|CloudinaryPathService
-     */
-    protected function getCloudinaryPathService(ResourceStorage $storage)
+    protected function getCloudinaryPathService(ResourceStorage $storage): CloudinaryPathService
     {
         return GeneralUtility::makeInstance(
             CloudinaryPathService::class,
-            $storage->getConfiguration()
+            $storage
         );
     }
 
-    /**
-     * @param File $file
-     *
-     * @return string
-     */
     public function getPublicIdForFile(File $file): string
     {
 
@@ -113,9 +91,8 @@ abstract class AbstractCloudinaryMediaService
         }
 
         // Compute the cloudinary public id
-        $publicId = $this
+        return $this
             ->getCloudinaryPathService($file->getStorage())
             ->computeCloudinaryPublicId($file->getIdentifier());
-        return $publicId;
     }
 }

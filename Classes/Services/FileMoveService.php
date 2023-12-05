@@ -8,6 +8,7 @@ namespace Visol\Cloudinary\Services;
  * For the full copyright and license information, please read the
  * LICENSE.md file that was distributed with this source code.
  */
+
 use Cloudinary\Api;
 use Cloudinary\Uploader;
 use Doctrine\DBAL\Driver\Connection;
@@ -18,28 +19,13 @@ use TYPO3\CMS\Core\Resource\ResourceStorage;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
 use Visol\Cloudinary\Utility\CloudinaryApiUtility;
 
-/**
- * Class FileMoveService
- */
 class FileMoveService
 {
 
-    /**
-     * @var string
-     */
-    protected $tableName = 'sys_file';
+    protected string $tableName = 'sys_file';
 
-    /**
-     * @var CloudinaryPathService
-     */
-    protected $cloudinaryPathService;
+    protected ?CloudinaryPathService $cloudinaryPathService = null;
 
-    /**
-     * @param File $fileObject
-     * @param ResourceStorage $targetStorage
-     *
-     * @return bool
-     */
     public function fileExists(File $fileObject, ResourceStorage $targetStorage): bool
     {
         $this->initializeApi($targetStorage);
@@ -60,13 +46,6 @@ class FileMoveService
         return $fileExists;
     }
 
-    /**
-     * @param File $fileObject
-     * @param ResourceStorage $targetStorage
-     * @param bool $removeFile
-     *
-     * @return bool
-     */
     #public function forceMove(File $fileObject, ResourceStorage $targetStorage, $removeFile = true): bool
     #{
     #    $isUpdated = $isDeletedFromSourceStorage = false;
@@ -96,14 +75,7 @@ class FileMoveService
     #    return $isUpdated && $isDeletedFromSourceStorage;
     #}
 
-    /**
-     * @param File $fileObject
-     * @param ResourceStorage $targetStorage
-     * @param bool $removeFile
-     *
-     * @return bool
-     */
-    public function changeStorage(File $fileObject, ResourceStorage $targetStorage, $removeFile = true): bool
+    public function changeStorage(File $fileObject, ResourceStorage $targetStorage, bool $removeFile = true): bool
     {
         // Update the storage uid
         $isMigrated = (bool)$this->updateFile(
@@ -121,9 +93,6 @@ class FileMoveService
         return $isMigrated;
     }
 
-    /**
-     * @param File $fileObject
-     */
     protected function ensureDirectoryExistence(File $fileObject)
     {
 
@@ -134,11 +103,6 @@ class FileMoveService
         }
     }
 
-    /**
-     * @param File $fileObject
-     *
-     * @return string
-     */
     protected function getAbsolutePath(File $fileObject): string
     {
         // Compute the absolute file name of the file to move
@@ -147,11 +111,6 @@ class FileMoveService
         return GeneralUtility::getFileAbsFileName($fileRelativePath);
     }
 
-    /**
-     * @param File $fileObject
-     * @param ResourceStorage $targetStorage
-     * @param string $baseUrl
-     */
     public function cloudinaryUploadFile(
         File $fileObject,
         ResourceStorage $targetStorage,
@@ -188,17 +147,11 @@ class FileMoveService
         );
     }
 
-    /**
-     * @param ResourceStorage $targetStorage
-     */
     protected function initializeApi(ResourceStorage $targetStorage)
     {
         CloudinaryApiUtility::initializeByConfiguration($targetStorage->getConfiguration());
     }
 
-    /**
-     * @return object|QueryBuilder
-     */
     protected function getQueryBuilder(): QueryBuilder
     {
         /** @var ConnectionPool $connectionPool */
@@ -206,9 +159,6 @@ class FileMoveService
         return $connectionPool->getQueryBuilderForTable($this->tableName);
     }
 
-    /**
-     * @return object|Connection
-     */
     protected function getConnection(): Connection
     {
         /** @var ConnectionPool $connectionPool */
@@ -216,12 +166,6 @@ class FileMoveService
         return $connectionPool->getConnectionForTable($this->tableName);
     }
 
-    /**
-     * @param File $fileObject
-     * @param array $values
-     *
-     * @return int
-     */
     protected function updateFile(File $fileObject, array $values): int
     {
         $connection = $this->getConnection();
@@ -234,22 +178,16 @@ class FileMoveService
         );
     }
 
-    /**
-     * @return object|CloudinaryPathService
-     */
-    protected function getCloudinaryPathService()
+    protected function getCloudinaryPathService(): CloudinaryPathService
     {
         return $this->cloudinaryPathService;
     }
 
-    /**
-     * @param ResourceStorage $storage
-     */
     protected function initializeCloudinaryService(ResourceStorage $storage)
     {
         $this->cloudinaryPathService = GeneralUtility::makeInstance(
                 CloudinaryPathService::class,
-            $storage->getStorageRecord()
+            $storage
             );
     }
 }

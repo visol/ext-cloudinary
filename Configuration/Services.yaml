@@ -7,6 +7,13 @@ services:
   Visol\Cloudinary\:
     resource: '../Classes/*'
 
+  Visol\Cloudinary\Command\CloudinaryApiCommand:
+    tags:
+      - name: 'console.command'
+        command: 'cloudinary:api'
+        schedulable: false
+        description: Interact with cloudinary api
+
   Visol\Cloudinary\Command\CloudinaryCopyCommand:
     tags:
       - name: 'console.command'
@@ -42,9 +49,22 @@ services:
         schedulable: false
         description: Scan and warm up a cloudinary storage.
 
+  Visol\Cloudinary\Command\CloudinaryMetadataCommand:
+    tags:
+      - name: 'console.command'
+        command: 'cloudinary:metadata'
+        schedulable: false
+        description: Set metadata on cloudinary resources such as file reference and file usage.
+
   Visol\Cloudinary\Command\CloudinaryQueryCommand:
     tags:
       - name: 'console.command'
         command: 'cloudinary:query'
         schedulable: false
         description: Query a given storage such a list, count files or folders.
+
+  Visol\Cloudinary\EventHandlers\BeforeFileProcessingEventHandler:
+    tags:
+      - name: event.listener
+        identifier: 'cloudinary-before-file-processing-event-handler'
+        event: TYPO3\CMS\Core\Resource\Event\BeforeFileProcessingEvent

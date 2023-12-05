@@ -29,30 +29,15 @@ abstract class AbstractCloudinaryCommand extends Command
     const WARNING = 'warning';
     const ERROR = 'error';
 
-    /**
-     * @var SymfonyStyle
-     */
-    protected $io;
+    protected SymfonyStyle $io;
 
-    /**
-     * @var bool
-     */
-    protected $isSilent = false;
+    protected bool $isSilent = false;
 
-    /**
-     * @var string
-     */
-    protected $tableName = 'sys_file';
+    protected string $tableName = 'sys_file';
 
-    /**
-     * @param ResourceStorage $storage
-     * @param InputInterface $input
-     *
-     * @return array
-     */
     protected function getFiles(ResourceStorage $storage, InputInterface $input): array
     {
-        $query = $this->getQueryBuilder();
+        $query = $this->getQueryBuilder($this->tableName);
         $query
             ->select('*')
             ->from($this->tableName)
@@ -110,13 +95,9 @@ abstract class AbstractCloudinaryCommand extends Command
             }
         }
 
-        return $query->execute()->fetchAll();
+        return $query->execute()->fetchAllAssociative();
     }
 
-    /**
-     * @param string $type
-     * @param array $files
-     */
     protected function writeLog(string $type, array $files)
     {
         $logFileName = sprintf(
@@ -141,22 +122,15 @@ abstract class AbstractCloudinaryCommand extends Command
         );
     }
 
-    /**
-     * @param ResourceStorage $storage
-     *
-     * @return bool
-     */
     protected function checkDriverType(ResourceStorage $storage): bool
     {
         return $storage->getDriverType() === CloudinaryDriver::DRIVER_TYPE;
     }
 
     /**
-     * @param string $message
-     * @param array $arguments
      * @param string $severity can be 'warning', 'error', 'success'
      */
-    protected function log(string $message = '', array $arguments = [], $severity = '')
+    protected function log(string $message = '', array $arguments = [], string $severity = '')
     {
         if (!$this->isSilent) {
             $formattedMessage = vsprintf($message, $arguments);
@@ -168,47 +142,28 @@ abstract class AbstractCloudinaryCommand extends Command
         }
     }
 
-    /**
-     * @param string $message
-     * @param array $arguments
-     */
     protected function success(string $message = '', array $arguments = [])
     {
         $this->log($message, $arguments, self::SUCCESS);
     }
 
-    /**
-     * @param string $message
-     * @param array $arguments
-     */
     protected function warning(string $message = '', array $arguments = [])
     {
         $this->log($message, $arguments, self::WARNING);
     }
 
-    /**
-     * @param string $message
-     * @param array $arguments
-     */
     protected function error(string $message = '', array $arguments = [])
     {
         $this->log($message, $arguments, self::ERROR);
     }
 
-
-    /**
-     * @return object|QueryBuilder
-     */
-    protected function getQueryBuilder(): QueryBuilder
+    protected function getQueryBuilder(string $tableName): QueryBuilder
     {
         /** @var ConnectionPool $connectionPool */
         $connectionPool = GeneralUtility::makeInstance(ConnectionPool::class);
-        return $connectionPool->getQueryBuilderForTable($this->tableName);
+        return $connectionPool->getQueryBuilderForTable($tableName);
     }
 
-    /**
-     * @return object|Connection
-     */
     protected function getConnection(): Connection
     {
         /** @var ConnectionPool $connectionPool */

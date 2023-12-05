@@ -9,6 +9,7 @@ namespace Visol\Cloudinary\Command;
  * LICENSE.md file that was distributed with this source code.
  */
 
+use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
@@ -21,40 +22,11 @@ use TYPO3\CMS\Core\Resource\ResourceStorage;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
 use Visol\Cloudinary\Filters\RegularExpressionFilter;
 
-/**
- * Examples:
- *
- * ./vendor/bin/typo3 cloudinary:query 2
- *
- * # List of files withing a folder
- * ./vendor/bin/typo3 cloudinary:query 2 --path=/foo/
- *
- * # List of files withing a folder with recursive flag
- * ./vendor/bin/typo3 cloudinary:query 2 --path=/foo/ --recursive
- *
- * # List of files withing a folder with filter flag
- * ./vendor/bin/typo3 cloudinary:query 2 --path=/foo/ --filter='[0-9,a-z]\.jpg'
- *
- *  # Count files / folder
- * ./vendor/bin/typo3 cloudinary:query 2 --count
- *
- *  # List of folders instead of files
- * ./vendor/bin/typo3 cloudinary:query 2 --folder
- *
- * Class CloudinaryQueryCommand
- */
 class CloudinaryQueryCommand extends AbstractCloudinaryCommand
 {
-    /**
-     * @var ResourceStorage
-     */
-    protected $storage;
+    protected ResourceStorage $storage;
 
-    /**
-     * @param InputInterface $input
-     * @param OutputInterface $output
-     */
-    protected function initialize(InputInterface $input, OutputInterface $output)
+    protected function initialize(InputInterface $input, OutputInterface $output): void
     {
         $this->io = new SymfonyStyle($input, $output);
 
@@ -64,10 +36,31 @@ class CloudinaryQueryCommand extends AbstractCloudinaryCommand
         $this->storage = $resourceFactory->getStorageObject($input->getArgument('storage'));
     }
 
+    protected string $help = '
+Usage: ./vendor/bin/typo3 cloudinary:query [0-9 - storage id]
+
+Examples
+
+# List of files withing a folder
+typo3 cloudinary:query [0-9] --path=/foo/
+
+# List of files withing a folder with recursive flag
+typo3 cloudinary:query [0-9] --path=/foo/ --recursive
+
+# List of files withing a folder with filter flag
+typo3 cloudinary:query [0-9] --path=/foo/ --filter=\'[0-9,a-z]\.jpg\'
+
+ # Count files / folder
+typo3 cloudinary:query [0-9] --count
+
+ # List of folders instead of files
+typo3 cloudinary:query [0-9] --folder
+    ' ;
+
     /**
      * Configure the command by defining the name, options and arguments
      */
-    protected function configure()
+    protected function configure(): void
     {
         $message = 'Query a given storage such a list, count files or folders';
         $this->setDescription($message)
@@ -79,18 +72,14 @@ class CloudinaryQueryCommand extends AbstractCloudinaryCommand
             ->addOption('recursive', 'r', InputOption::VALUE_NONE, 'Recursive lookup')
             ->addOption('delete', 'd', InputOption::VALUE_NONE, 'Delete found files / folders.')
             ->addArgument('storage', InputArgument::REQUIRED, 'Storage identifier')
-            ->setHelp('Usage: ./vendor/bin/typo3 cloudinary:query [0-9]');
+            ->setHelp($this->help);
     }
 
-    /**
-     * @param InputInterface $input
-     * @param OutputInterface $output
-     */
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
         if (!$this->checkDriverType($this->storage)) {
             $this->log('Look out! Storage is not of type "cloudinary"');
-            return 1;
+            return Command::INVALID;
         }
 
         // Get the chance to define a filter
@@ -141,14 +130,9 @@ class CloudinaryQueryCommand extends AbstractCloudinaryCommand
             }
         }
 
-        return 0;
+        return Command::SUCCESS;
     }
 
-    /**
-     * @param InputInterface $input
-     *
-     * @return array
-     */
     protected function listFoldersAction(InputInterface $input): array
     {
         $folders = $this->storage->getFoldersInFolder($this->getFolder($input->getOption('path')), 0, 0, true, $input->getOption('recursive'));
@@ -160,11 +144,6 @@ class CloudinaryQueryCommand extends AbstractCloudinaryCommand
         return $folders;
     }
 
-    /**
-     * @param InputInterface $input
-     *
-     * @return array
-     */
     protected function listFilesAction(InputInterface $input): array
     {
         $files = $this->storage->getFilesInFolder($this->getFolder($input->getOption('path')), 0, 0, true, $input->getOption('recursive'));
@@ -175,11 +154,6 @@ class CloudinaryQueryCommand extends AbstractCloudinaryCommand
         return $files;
     }
 
-    /**
-     * @param InputInterface $input
-     *
-     * @return void
-     */
     protected function countFoldersAction(InputInterface $input): void
     {
         $numberOfFolders = $this->storage->countFoldersInFolder($this->getFolder($input->getOption('path')), true, $input->getOption('recursive'));
@@ -187,11 +161,6 @@ class CloudinaryQueryCommand extends AbstractCloudinaryCommand
         $this->log('I found %s folder(s)', [$numberOfFolders]);
     }
 
-    /**
-     * @param InputInterface $input
-     *
-     * @return void
-     */
     protected function countFilesAction(InputInterface $input): void
     {
         $numberOfFiles = $this->storage->countFilesInFolder($this->getFolder($input->getOption('path')), true, $input->getOption('recursive'));
@@ -199,12 +168,7 @@ class CloudinaryQueryCommand extends AbstractCloudinaryCommand
         $this->log('I found %s files(s)', [$numberOfFiles]);
     }
 
-    /**
-     * @param string $folderIdentifier
-     *
-     * @return object|Folder
-     */
-    protected function getFolder($folderIdentifier): Folder
+    protected function getFolder(string $folderIdentifier): Folder
     {
         $folderIdentifier =
             $folderIdentifier === DIRECTORY_SEPARATOR ? $folderIdentifier : DIRECTORY_SEPARATOR . trim($folderIdentifier, '/') . DIRECTORY_SEPARATOR;
