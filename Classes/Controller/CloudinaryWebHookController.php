@@ -221,13 +221,14 @@ class CloudinaryWebHookController extends ActionController
     protected function getFile(array $cloudinaryResource): File
     {
         $fileIdentifier = $this->cloudinaryPathService->computeFileIdentifier($cloudinaryResource);
+        $fileIdentifierHash = $this->storage->hashFileIdentifier($fileIdentifier);
         $tableName = 'sys_file';
         $q = $this->getQueryBuilder($tableName);
         $fileRecord = $q->select('*')
             ->from($tableName)
             ->where(
                 $q->expr()->eq('storage', $this->storage->getUid()),
-                $q->expr()->eq('identifier', $q->expr()->literal($fileIdentifier))
+                $q->expr()->eq('identifier_hash', $q->expr()->literal($fileIdentifierHash))
             )
             ->execute()
             ->fetchAssociative();
