@@ -10,17 +10,36 @@ define([
 ], function ($, NProgress, MessageUtility, Modal, Severity) {
 
   let cloudinaryButtons = Array.from(document.getElementsByClassName('btn-cloudinary-media-library'));
+  setCloudinaryButtonEvent(cloudinaryButtons);
 
-  cloudinaryButtons.map((cloudinaryButton) => {
-    cloudinaryButton.addEventListener("click", function(event){
-      event.preventDefault();
-      let buttonClasses = $(this).attr('class');
-      let buttonInnerHtml = $(this).prop("innerHTML");
-      let objectGroup = $(this).data('objectGroup');
-      let elementId = $(this).attr('id');
-      openMediaLibrary(JSON.parse(cloudinaryButton.dataset.cloudinaryCredentials), objectGroup, elementId, buttonClasses, buttonInnerHtml);
+  $('.t3js-create-new-button').click(function(e) {
+    setTimedOutedCloudinaryButtonEvent();
+  })
+
+  $('.form-irre-header-button').click(function(e) {
+    setTimedOutedCloudinaryButtonEvent();
+  })
+
+  function setTimedOutedCloudinaryButtonEvent(){
+    setTimeout(() =>
+      {setCloudinaryButtonEvent(Array.from(document.getElementsByClassName('btn-cloudinary-media-library')))},
+      1000
+    );
+  }
+
+  function setCloudinaryButtonEvent(cloudinaryButtons) {
+    cloudinaryButtons.map((cloudinaryButton) => {
+      cloudinaryButton.addEventListener("click", function(event){
+        event.preventDefault();
+        let buttonClasses = $(this).attr('class');
+        let buttonInnerHtml = $(this).prop("innerHTML");
+        let objectGroup = $(this).data('objectGroup');
+        let elementId = $(this).attr('id');
+        openMediaLibrary(JSON.parse(cloudinaryButton.dataset.cloudinaryCredentials), objectGroup, elementId, buttonClasses, buttonInnerHtml);
+      });
+      cloudinaryButton.removeAttribute('disabled');
     });
-  });
+  }
 
   function openMediaLibrary(credential, objectGroup, elementId, buttonClasses, buttonInnerHtml) {
     // Render the cloudinary button
