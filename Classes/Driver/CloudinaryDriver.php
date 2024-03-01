@@ -44,6 +44,8 @@ class CloudinaryDriver extends AbstractHierarchicalFilesystemDriver
 
     protected const UNSAFE_FILENAME_CHARACTER_EXPRESSION = '\\x00-\\x2C\\/\\x3A-\\x3F\\x5B-\\x60\\x7B-\\xBF';
 
+    public const PROCESSEDFILE_IDENTIFIER_PREFIX = 'PROCESSEDFILE';
+
     static public array $knownRawFormats = ['youtube', 'vimeo'];
 
     /**
@@ -105,8 +107,8 @@ class CloudinaryDriver extends AbstractHierarchicalFilesystemDriver
      */
     public function getPublicUrl($identifier): string
     {
-        if ($processedPath = $this->computeProcessedPath($identifier)) {
-            return 'https://res.cloudinary.com/' . $processedPath;
+        if ($this->isProcessedFile($identifier)) {
+            return $this->getPublicBaseUrl() . $this->getProcessedFileUri($identifier);
         }
 
         $cloudinaryResource = $this->getCloudinaryResourceService()->getResource(
@@ -114,6 +116,17 @@ class CloudinaryDriver extends AbstractHierarchicalFilesystemDriver
         );
 
         return $cloudinaryResource ? $cloudinaryResource['secure_url'] : '';
+    }
+
+    public function getPublicBaseUrl(): string
+    {
+        $cname = $this->configurationService->get('cname');
+        $publicBaseUrl = empty($cname)
+            ? 'https://res.cloudinary.com/' . $this->configurationService->get('cloudName')
+            : 'https://' . $this->configurationService->get('cname')
+        ;
+
+        return $publicBaseUrl;
     }
 
     protected function log(string $message, array $arguments = [], array $data = []): void
@@ -1027,14 +1040,18 @@ class CloudinaryDriver extends AbstractHierarchicalFilesystemDriver
         return GeneralUtility::makeInstance(ExplicitDataCacheRepository::class);
     }
 
-    protected function getProcessedFilePattern(): string
-    {
-        return sprintf('/^PROCESSEDFILE\/(%s\/.*)/', $this->configurationService->get('cloudName'));
-    }
-
     protected function isProcessedFile(string $identifier): bool
     {
-        return (bool)preg_match($this->getProcessedFilePattern(), $identifier);
+        return str_starts_with($identifier, self::PROCESSEDFILE_IDENTIFIER_PREFIX);
+    }
+
+    protected function getProcessedFileUri(string $identifier): string
+    {
+        if (! $this->isProcessedFile($identifier)) {
+            throw new \DomainException('Identifier does not belong to a processed file', 1709283844258);
+        }
+
+        return substr($identifier, strlen(self::PROCESSEDFILE_IDENTIFIER_PREFIX));
     }
 
     protected function isProcessedFolder(string $identifier): bool
@@ -1048,15 +1065,6 @@ class CloudinaryDriver extends AbstractHierarchicalFilesystemDriver
 
         // We detect if the identifier start with the value from $folderPath
         return str_starts_with($identifier, $folderPath);
-    }
-
-    protected function computeProcessedPath(string $identifier): string|null
-    {
-        $cloudinaryPath = null;
-        if (preg_match($this->getProcessedFilePattern(), $identifier, $matches)) {
-            [, $cloudinaryPath] = $matches;
-        }
-        return $cloudinaryPath;
     }
 
     protected function isFileIdentifier(string $newFileIdentifier): bool
@@ -1139,5 +1147,4 @@ class CloudinaryDriver extends AbstractHierarchicalFilesystemDriver
     {
         return CloudinaryApiUtility::getCloudinary($this->configuration)->adminApi();
     }
-
 }
