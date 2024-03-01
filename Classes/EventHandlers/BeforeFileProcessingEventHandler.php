@@ -54,14 +54,19 @@ final class BeforeFileProcessingEventHandler
                 ]
             ]
         );
-        $url = $explicitData['eager'][0]['secure_url'];
-        $publicBaseUrl = $driver->getPublicBaseUrl();
 
+        $url = $explicitData['eager'][0]['secure_url'] ?? null;
+        if (!isset($url)) {
+            // cloudinary is unable to render
+            return;
+        }
+
+        $publicBaseUrl = $driver->getPublicBaseUrl();
         if (! str_starts_with($url, $publicBaseUrl)) {
             throw new InvalidResourceUrlException($url, $publicBaseUrl, 1709284880259);
         }
-
         $identifier = CloudinaryDriver::PROCESSEDFILE_IDENTIFIER_PREFIX . substr($url, strlen($publicBaseUrl));
+
         $processedFile->setName(basename($url));
         $processedFile->setIdentifier($identifier);
 
