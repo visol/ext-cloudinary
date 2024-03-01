@@ -11,6 +11,7 @@ namespace Visol\Cloudinary\Services;
 
 use Cloudinary\Asset\Image;
 use Cloudinary\Transformation\ImageTransformation;
+use Cloudinary\Transformation\Scale;
 use Exception;
 use TYPO3\CMS\Core\Resource\StorageRepository;
 use TYPO3\CMS\Core\Resource\File;
