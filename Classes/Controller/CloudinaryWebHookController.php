@@ -204,6 +204,8 @@ class CloudinaryWebHookController extends ActionController
         $nextFolderIdentifier = PathUtility::dirname($nextFileIdentifier);
         $nextFolderIdentifierHash = sha1($this->canonicalizeAndCheckFolderIdentifier($nextFolderIdentifier));
         $nextFileIdentifierHash = sha1($this->canonicalizeAndCheckFileIdentifier($nextFileIdentifier));
+        $nextName = PathUtility::basename($nextFileIdentifier);
+
         $tableName = 'sys_file';
         $q = $this->getQueryBuilder($tableName);
         $q->update($tableName)
@@ -214,6 +216,7 @@ class CloudinaryWebHookController extends ActionController
             ->set('identifier', $q->expr()->literal($nextFileIdentifier), false)
             ->set('identifier_hash', $q->expr()->literal($nextFileIdentifierHash), false)
             ->set('folder_hash', $q->expr()->literal($nextFolderIdentifierHash), false)
+            ->set('name', $q->expr()->literal($nextName), false)
             ->setMaxResults(1)
             ->executeStatement();
     }
