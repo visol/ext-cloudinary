@@ -16,7 +16,6 @@ use TYPO3\CMS\Core\Utility\GeneralUtility;
 use Visol\Cloudinary\Driver\CloudinaryDriver;
 use Visol\Cloudinary\Exceptions\InvalidResourceUrlException;
 use Visol\Cloudinary\Services\CloudinaryImageService;
-use Visol\Cloudinary\Services\ConfigurationService;
 
 final class BeforeFileProcessingEventHandler
 {
@@ -78,11 +77,5 @@ final class BeforeFileProcessingEventHandler
     public function getCloudinaryImageService(): CloudinaryImageService
     {
         return GeneralUtility::makeInstance(CloudinaryImageService::class);
-    }
-
-    protected function getCloudNameForFile(File $file): string
-    {
-        $configurationService = GeneralUtility::makeInstance(ConfigurationService::class, $file->getStorage()->getConfiguration());
-        return $configurationService->get('cloudName');
     }
 }
