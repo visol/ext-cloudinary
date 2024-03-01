@@ -40,10 +40,15 @@ class CloudinaryPathService
             ? $cloudinaryResource['public_id']
             : $cloudinaryResource['public_id'] . '.' . $cloudinaryResource['format'];
 
-        return self::stripBasePathFromIdentifier(
+        $fileIdentifier = self::stripBasePathFromIdentifier(
             DIRECTORY_SEPARATOR . $fileIdentifier,
             $this->getBasePath()
         );
+
+        // ensure leading slash
+        $fileIdentifier = '/' . ltrim($fileIdentifier, './');
+
+        return $fileIdentifier;
     }
 
     public function computeFolderIdentifier(string $cloudinaryFolder): string
