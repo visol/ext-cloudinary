@@ -46,22 +46,20 @@ final class BeforeFileProcessingEventHandler
         /** @var File $file */
         $file = $event->getFile();
 
-        $explicitData = $this->getCloudinaryImageService()->getExplicitData(
-            $file,
-            [
-                'type' => 'upload',
-                'eager' => [
-                    [
-                        //'format' => 'jpg', // `Invalid transformation component - auto`
-                        'fetch_format' => 'auto',
-                        'quality' => 'auto:eco',
-                        'width' => 64,
-                        'height' => 64,
-                        'crop' => 'fit',
-                    ]
-                ]
-            ]
-        );
+        $eagerOptions = [
+            'fetch_format' => 'auto',
+            'quality' => 'auto:eco',
+            'width' => 64,
+            'height' => 64,
+            'crop' => 'fit',
+        ];
+        if ($file->getType() === $file::FILETYPE_VIDEO) {
+            $eagerOptions['format'] = 'png';
+        }
+        $explicitData = $this->getCloudinaryImageService()->getExplicitData($file, [
+            'type' => 'upload',
+            'eager' => [$eagerOptions]
+        ]);
 
         $url = $explicitData['eager'][0]['secure_url'] ?? null;
         if (!isset($url)) {

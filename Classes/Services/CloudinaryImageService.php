@@ -30,7 +30,6 @@ class CloudinaryImageService extends AbstractCloudinaryMediaService
 
     protected array $defaultOptions = [
         'type' => 'upload',
-        'resource_type' => 'image',
         'fetch_format' => 'auto',
         'quality' => 'auto',
     ];
@@ -43,6 +42,7 @@ class CloudinaryImageService extends AbstractCloudinaryMediaService
     public function getExplicitData(File $file, array $options): array
     {
         $publicId = $this->getPublicIdForFile($file);
+        $options['resource_type'] = $this->getResourceTypeForFile($file);
 
         $explicitData = $this->explicitDataCacheRepository->findByStorageAndPublicIdAndOptions($file->getStorage()->getUid(), $publicId, $options)['explicit_data'];
 
