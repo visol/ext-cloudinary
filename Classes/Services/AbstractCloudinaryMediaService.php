@@ -77,6 +77,11 @@ abstract class AbstractCloudinaryMediaService
             ->computeCloudinaryPublicId($file->getIdentifier());
     }
 
+    public function getResourceTypeForFile(File $file): string
+    {
+        return $this->getCloudinaryPathService($file->getStorage())->getResourceType($file->getIdentifier());
+    }
+
     protected function getUploadApi(ResourceStorage $storage): UploadApi
     {
         return CloudinaryApiUtility::getCloudinary($storage)->uploadApi();
