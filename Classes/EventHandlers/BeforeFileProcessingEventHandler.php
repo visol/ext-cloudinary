@@ -11,6 +11,7 @@ namespace Visol\Cloudinary\EventHandlers;
 
 use TYPO3\CMS\Core\Resource\Event\BeforeFileProcessingEvent;
 use TYPO3\CMS\Core\Resource\File;
+use TYPO3\CMS\Core\Resource\ProcessedFile;
 use TYPO3\CMS\Core\Resource\ProcessedFileRepository;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
 use Visol\Cloudinary\Driver\CloudinaryDriver;
@@ -19,24 +20,31 @@ use Visol\Cloudinary\Services\CloudinaryImageService;
 
 final class BeforeFileProcessingEventHandler
 {
+    public const ALLOWED_TASKS = [
+        ProcessedFile::CONTEXT_IMAGECROPSCALEMASK,
+        ProcessedFile::CONTEXT_IMAGEPREVIEW,
+    ];
+
     public function __invoke(BeforeFileProcessingEvent $event): void
     {
         $driver = $event->getDriver();
-        $processedFile = $event->getProcessedFile();
-        /** @var File $file */
-        $file = $event->getFile();
-
         if (!$driver instanceof CloudinaryDriver) {
             return;
         }
 
+        $processedFile = $event->getProcessedFile();
+        if(! in_array($processedFile->getTaskIdentifier(), self::ALLOWED_TASKS)) {
+            return;
+        }
         if ($processedFile->isProcessed()) {
             return;
         }
-
         if (str_starts_with($processedFile->getIdentifier(), 'PROCESSEDFILE')) {
             return;
         }
+
+        /** @var File $file */
+        $file = $event->getFile();
 
         $explicitData = $this->getCloudinaryImageService()->getExplicitData(
             $file,
