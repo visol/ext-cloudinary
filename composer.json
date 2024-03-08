@@ -6,7 +6,7 @@
     "GPL-2.0-or-later"
   ],
   "require": {
-    "cloudinary/cloudinary_php": "^1.15",
+    "cloudinary/cloudinary_php": "^2.12",
     "ext-json": "*",
     "php": "~8.0 || ~8.1",
     "typo3/cms-backend": "^11.5",
