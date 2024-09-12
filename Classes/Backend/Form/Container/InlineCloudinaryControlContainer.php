@@ -18,7 +18,7 @@ use Visol\Cloudinary\Services\ConfigurationService;
 class InlineCloudinaryControlContainer extends InlineControlContainer
 {
 
-    public function render()
+    public function render(): array
     {
         /** @var PageRenderer $pageRenderer */
         $pageRenderer = GeneralUtility::makeInstance(PageRenderer::class);
@@ -27,7 +27,7 @@ class InlineCloudinaryControlContainer extends InlineControlContainer
         return parent::render();
     }
 
-    protected function renderPossibleRecordsSelectorTypeGroupDB(array $inlineConfiguration): ?string
+    protected function renderPossibleRecordsSelectorTypeGroupDB(array $inlineConfiguration): string
     {
         $typo3Buttons = parent::renderPossibleRecordsSelectorTypeGroupDB($inlineConfiguration);
 
@@ -138,7 +138,7 @@ class InlineCloudinaryControlContainer extends InlineControlContainer
         return $cloudinaryCredentials;
     }
 
-    protected function appendButtons(string $typo3Buttons, string $cloudinaryButtons): ?string
+    protected function appendButtons(string $typo3Buttons, string $cloudinaryButtons): string
     {
         // Inject button before help-block
         if (strpos($typo3Buttons, '</div><div class="help-block">') > 0) {
