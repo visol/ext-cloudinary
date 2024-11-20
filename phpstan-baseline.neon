@@ -1,46 +1,6 @@
 parameters:
 	ignoreErrors:
 		-
-			message: "#^Call to method assignMultiple\\(\\) on an unknown class TYPO3\\\\CMS\\\\Fluid\\\\View\\\\StandaloneView\\.$#"
-			count: 1
-			path: Classes/Backend/Form/Container/InlineCloudinaryControlContainer.php
-
-		-
-			message: "#^Call to method render\\(\\) on an unknown class TYPO3\\\\CMS\\\\Fluid\\\\View\\\\StandaloneView\\.$#"
-			count: 1
-			path: Classes/Backend/Form/Container/InlineCloudinaryControlContainer.php
-
-		-
-			message: "#^Call to method setTemplatePathAndFilename\\(\\) on an unknown class TYPO3\\\\CMS\\\\Fluid\\\\View\\\\StandaloneView\\.$#"
-			count: 1
-			path: Classes/Backend/Form/Container/InlineCloudinaryControlContainer.php
-
-		-
-			message: "#^Class TYPO3\\\\CMS\\\\Fluid\\\\View\\\\StandaloneView not found\\.$#"
-			count: 1
-			path: Classes/Backend/Form/Container/InlineCloudinaryControlContainer.php
-
-		-
-			message: "#^Method Visol\\\\Cloudinary\\\\Backend\\\\Form\\\\Container\\\\InlineCloudinaryControlContainer\\:\\:initializeStandaloneView\\(\\) has invalid return type TYPO3\\\\CMS\\\\Fluid\\\\View\\\\StandaloneView\\.$#"
-			count: 1
-			path: Classes/Backend/Form/Container/InlineCloudinaryControlContainer.php
-
-		-
-			message: "#^Method Visol\\\\Cloudinary\\\\Backend\\\\Form\\\\Container\\\\InlineCloudinaryControlContainer\\:\\:renderPossibleRecordsSelectorTypeGroupDB\\(\\) should return string but returns string\\|null\\.$#"
-			count: 1
-			path: Classes/Backend/Form/Container/InlineCloudinaryControlContainer.php
-
-		-
-			message: "#^PHPDoc tag @var for variable \\$view contains unknown class TYPO3\\\\CMS\\\\Fluid\\\\View\\\\StandaloneView\\.$#"
-			count: 1
-			path: Classes/Backend/Form/Container/InlineCloudinaryControlContainer.php
-
-		-
-			message: "#^Parameter \\#1 \\$uid of method TYPO3\\\\CMS\\\\Core\\\\Resource\\\\ResourceFactory\\:\\:getStorageObject\\(\\) expects int\\|null, int\\|string given\\.$#"
-			count: 1
-			path: Classes/Backend/Form/Container/InlineCloudinaryControlContainer.php
-
-		-
 			message: "#^PHPDoc tag @return with type object is not subtype of native type TYPO3\\\\CMS\\\\Core\\\\Resource\\\\Folder\\.$#"
 			count: 1
 			path: Classes/CloudinaryFactory.php

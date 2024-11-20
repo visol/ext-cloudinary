@@ -5,7 +5,7 @@ use TYPO3\CMS\Core\Log\LogLevel;
 use TYPO3\CMS\Core\Log\Writer\SyslogWriter;
 use TYPO3\CMS\Core\Resource\Index\ExtractorRegistry;
 use TYPO3\CMS\Extbase\Utility\ExtensionUtility;
-use Visol\Cloudinary\Backend\Form\Container\InlineCloudinaryControlContainer;
+use Visol\Cloudinary\Backend\Form\Container\FilesControlContainer;
 use TYPO3\CMS\Core\Resource\Driver\DriverRegistry;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
 use Visol\Cloudinary\Controller\CloudinaryWebHookController;
@@ -16,12 +16,10 @@ use Visol\Cloudinary\Services\Extractor\CloudinaryMetaDataExtractor;
 
 defined('TYPO3') || die('Access denied.');
 call_user_func(callback: function () {
-
-    // Override default class to add cloudinary button
-    $GLOBALS['TYPO3_CONF_VARS']['SYS']['formEngine']['nodeRegistry'][1652423292] = [
-        'nodeName' => 'inline',
+    $GLOBALS['TYPO3_CONF_VARS']['SYS']['formEngine']['nodeRegistry'][1732100836695] = [
+        'nodeName' => \TYPO3\CMS\Backend\Form\Container\FilesControlContainer::NODE_TYPE_IDENTIFIER,
         'priority' => 50,
-        'class' => InlineCloudinaryControlContainer::class,
+        'class' => FilesControlContainer::class,
     ];
 
     ExtensionUtility::configurePlugin(

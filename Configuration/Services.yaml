@@ -81,3 +81,9 @@ services:
       - name: event.listener
         identifier: 'cloudinary-before-file-processing-event-handler'
         event: TYPO3\CMS\Core\Resource\Event\BeforeFileProcessingEvent
+
+  Visol\Cloudinary\EventHandlers\CustomFileSelectorsEventHandler:
+    tags:
+      - name: event.listener
+        identifier: 'cloudinary-custom-file-selectors-event-handler'
+        event: Visol\Cloudinary\Events\CustomFileSelectorsEvent
