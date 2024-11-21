@@ -20,7 +20,6 @@ use TYPO3\CMS\Core\Database\Query\QueryBuilder;
 use TYPO3\CMS\Core\Exception;
 use TYPO3\CMS\Core\Log\Logger;
 use TYPO3\CMS\Core\Log\LogManager;
-use TYPO3\CMS\Core\Package\PackageManager;
 use TYPO3\CMS\Core\Resource\File;
 use TYPO3\CMS\Core\Resource\ProcessedFileRepository;
 use TYPO3\CMS\Core\Resource\ResourceFactory;
@@ -57,8 +56,6 @@ class CloudinaryWebHookController extends ActionController
     protected ProcessedFileRepository $processedFileRepository;
 
     protected ResourceStorage $storage;
-
-    protected PackageManager $packageManager;
 
     /**
      * @var EventDispatcherInterface
@@ -100,8 +97,6 @@ class CloudinaryWebHookController extends ActionController
         $this->storage = $storage;
 
         $this->processedFileRepository = GeneralUtility::makeInstance(ProcessedFileRepository::class);
-
-        $this->packageManager = GeneralUtility::makeInstance(PackageManager::class);
     }
 
     public function processAction(): ResponseInterface
