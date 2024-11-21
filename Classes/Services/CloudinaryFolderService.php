@@ -9,7 +9,7 @@ namespace Visol\Cloudinary\Services;
  * LICENSE.md file that was distributed with this source code.
  */
 
-use Doctrine\DBAL\Driver\Connection;
+use Doctrine\DBAL\Connection;
 use TYPO3\CMS\Core\Database\ConnectionPool;
 use TYPO3\CMS\Core\Database\Query\QueryBuilder;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
