@@ -11,7 +11,6 @@ use TYPO3\CMS\Core\Utility\GeneralUtility;
 use Visol\Cloudinary\Controller\CloudinaryWebHookController;
 use Visol\Cloudinary\Driver\CloudinaryDriver;
 use TYPO3\CMS\Core\Log\Writer\FileWriter;
-use Visol\Cloudinary\Hook\FileUploadHook;
 use Visol\Cloudinary\Services\Extractor\CloudinaryMetaDataExtractor;
 
 defined('TYPO3') || die('Access denied.');
@@ -76,8 +75,4 @@ call_user_func(callback: function () {
             ],
         ],
     ];
-
-    // Hook for traditional file upload, replace
-    $GLOBALS['TYPO3_CONF_VARS']['SC_OPTIONS']['t3lib/class.t3lib_extfilefunc.php']['processData'][] = FileUploadHook::class;
-
 });
