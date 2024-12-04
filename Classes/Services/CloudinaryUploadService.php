@@ -53,7 +53,7 @@ class CloudinaryUploadService
 
     public function getEmergencyFile(): File
     {
-        return $this->uploadLocalFile($this->emergencyFileIdentifier);
+        return $this->uploadLocalFile($this->cleanUp($this->emergencyFileIdentifier));
     }
 
     protected function cleanUp(string $fileIdentifier): string
