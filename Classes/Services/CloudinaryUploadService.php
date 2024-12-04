@@ -16,11 +16,12 @@ use TYPO3\CMS\Core\Log\LogManager;
 use TYPO3\CMS\Core\Resource\File;
 use TYPO3\CMS\Core\Resource\ResourceStorage;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
+use TYPO3\CMS\Core\Utility\PathUtility;
 use Visol\Cloudinary\CloudinaryFactory;
 
 class CloudinaryUploadService
 {
-    protected string $emergencyFileIdentifier = '/typo3conf/ext/cloudinary/Resources/Public/Images/emergency-placeholder-image.png';
+    protected string $emergencyFileIdentifier = 'EXT:cloudinary/Resources/Public/Images/emergency-placeholder-image.png';
 
     protected ResourceStorage $storage;
 
@@ -35,7 +36,7 @@ class CloudinaryUploadService
         $fileIdentifier = $this->cleanUp($fileIdentifier);
 
         if (!$this->fileExists($fileIdentifier)) {
-            $fileIdentifier = $this->emergencyFileIdentifier;
+            $fileIdentifier = $this->cleanUp($this->emergencyFileIdentifier);
             $this->error(
                 'I am using a default emergency placeholder file since I could not find file ' . $fileIdentifier,
             );
@@ -57,6 +58,9 @@ class CloudinaryUploadService
 
     protected function cleanUp(string $fileIdentifier): string
     {
+        if (str_starts_with($fileIdentifier, 'EXT:')) {
+            $fileIdentifier = PathUtility::getPublicResourceWebPath($fileIdentifier);
+        }
         return DIRECTORY_SEPARATOR . ltrim($fileIdentifier, DIRECTORY_SEPARATOR);
     }
 
