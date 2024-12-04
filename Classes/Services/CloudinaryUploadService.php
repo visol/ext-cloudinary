@@ -36,10 +36,10 @@ class CloudinaryUploadService
         $fileIdentifier = $this->cleanUp($fileIdentifier);
 
         if (!$this->fileExists($fileIdentifier)) {
-            $fileIdentifier = $this->cleanUp($this->emergencyFileIdentifier);
             $this->error(
                 'I am using a default emergency placeholder file since I could not find file ' . $fileIdentifier,
             );
+            $fileIdentifier = $this->cleanUp($this->emergencyFileIdentifier);
         }
 
         // Fetch the file if existing or create one
