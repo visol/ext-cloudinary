@@ -95,6 +95,15 @@ abstract class AbstractCloudinaryCommand extends Command
             }
         }
 
+        if ((bool)$input->getOption('used-only')) {
+            $query->join(
+                'sys_file',
+                'sys_file_reference',
+                'sys_file_reference',
+                $query->expr()->eq('sys_file_reference.uid_local', 'sys_file.uid'),
+            );
+        }
+
         return $query->execute()->fetchAllAssociative();
     }
 

@@ -49,6 +49,7 @@ class CloudinaryMoveCommand extends AbstractCloudinaryCommand
             ->addOption('filter-file-type', '', InputArgument::OPTIONAL, 'Add a possible filter for file type as defined by FAL (e.g 1,2,3,4,5)', '')
             ->addOption('limit', '', InputArgument::OPTIONAL, 'Add a possible offset, limit to restrain the number of files. (eg. 0,100)', '')
             ->addOption('exclude', '', InputArgument::OPTIONAL, 'Exclude pattern, can contain comma separated values e.g. --exclude="/apps/%,/_temp/%"', '')
+            ->addOption('used-only', '', InputArgument::OPTIONAL, 'Only move used files (with sys_file_reference)', false)
             ->addArgument('source', InputArgument::REQUIRED, 'Source storage identifier')
             ->addArgument('target', InputArgument::REQUIRED, 'Target storage identifier')
             ->setHelp('Usage: ./vendor/bin/typo3 cloudinary:move 1 2');
