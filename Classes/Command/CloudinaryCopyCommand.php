@@ -67,7 +67,7 @@ class CloudinaryCopyCommand extends AbstractCloudinaryCommand
             return Command::INVALID;
         }
 
-        $files = $this->getFiles($this->sourceStorage, $input);
+        $files = $this->getFiles($this->sourceStorage->getRootLevelFolder(), $input);
 
         if (count($files) === 0) {
             $this->log('No files found, no work for me!');

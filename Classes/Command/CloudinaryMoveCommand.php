@@ -10,8 +10,14 @@ namespace Visol\Cloudinary\Command;
  */
 
 use Exception;
+use Psr\EventDispatcher\EventDispatcherInterface;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Style\SymfonyStyle;
+use TYPO3\CMS\Core\Resource\Driver\DriverInterface;
+use TYPO3\CMS\Core\Resource\Event\AfterFileAddedEvent;
+use TYPO3\CMS\Core\Resource\Event\AfterFileMovedEvent;
+use TYPO3\CMS\Core\Resource\Folder;
+use TYPO3\CMS\Core\Resource\Index\Indexer;
 use TYPO3\CMS\Core\Resource\ResourceStorage;
 use TYPO3\CMS\Core\Utility\PathUtility;
 use Visol\Cloudinary\Services\FileMoveService;
@@ -31,13 +37,13 @@ class CloudinaryMoveCommand extends AbstractCloudinaryCommand
 
     protected array $missingFiles = [];
 
-    protected ResourceStorage $sourceStorage;
+    public function __construct(
+        protected ResourceFactory $resourceFactory,
+        protected EventDispatcherInterface $eventDispatcher,
+    ) {
+        parent::__construct();
+    }
 
-    protected ResourceStorage $targetStorage;
-
-    /**
-     * Configure the command by defining the name, options and arguments
-     */
     protected function configure(): void
     {
         $message = 'Move bunch of images to a cloudinary storage. Consult the README.md for more info.';
@@ -60,23 +66,40 @@ class CloudinaryMoveCommand extends AbstractCloudinaryCommand
         $this->io = new SymfonyStyle($input, $output);
 
         $this->isSilent = $input->getOption('silent');
-
-        /** @var ResourceFactory $resourceFactory */
-        $resourceFactory = GeneralUtility::makeInstance(ResourceFactory::class);
-
-        $this->sourceStorage = $resourceFactory->getStorageObject($input->getArgument('source'));
-        $this->targetStorage = $resourceFactory->getStorageObject($input->getArgument('target'));
     }
 
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
-        if (!$this->checkDriverType($this->targetStorage)) {
+        $sourceCombinedIdentifier = $input->getArgument('source');
+        if (!is_string($sourceCombinedIdentifier)) {
+            throw new \LogicException('source argument must be a string', 1749032224634);
+        }
+        $source = $this->resourceFactory->getFolderObjectFromCombinedIdentifier($sourceCombinedIdentifier);
+        $sourceStorage = $source->getStorage();
+        $sourceStorageDriver = $this->getStorageDriver($sourceStorage);
+
+        $targetCombinedIdentifier = $input->getArgument('target');
+        if (!is_string($targetCombinedIdentifier)) {
+            throw new \LogicException('target argument must be a string', 1749032230062);
+        }
+        $target = $this->resourceFactory->getFolderObjectFromCombinedIdentifier($targetCombinedIdentifier);
+        $targetIndexer = GeneralUtility::makeInstance(Indexer::class, $target->getStorage());
+
+        $baseUrl = $input->getOption('base-url');
+        if (!is_string($baseUrl)) {
+            throw new \LogicException('Base URL must be a string');
+        }
+
+        if (!$sourceStorage->hasHierarchicalIdentifiers()) {
+            $this->log('Source storage must use hierarchical identifiers');
+            return Command::INVALID;
+        }
+        if (!$this->checkDriverType($target->getStorage())) {
             $this->log('Look out! target storage is not of type "cloudinary"');
             return Command::INVALID;
         }
 
-        $files = $this->getFiles($this->sourceStorage, $input);
-
+        $files = $this->getFiles($source, $input);
         if (count($files) === 0) {
             $this->log('No files found, no work for me!');
             return Command::SUCCESS;
@@ -84,10 +107,10 @@ class CloudinaryMoveCommand extends AbstractCloudinaryCommand
 
         $this->log('I will process %s files to be moved from storage "%s" (%s) to "%s" (%s)', [
             count($files),
-            $this->sourceStorage->getUid(),
-            $this->sourceStorage->getName(),
-            $this->targetStorage->getUid(),
-            $this->targetStorage->getName(),
+            $source->getCombinedIdentifier(),
+            $sourceStorage->getName(),
+            $target->getCombinedIdentifier(),
+            $target->getStorage()->getName(),
         ]);
 
         // A chance to the user to confirm the action
@@ -96,21 +119,18 @@ class CloudinaryMoveCommand extends AbstractCloudinaryCommand
 
             if (!$response) {
                 $this->log('Script aborted');
-
-        return Command::SUCCESS;
+                return Command::SUCCESS;
             }
         }
-
-        /** @var ResourceFactory $resourceFactory */
-        $resourceFactory = GeneralUtility::makeInstance(ResourceFactory::class);
 
         $counter = 0;
         foreach ($files as $file) {
             $this->log();
             $this->log('Starting migration with %s', [$file['identifier']]);
 
-            /** @var  $fileObject */
-            $fileObject = $resourceFactory->getFileObjectByStorageAndIdentifier($this->sourceStorage->getUid(), $file['identifier']);
+            /** @var File $fileObject */
+            $fileObject = $this->resourceFactory->getFileObject($file['uid'], $file);
+            $sourceFileExists = $fileObject->exists();
 
             if ($this->isFileSkipped($fileObject)) {
                 $this->log('Skipping file ' . $fileObject->getIdentifier());
@@ -118,11 +138,17 @@ class CloudinaryMoveCommand extends AbstractCloudinaryCommand
                 continue;
             }
 
-            if ($this->getFileMoveService()->fileExists($fileObject, $this->targetStorage)) {
+            if (! str_starts_with($fileObject->getIdentifier(), $source->getIdentifier())) {
+                throw new \LogicException('file is not in source folder', 1748004982814);
+            }
+
+            $newIdentifier = str_replace($source->getIdentifier(), $target->getIdentifier(), $fileObject->getIdentifier());
+
+            if ($this->getFileMoveService()->fileExists($target->getStorage(), $newIdentifier)) {
                 $this->log('File has already been uploaded, good for us %s', [$fileObject->getIdentifier()]);
             } else {
                 // Detect if the file is existing on storage "source" (1)
-                if (!$fileObject->exists() && !$input->getOption('base-url')) {
+                if (!$sourceFileExists && empty($baseUrl)) {
                     $this->log('Missing file %s', [$fileObject->getIdentifier()], self::WARNING);
                     // We could log the missing files
                     $this->missingFiles[] = $fileObject->getIdentifier();
@@ -130,11 +156,11 @@ class CloudinaryMoveCommand extends AbstractCloudinaryCommand
                 }
 
                 // Upload the file
-                $this->log('Uploading file from %s%s', [$input->getOption('base-url'), $fileObject->getIdentifier()]);
+                $this->log('Uploading file from %s%s', [$baseUrl, $fileObject->getIdentifier()]);
 
                 try {
                     $start = microtime(true);
-                    $this->getFileMoveService()->cloudinaryUploadFile($fileObject, $this->targetStorage, $input->getOption('base-url'));
+                    $this->getFileMoveService()->cloudinaryUploadFile($fileObject, $target, $newIdentifier, $baseUrl);
                     $timeElapsedSeconds = microtime(true) - $start;
                     $this->log('File uploaded, Elapsed time %.3f', [$timeElapsedSeconds]);
                 } catch (Exception $e) {
@@ -148,9 +174,29 @@ class CloudinaryMoveCommand extends AbstractCloudinaryCommand
                 }
             }
 
-            // changing file storage and hard delete the file from the current storage
+            // Update sys_file entry
+            // See \TYPO3\CMS\Core\Resource\ResourceStorage::moveFile for reference
             $this->log('Changing storage for file %s', [$fileObject->getIdentifier()]);
-            $this->getFileMoveService()->changeStorage($fileObject, $this->targetStorage);
+            $oldIdentifier = $fileObject->getIdentifier();
+            $oldFolder = $fileObject->getParentFolder();
+            $fileObject->updateProperties(['storage' => $target->getStorage()->getUid(), 'identifier' => $newIdentifier]);
+            $newFolder = $fileObject->getParentFolder();
+            if (!$newFolder instanceof Folder) {
+                throw new \LogicException('New folder must be a Folder', 1749032215642);
+            }
+
+            // clean up processed files
+            $this->eventDispatcher->dispatch(new AfterFileAddedEvent($fileObject, $newFolder));
+            $targetIndexer->updateIndexEntry($fileObject);
+
+            // Delete the file from the source storage without deleting the sys_file record
+            if ($sourceFileExists) {
+                $sourceStorageDriver->deleteFile($oldIdentifier);
+                $sourceFileExists = false;
+            }
+
+            $this->eventDispatcher->dispatch(new AfterFileMovedEvent($fileObject, $newFolder, $oldFolder));
+
             $counter++;
         }
         $this->log(LF);
@@ -207,5 +253,17 @@ class CloudinaryMoveCommand extends AbstractCloudinaryCommand
     protected function getFileMoveService(): FileMoveService
     {
         return GeneralUtility::makeInstance(FileMoveService::class);
+    }
+
+    protected function getStorageDriver(ResourceStorage $storage): DriverInterface
+    {
+        $reflection = new \ReflectionClass($storage);
+        $property = $reflection->getProperty('driver');
+        $property->setAccessible(true);
+        $driver = $property->getValue($storage);
+        if (!$driver instanceof DriverInterface) {
+            throw new \LogicException('Storage driver must implement DriverInterface', 1749032330406);
+        }
+        return $driver;
     }
 }
