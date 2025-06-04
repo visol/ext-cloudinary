@@ -1,7 +1,27 @@
 parameters:
 	ignoreErrors:
 		-
+			message: "#^Cannot access offset 'tceform_cludinary…' on mixed\\.$#"
+			count: 1
+			path: Classes/Backend/Form/CloudinaryFileSelector.php
+
+		-
+			message: "#^Parameter \\#1 \\$uid of method TYPO3\\\\CMS\\\\Core\\\\Resource\\\\ResourceFactory\\:\\:getStorageObject\\(\\) expects int\\|null, int\\|string given\\.$#"
+			count: 1
+			path: Classes/Backend/Form/CloudinaryFileSelector.php
+
+		-
+			message: "#^Parameter \\#2 \\$string of static method TYPO3\\\\CMS\\\\Core\\\\Utility\\\\GeneralUtility\\:\\:intExplode\\(\\) expects string, mixed given\\.$#"
+			count: 1
+			path: Classes/Backend/Form/CloudinaryFileSelector.php
+
+		-
 			message: "#^PHPDoc tag @return with type object is not subtype of native type TYPO3\\\\CMS\\\\Core\\\\Resource\\\\Folder\\.$#"
+			count: 1
+			path: Classes/CloudinaryFactory.php
+
+		-
+			message: "#^Parameter \\#1 \\$uid of method TYPO3\\\\CMS\\\\Core\\\\Resource\\\\ResourceFactory\\:\\:getStorageObject\\(\\) expects int\\|null, mixed given\\.$#"
 			count: 1
 			path: Classes/CloudinaryFactory.php
 
@@ -12,6 +32,11 @@ parameters:
 
 		-
 			message: "#^Method Visol\\\\Cloudinary\\\\Command\\\\AbstractCloudinaryCommand\\:\\:error\\(\\) has no return type specified\\.$#"
+			count: 1
+			path: Classes/Command/AbstractCloudinaryCommand.php
+
+		-
+			message: "#^Method Visol\\\\Cloudinary\\\\Command\\\\AbstractCloudinaryCommand\\:\\:getConnection\\(\\) should return Doctrine\\\\DBAL\\\\Driver\\\\Connection but returns TYPO3\\\\CMS\\\\Core\\\\Database\\\\Connection\\.$#"
 			count: 1
 			path: Classes/Command/AbstractCloudinaryCommand.php
 
@@ -146,7 +171,7 @@ parameters:
 			path: Classes/Command/CloudinaryFixImageDimensionCommand.php
 
 		-
-			message: "#^Method Doctrine\\\\DBAL\\\\Driver\\\\Connection\\:\\:query\\(\\) invoked with 1 parameter, 0 required\\.$#"
+			message: "#^Call to an undefined method Doctrine\\\\DBAL\\\\Driver\\\\Result\\:\\:execute\\(\\)\\.$#"
 			count: 1
 			path: Classes/Command/CloudinaryFixJpegCommand.php
 
@@ -266,6 +291,11 @@ parameters:
 			path: Classes/Command/CloudinaryScanCommand.php
 
 		-
+			message: "#^Parameter \\#1 \\$uid of method TYPO3\\\\CMS\\\\Core\\\\Resource\\\\ResourceFactory\\:\\:getStorageObject\\(\\) expects int\\|null, mixed given\\.$#"
+			count: 1
+			path: Classes/Command/CloudinaryStorageListCommand.php
+
+		-
 			message: "#^Call to an undefined method TYPO3\\\\CMS\\\\Core\\\\Resource\\\\FileInterface\\:\\:getUid\\(\\)\\.$#"
 			count: 2
 			path: Classes/Controller/CloudinaryAjaxController.php
@@ -294,6 +324,16 @@ parameters:
 			message: "#^PHPDoc tag @return with type string is incompatible with native type Psr\\\\Http\\\\Message\\\\ResponseInterface\\.$#"
 			count: 1
 			path: Classes/Controller/CloudinaryScanController.php
+
+		-
+			message: "#^Parameter \\#1 \\$uid of method TYPO3\\\\CMS\\\\Core\\\\Resource\\\\ResourceFactory\\:\\:getFileObject\\(\\) expects int, mixed given\\.$#"
+			count: 1
+			path: Classes/Controller/CloudinaryWebHookController.php
+
+		-
+			message: "#^Cannot cast mixed to int\\.$#"
+			count: 2
+			path: Classes/Domain/Repository/ExplicitDataCacheRepository.php
 
 		-
 			message: "#^PHPDoc tag @return with type object is not subtype of native type TYPO3\\\\CMS\\\\Core\\\\Database\\\\Connection\\.$#"
@@ -411,23 +451,33 @@ parameters:
 			path: Classes/Services/AbstractCloudinaryMediaService.php
 
 		-
-			message: "#^Call to an undefined method Doctrine\\\\DBAL\\\\Driver\\\\Connection\\:\\:delete\\(\\)\\.$#"
+			message: "#^Cannot cast mixed to int\\.$#"
 			count: 2
 			path: Classes/Services/CloudinaryFolderService.php
 
 		-
-			message: "#^Call to an undefined method Doctrine\\\\DBAL\\\\Driver\\\\Connection\\:\\:insert\\(\\)\\.$#"
+			message: "#^Method Visol\\\\Cloudinary\\\\Services\\\\CloudinaryFolderService\\:\\:add\\(\\) should return int but returns int\\|string\\.$#"
 			count: 1
 			path: Classes/Services/CloudinaryFolderService.php
 
 		-
-			message: "#^Call to an undefined method Doctrine\\\\DBAL\\\\Driver\\\\Connection\\:\\:update\\(\\)\\.$#"
-			count: 2
+			message: "#^Method Visol\\\\Cloudinary\\\\Services\\\\CloudinaryFolderService\\:\\:delete\\(\\) should return int but returns int\\|string\\.$#"
+			count: 1
 			path: Classes/Services/CloudinaryFolderService.php
 
 		-
-			message: "#^Cannot cast mixed to int\\.$#"
-			count: 2
+			message: "#^Method Visol\\\\Cloudinary\\\\Services\\\\CloudinaryFolderService\\:\\:deleteAll\\(\\) should return int but returns int\\|string\\.$#"
+			count: 1
+			path: Classes/Services/CloudinaryFolderService.php
+
+		-
+			message: "#^Method Visol\\\\Cloudinary\\\\Services\\\\CloudinaryFolderService\\:\\:markAsMissing\\(\\) should return int but returns int\\|string\\.$#"
+			count: 1
+			path: Classes/Services/CloudinaryFolderService.php
+
+		-
+			message: "#^Method Visol\\\\Cloudinary\\\\Services\\\\CloudinaryFolderService\\:\\:update\\(\\) should return int but returns int\\|string\\.$#"
+			count: 1
 			path: Classes/Services/CloudinaryFolderService.php
 
 		-
@@ -471,11 +521,6 @@ parameters:
 			path: Classes/Services/CloudinaryImageService.php
 
 		-
-			message: "#^Parameter \\#1 \\$callback of function call_user_func_array expects callable\\(\\)\\: mixed, array\\{\\$this\\(Visol\\\\Cloudinary\\\\Services\\\\CloudinaryImageService\\), string\\} given\\.$#"
-			count: 1
-			path: Classes/Services/CloudinaryImageService.php
-
-		-
 			message: "#^Method Visol\\\\Cloudinary\\\\Services\\\\CloudinaryPathService\\:\\:stripBasePathFromIdentifier\\(\\) should return string but returns string\\|null\\.$#"
 			count: 1
 			path: Classes/Services/CloudinaryPathService.php
@@ -486,23 +531,33 @@ parameters:
 			path: Classes/Services/CloudinaryPathService.php
 
 		-
-			message: "#^Call to an undefined method Doctrine\\\\DBAL\\\\Driver\\\\Connection\\:\\:delete\\(\\)\\.$#"
+			message: "#^Cannot cast mixed to int\\.$#"
 			count: 2
 			path: Classes/Services/CloudinaryResourceService.php
 
 		-
-			message: "#^Call to an undefined method Doctrine\\\\DBAL\\\\Driver\\\\Connection\\:\\:insert\\(\\)\\.$#"
+			message: "#^Method Visol\\\\Cloudinary\\\\Services\\\\CloudinaryResourceService\\:\\:add\\(\\) should return int but returns int\\|string\\.$#"
 			count: 1
 			path: Classes/Services/CloudinaryResourceService.php
 
 		-
-			message: "#^Call to an undefined method Doctrine\\\\DBAL\\\\Driver\\\\Connection\\:\\:update\\(\\)\\.$#"
-			count: 2
+			message: "#^Method Visol\\\\Cloudinary\\\\Services\\\\CloudinaryResourceService\\:\\:delete\\(\\) should return int but returns int\\|string\\.$#"
+			count: 1
 			path: Classes/Services/CloudinaryResourceService.php
 
 		-
-			message: "#^Cannot cast mixed to int\\.$#"
-			count: 2
+			message: "#^Method Visol\\\\Cloudinary\\\\Services\\\\CloudinaryResourceService\\:\\:deleteAll\\(\\) should return int but returns int\\|string\\.$#"
+			count: 1
+			path: Classes/Services/CloudinaryResourceService.php
+
+		-
+			message: "#^Method Visol\\\\Cloudinary\\\\Services\\\\CloudinaryResourceService\\:\\:markAsMissing\\(\\) should return int but returns int\\|string\\.$#"
+			count: 1
+			path: Classes/Services/CloudinaryResourceService.php
+
+		-
+			message: "#^Method Visol\\\\Cloudinary\\\\Services\\\\CloudinaryResourceService\\:\\:update\\(\\) should return int but returns int\\|string\\.$#"
+			count: 1
 			path: Classes/Services/CloudinaryResourceService.php
 
 		-
@@ -551,6 +606,11 @@ parameters:
 			path: Classes/Services/FileMoveService.php
 
 		-
+			message: "#^Method Visol\\\\Cloudinary\\\\Services\\\\FileMoveService\\:\\:getConnection\\(\\) should return Doctrine\\\\DBAL\\\\Driver\\\\Connection but returns TYPO3\\\\CMS\\\\Core\\\\Database\\\\Connection\\.$#"
+			count: 1
+			path: Classes/Services/FileMoveService.php
+
+		-
 			message: "#^Method Visol\\\\Cloudinary\\\\Services\\\\FileMoveService\\:\\:initializeCloudinaryService\\(\\) has no return type specified\\.$#"
 			count: 1
 			path: Classes/Services/FileMoveService.php
@@ -559,6 +619,11 @@ parameters:
 			message: "#^Variable \\$resource in empty\\(\\) always exists and is not falsy\\.$#"
 			count: 1
 			path: Classes/Services/FileMoveService.php
+
+		-
+			message: "#^Offset 2 does not exist on array\\{0\\?\\: string, 1\\?\\: ''\\|numeric\\-string, 2\\?\\: 'c'\\}\\.$#"
+			count: 1
+			path: Classes/Services/ProcessingTaskConverter.php
 
 		-
 			message: "#^Method Visol\\\\Cloudinary\\\\Utility\\\\CloudinaryFileUtility\\:\\:getTemporaryFile\\(\\) has parameter \\$storageUid with no type specified\\.$#"
