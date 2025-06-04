@@ -5,9 +5,10 @@ parameters:
     paths:
         - Classes
         - Configuration
-    checkMissingIterableValueType: false
     reportUnmatchedIgnoredErrors: false
     ignoreErrors:
+        -
+            identifier: missingType.iterableValue
         -
             message: '#does not accept object.$#'
         -
