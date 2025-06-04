@@ -8,7 +8,6 @@ use TYPO3\CMS\Core\Database\Query\QueryBuilder;
 use TYPO3\CMS\Core\Page\JavaScriptModuleInstruction;
 use TYPO3\CMS\Core\Resource\ResourceFactory;
 use TYPO3\CMS\Core\Resource\ResourceStorage;
-use TYPO3\CMS\Core\Resource\ResourceStorageInterface;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
 use TYPO3\CMS\Fluid\View\StandaloneView;
 use Visol\Cloudinary\Driver\CloudinaryDriver;
@@ -19,7 +18,7 @@ class CloudinaryFileSelector
     protected string $moduleName = 'TYPO3/CMS/Cloudinary/CloudinaryMediaLibrary';
 
     /**
-     * @return array<string[], JavaScriptModuleInstruction[]> HTML snippets
+     * @return array{'buttons': string[], 'javaScriptModules': JavaScriptModuleInstruction[]} HTML snippets
      */
     public function renderCloudinaryFileSelectors(
         string $irreObject
@@ -27,7 +26,7 @@ class CloudinaryFileSelector
         $storages = $this->getCloudinaryStorages();
 
         $view = $this->initializeStandaloneView('EXT:cloudinary/Resources/Private/Standalone/MediaLibrary/Show.html');
-        $buttons = array_map(fn(ResourceStorageInterface $storage): string => $view->assignMultiple([
+        $buttons = array_map(fn(ResourceStorage $storage): string => $view->assignMultiple([
             'objectGroup' => $irreObject,
             'cloudinaryCredentials' => $this->computeCloudinaryCredentials($storage),
         ])->render(), $storages);
@@ -57,7 +56,7 @@ class CloudinaryFileSelector
         $configuration = GeneralUtility::makeInstance(ExtensionConfiguration::class)->get('cloudinary');
 
         // fetch the storage from the configuration
-        $storages = array_filter(GeneralUtility::trimExplode(',', $configuration['tceform_cludinary_storage']));
+        $storages = array_filter(GeneralUtility::intExplode(',', $configuration['tceform_cludinary_storage'], true));
         if (empty($storages)) {
             // empty... we fetch all storages
 
@@ -84,7 +83,7 @@ class CloudinaryFileSelector
         return $storageObjects;
     }
 
-    protected function computeCloudinaryCredentials(ResourceStorageInterface $storage): array
+    protected function computeCloudinaryCredentials(ResourceStorage $storage): array
     {
         $configurationService = GeneralUtility::makeInstance(
             ConfigurationService::class,
