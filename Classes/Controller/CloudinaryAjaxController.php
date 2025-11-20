@@ -40,7 +40,7 @@ class CloudinaryAjaxController
 
                 // We must retrieve the resources so that we can determine the format
                 $response = $this->getSearchApi($storage)
-                    ->expression('public_id:' . $publicId)
+                    ->expression(sprintf('public_id:"%s"', $publicId))
                     ->maxResults(1)
                     ->execute();
 
