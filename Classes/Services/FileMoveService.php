@@ -16,6 +16,7 @@ use Exception;
 use TYPO3\CMS\Core\Database\ConnectionPool;
 use TYPO3\CMS\Core\Database\Query\QueryBuilder;
 use TYPO3\CMS\Core\Resource\File;
+use TYPO3\CMS\Core\Resource\Folder;
 use TYPO3\CMS\Core\Resource\ResourceStorage;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
 use Visol\Cloudinary\Utility\CloudinaryApiUtility;
@@ -27,22 +28,22 @@ class FileMoveService
 
     protected ?CloudinaryPathService $cloudinaryPathService = null;
 
-    public function fileExists(File $fileObject, ResourceStorage $targetStorage): bool
+    public function fileExists(ResourceStorage $storage, string $identifier): bool
     {
-        $this->initializeCloudinaryService($targetStorage);
+        $this->initializeCloudinaryService($storage);
 
         // Retrieve the Public Id based on the file identifier
-        $publicId = $this->getCloudinaryPathService()
-            ->computeCloudinaryPublicId($fileObject->getIdentifier());
+        $publicId = $this->getCloudinaryPathService()->computeCloudinaryPublicId($identifier);
 
         try {
-            $resource = $this->getAdminApi($targetStorage)->asset($publicId);
-            $fileExists = !empty($resource);
-        } catch (Exception $exception) {
-            $fileExists = false;
-        }
+            $resource = (array)$this->getAdminApi($storage)->asset($publicId);
 
-        return $fileExists;
+            // update resource index
+            (new CloudinaryResourceService($storage))->save((array)$resource);
+            return true;
+        } catch (Exception $exception) {
+            return false;
+        }
     }
 
     #public function forceMove(File $fileObject, ResourceStorage $targetStorage, $removeFile = true): bool
@@ -74,34 +75,6 @@ class FileMoveService
     #    return $isUpdated && $isDeletedFromSourceStorage;
     #}
 
-    public function changeStorage(File $fileObject, ResourceStorage $targetStorage, bool $removeFile = true): bool
-    {
-        // Update the storage uid
-        $isMigrated = (bool)$this->updateFile(
-            $fileObject,
-            [
-                'storage' => $targetStorage->getUid(),
-            ]
-        );
-
-        if ($removeFile) {
-            // Delete the file form the local storage
-            $isMigrated = unlink($this->getAbsolutePath($fileObject));
-        }
-
-        return $isMigrated;
-    }
-
-    protected function ensureDirectoryExistence(File $fileObject)
-    {
-
-        // Make sure the directory exists
-        $directory = dirname($this->getAbsolutePath($fileObject));
-        if (!is_dir($directory)) {
-            GeneralUtility::mkdir_deep($directory);
-        }
-    }
-
     protected function getAbsolutePath(File $fileObject): string
     {
         // Compute the absolute file name of the file to move
@@ -112,37 +85,34 @@ class FileMoveService
 
     public function cloudinaryUploadFile(
         File $fileObject,
-        ResourceStorage $targetStorage,
+        Folder $targetFolder,
+        string $newIdentifier,
         string $baseUrl = ''
     ): void {
-
+        $targetStorage = $targetFolder->getStorage();
         $this->initializeCloudinaryService($targetStorage);
-
-        $this->ensureDirectoryExistence($fileObject);
-
-
-        $fileIdentifier = $fileObject->getIdentifier();
-        $publicId = $this->getCloudinaryPathService()
-            ->computeCloudinaryPublicId($fileIdentifier);
+        $publicId = $this->getCloudinaryPathService()->computeCloudinaryPublicId($newIdentifier);
 
         $options = [
             'public_id' => basename($publicId),
             'folder' => $this->getCloudinaryPathService()
                 ->computeCloudinaryFolderPath(
-                    $fileObject->getParentFolder()->getIdentifier()
+                    dirname($newIdentifier)
                 ),
-            'resource_type' => $this->getCloudinaryPathService()->getResourceType($fileIdentifier),
+            'resource_type' => $this->getCloudinaryPathService()->getResourceType($newIdentifier),
             'overwrite' => true,
         ];
         $fileNameAndPath = $baseUrl
-            ? rtrim($baseUrl, DIRECTORY_SEPARATOR) . $fileIdentifier
-            : $this->getAbsolutePath($fileObject);
+            ? rtrim($baseUrl, DIRECTORY_SEPARATOR) . $fileObject->getIdentifier()
+            : ($fileObject->getPublicUrl() ?: $fileObject->getForLocalProcessing(false));
 
         // Upload the file
-        $this->getUploadApi($targetStorage)->upload(
+        $response = $this->getUploadApi($targetStorage)->upload(
             $fileNameAndPath,
             $options
         );
+        $resource = (array)$response;
+        (new CloudinaryResourceService($targetStorage))->save($resource);
     }
 
     protected function getQueryBuilder(): QueryBuilder

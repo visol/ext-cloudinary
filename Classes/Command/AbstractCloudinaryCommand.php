@@ -9,12 +9,13 @@ namespace Visol\Cloudinary\Command;
  * LICENSE.md file that was distributed with this source code.
  */
 
-use Doctrine\DBAL\Driver\Connection;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Style\SymfonyStyle;
 use Symfony\Component\Console\Command\Command;
+use TYPO3\CMS\Core\Database\Connection;
 use TYPO3\CMS\Core\Database\ConnectionPool;
 use TYPO3\CMS\Core\Database\Query\QueryBuilder;
+use TYPO3\CMS\Core\Resource\Folder;
 use TYPO3\CMS\Core\Resource\ResourceStorage;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
 use Visol\Cloudinary\Driver\CloudinaryDriver;
@@ -35,14 +36,15 @@ abstract class AbstractCloudinaryCommand extends Command
 
     protected string $tableName = 'sys_file';
 
-    protected function getFiles(ResourceStorage $storage, InputInterface $input): array
+    protected function getFiles(Folder $folder, InputInterface $input): array
     {
         $query = $this->getQueryBuilder($this->tableName);
         $query
             ->select('*')
             ->from($this->tableName)
             ->where(
-                $query->expr()->eq('storage', $storage->getUid()),
+                $query->expr()->eq('storage', $folder->getStorage()->getUid()),
+                $query->expr()->like('identifier', $query->createNamedParameter($query->escapeLikeWildcards($folder->getIdentifier()) . '%')),
                 $query->expr()->eq('missing', 0)
             );
 
@@ -93,6 +95,15 @@ abstract class AbstractCloudinaryCommand extends Command
             } else {
                 $query->setMaxResults((int)$offsetOrLimit);
             }
+        }
+
+        if ((bool)$input->getOption('used-only')) {
+            $query->join(
+                'sys_file',
+                'sys_file_reference',
+                'sys_file_reference',
+                $query->expr()->eq('sys_file_reference.uid_local', 'sys_file.uid'),
+            );
         }
 
         return $query->execute()->fetchAllAssociative();

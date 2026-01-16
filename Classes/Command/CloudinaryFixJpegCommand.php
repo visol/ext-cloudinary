@@ -86,7 +86,7 @@ SET extension = REPLACE(extension, 'jpeg', 'jpg'),
     name = REPLACE(name, '.jpeg', '.jpg') 
 WHERE storage = " . $this->targetStorage->getUid();
 
-        $connection->query($query)->execute();
+        $connection->executeStatement($query);
 
 
         return Command::SUCCESS;
