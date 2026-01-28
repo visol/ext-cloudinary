@@ -25,7 +25,7 @@ class CloudinaryUploadService
 
     protected ResourceStorage $storage;
 
-    public function __construct(ResourceStorage $storage = null)
+    public function __construct(?ResourceStorage $storage = null)
     {
         $this->storage = $storage ?: CloudinaryFactory::getDefaultStorage();
     }

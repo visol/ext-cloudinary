@@ -53,7 +53,7 @@ class CloudinaryScanService
 
     protected ?SymfonyStyle $io = null;
 
-    public function __construct(ResourceStorage $storage, SymfonyStyle $io = null)
+    public function __construct(ResourceStorage $storage, ?SymfonyStyle $io = null)
     {
         if ($storage->getDriverType() !== CloudinaryDriver::DRIVER_TYPE) {
             throw new \Exception('Storage is not of type "cloudinary"', 1594714337);

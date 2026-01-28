@@ -39,7 +39,7 @@ class CloudinaryFactory extends Exception
      *
      * @return object|Folder
      */
-    public static function getFolder($folderIdentifier, ResourceStorage $storage = null): Folder
+    public static function getFolder($folderIdentifier, ?ResourceStorage $storage = null): Folder
     {
         // prettier-ignore
         $folderIdentifier = $folderIdentifier === DIRECTORY_SEPARATOR
