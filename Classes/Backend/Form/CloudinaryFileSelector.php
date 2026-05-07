@@ -15,7 +15,7 @@ use Visol\Cloudinary\Services\ConfigurationService;
 
 class CloudinaryFileSelector
 {
-    protected string $moduleName = 'TYPO3/CMS/Cloudinary/CloudinaryMediaLibrary';
+    protected string $moduleName = '@visol/cloudinary/cloudinary-media-library.js';
 
     /**
      * @return array{'buttons': string[], 'javaScriptModules': JavaScriptModuleInstruction[]} HTML snippets
@@ -33,7 +33,7 @@ class CloudinaryFileSelector
 
         return [
             'buttons' => $buttons,
-            'javaScriptModules' => [JavaScriptModuleInstruction::forRequireJS('TYPO3/CMS/Cloudinary/CloudinaryMediaLibrary')],
+            'javaScriptModules' => [JavaScriptModuleInstruction::create($this->moduleName)],
         ];
     }
 
