@@ -1,49 +1,69 @@
-/*jshint -W033, -W003, -W116, -W069 */
-/*globals define:false, cloudinary:false, cloudinaryCredentials:false, TYPO3:false */
-define([
-  'jquery',
-  'nprogress',
-  'TYPO3/CMS/Backend/Utility/MessageUtility',
-  'TYPO3/CMS/Backend/Modal',
-  'TYPO3/CMS/Backend/Severity',
-  '//media-library.cloudinary.com/global/all.js',
-], function ($, NProgress, MessageUtility, Modal, Severity) {
+import $ from 'jquery';
+import NProgress from 'nprogress';
+import {MessageUtility} from '@typo3/backend/utility/message-utility.js';
+import Modal from '@typo3/backend/modal.js';
+import Severity from '@typo3/backend/severity.js';
 
-  let cloudinaryButtons = Array.from(document.getElementsByClassName('btn-cloudinary-media-library'));
-  setCloudinaryButtonEvent(cloudinaryButtons);
+const cloudinaryMediaLibraryUrl = 'https://media-library.cloudinary.com/global/all.js';
+let cloudinaryMediaLibraryPromise = null;
 
-  $('.t3js-create-new-button').click(function(e) {
-    setTimedOutedCloudinaryButtonEvent();
-  })
-
-  $('.form-irre-header-button').click(function(e) {
-    setTimedOutedCloudinaryButtonEvent();
-  })
-
-  function setTimedOutedCloudinaryButtonEvent(){
-    setTimeout(() =>
-      {setCloudinaryButtonEvent(Array.from(document.getElementsByClassName('btn-cloudinary-media-library')))},
-      1000
-    );
+const loadCloudinaryMediaLibrary = () => {
+  if (window.cloudinary?.openMediaLibrary) {
+    return Promise.resolve();
   }
 
-  function setCloudinaryButtonEvent(cloudinaryButtons) {
-    cloudinaryButtons.map((cloudinaryButton) => {
-      cloudinaryButton.addEventListener("click", function(event){
-        event.preventDefault();
-        let buttonClasses = $(this).attr('class');
-        let buttonInnerHtml = $(this).prop("innerHTML");
-        let objectGroup = $(this).data('objectGroup');
-        let elementId = $(this).attr('id');
-        openMediaLibrary(JSON.parse(cloudinaryButton.dataset.cloudinaryCredentials), objectGroup, elementId, buttonClasses, buttonInnerHtml);
-      });
-      cloudinaryButton.removeAttribute('disabled');
+  if (cloudinaryMediaLibraryPromise === null) {
+    cloudinaryMediaLibraryPromise = new Promise((resolve, reject) => {
+      const script = document.createElement('script');
+      script.src = cloudinaryMediaLibraryUrl;
+      script.async = true;
+      script.addEventListener('load', () => resolve());
+      script.addEventListener('error', () => reject(new Error('Could not load Cloudinary media library.')));
+      document.head.appendChild(script);
     });
   }
 
-  function openMediaLibrary(credential, objectGroup, elementId, buttonClasses, buttonInnerHtml) {
+  return cloudinaryMediaLibraryPromise;
+};
+
+loadCloudinaryMediaLibrary();
+
+let cloudinaryButtons = Array.from(document.getElementsByClassName('btn-cloudinary-media-library'));
+setCloudinaryButtonEvent(cloudinaryButtons);
+
+$('.t3js-create-new-button').click(function(e) {
+  setTimedOutedCloudinaryButtonEvent();
+})
+
+$('.form-irre-header-button').click(function(e) {
+  setTimedOutedCloudinaryButtonEvent();
+})
+
+function setTimedOutedCloudinaryButtonEvent(){
+  setTimeout(() =>
+    {setCloudinaryButtonEvent(Array.from(document.getElementsByClassName('btn-cloudinary-media-library')))},
+    1000
+  );
+}
+
+function setCloudinaryButtonEvent(cloudinaryButtons) {
+  cloudinaryButtons.map((cloudinaryButton) => {
+    cloudinaryButton.addEventListener("click", function(event){
+      event.preventDefault();
+      let buttonClasses = $(this).attr('class');
+      let buttonInnerHtml = $(this).prop("innerHTML");
+      let objectGroup = $(this).data('objectGroup');
+      let elementId = $(this).attr('id');
+      openMediaLibrary(JSON.parse(cloudinaryButton.dataset.cloudinaryCredentials), objectGroup, elementId, buttonClasses, buttonInnerHtml);
+    });
+    cloudinaryButton.removeAttribute('disabled');
+  });
+}
+
+function openMediaLibrary(credential, objectGroup, elementId, buttonClasses, buttonInnerHtml) {
+  loadCloudinaryMediaLibrary().then(() => {
     // Render the cloudinary button
-    const mediaLibrary = cloudinary.openMediaLibrary(
+    const mediaLibrary = window.cloudinary.openMediaLibrary(
       {
         cloud_name: credential.cloudName,
         api_key: credential.apiKey,
@@ -71,7 +91,7 @@ define([
             function (data) {
               if (data.result === 'ok') {
                 data.files.map((fileUid) => {
-                  MessageUtility.MessageUtility.send({
+                  MessageUtility.send({
                     actionName: 'typo3:foreignRelation:insert',
                     objectGroup: me.objectGroup,
                     table: 'sys_file',
@@ -82,16 +102,15 @@ define([
                 NProgress.done();
               } else {
                 // error!
-                const $confirm = Modal.confirm('ERROR', data.error, Severity.error, [
+                const confirm = Modal.confirm('ERROR', data.error, Severity.error, [
                   {
                     text: 'OK', // TYPO3.lang['file_upload.button.ok']
                     btnClass: 'btn-' + Severity.getCssClass(Severity.error),
                     name: 'ok',
                     active: true,
                   },
-                ]).on('confirm.button.ok', function () {
-                  $confirm.modal('hide');
-                });
+                ]);
+                confirm.addEventListener('confirm.button.ok', () => confirm.hideModal());
               }
 
               NProgress.done();
@@ -103,5 +122,5 @@ define([
     );
     mediaLibrary.storageUid = credential.storageUid;
     mediaLibrary.objectGroup = objectGroup;
-  }
-});
+  });
+}
